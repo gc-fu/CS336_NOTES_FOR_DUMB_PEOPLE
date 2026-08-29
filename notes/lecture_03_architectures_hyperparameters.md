@@ -5,7 +5,7 @@
 > 视频：[Lecture 3: Architectures, Hyperparameters](https://www.youtube.com/watch?v=lVynu4bo1rY)（89:09）  
 > 官方讲义：[lecture_03.pdf](https://github.com/stanford-cs336/lectures/blob/main/lecture_03.pdf)（67 页）
 
-> **资料核对说明：**本笔记逐页检查了官方 PDF 的 67 页渲染结果；公式、架构图、模型对比表和曲线页另以高分辨率复核。视频主字幕使用 YouTube 的人工轨 `English (United States)`，共 2020 个片段，最后一段从 89:08 开始、约在 89:09 结束。`English (auto-generated)` 轨存在，但不作为主字幕。笔记不是字幕翻译，而是把讲义、视频口头说明和必要前置知识重新编成一条可独立学习的路线。
+> **资料核对说明：** 本笔记逐页检查了官方 PDF 的 67 页渲染结果；公式、架构图、模型对比表和曲线页另以高分辨率复核。视频主字幕使用 YouTube 的人工轨 `English (United States)`，共 2020 个片段，最后一段从 89:08 开始、约在 89:09 结束。`English (auto-generated)` 轨存在，但不作为主字幕。笔记不是字幕翻译，而是把讲义、视频口头说明和必要前置知识重新编成一条可独立学习的路线。
 
 本讲的来源标签：
 
@@ -21,7 +21,7 @@
 
 ## 0. 五分钟复习卡
 
-> **第一次学习请直接跳到第 1 节。**这一节是复习索引，会提前使用尚未解释的词。
+> **第一次学习请直接跳到第 1 节。** 这一节是复习索引，会提前使用尚未解释的词。
 
 ### 0.1 一句话主线
 
@@ -84,7 +84,7 @@ MHA → GQA/MQA 缩小 KV cache；滑动窗口减少长上下文成本
 - stable softmax 先做 `logits - max(logits)`；这是数学等价的数值实现；
 - z-loss 是训练 objective 的附加项，QK norm 与 soft-cap 则会改变 forward；
 - MHA 有 $`H_{kv}=H_q`$，MQA 有 $`H_{kv}=1`$，GQA 介于二者；$`H_{kv}=1`$ **不等于** $`d_h=1`$；
-- 单层 KV cache 元素数为 $`2BnH_{kv}d_h`$；**dtype（data type，数据类型）**是 tensor 每个元素采用的数字存储格式，例如 BF16；换 bytes 还要乘该 dtype 的每元素字节数；
+- 单层 KV cache 元素数为 $`2BnH_{kv}d_h`$；**dtype（data type，数据类型）** 是 tensor 每个元素采用的数字存储格式，例如 BF16；换 bytes 还要乘该 dtype 的每元素字节数；
 - prefill 可并行处理 prompt，incremental decode 必须逐 token，并反复读取权重与历史 K/V；
 - local attention 的长程信息要逐层接力；周期性 full layer 用较高成本换短的全局路径。
 
@@ -94,7 +94,7 @@ MHA → GQA/MQA 缩小 KV cache；滑动窗口减少长上下文成本
 
 ### 1.1 标量、向量、矩阵和 tensor
 
-**【补充解释】**先把“数字装在什么盒子里”分清：
+**【补充解释】** 先把“数字装在什么盒子里”分清：
 
 - **scalar（标量）**：一个数字，例如温度 `20`；shape 可写成 `[]`；
 - **vector（向量）**：一排数字，例如 `[1, 3, -2]`；shape 是 `[3]`；
@@ -111,7 +111,7 @@ MHA → GQA/MQA 缩小 KV cache；滑动窗口减少长上下文成本
 
 ### 1.2 token、embedding、hidden state、logit
 
-**【补充解释】**本讲反复使用五个词：
+**【补充解释】** 本讲反复使用五个词：
 
 - **token（词元）**：分词器切出的单位，例如一个字、半个单词或标点；
 - **token ID**：词表给 token 分配的整数编号；编号本身没有“大小含义”；
@@ -131,7 +131,7 @@ y=xW
 
 的 shape 是 `[d_out]`。中间的 $`d_{in}`$ 必须对上。
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 x=[2,3],\qquad
@@ -154,7 +154,7 @@ y_2=2\times4+3\times2=14.
 
 ### 1.4 “逐元素”和“混合位置”是两件事
 
-**【补充解释】**若函数对向量的每个数字分别做同一件事，例如：
+**【补充解释】** 若函数对向量的每个数字分别做同一件事，例如：
 
 ```math
 \mathrm{ReLU}([-2,3])=[0,3],
@@ -166,7 +166,7 @@ attention（注意力）才会让不同 token 位置彼此取信息。FFN（feed
 
 ### 1.5 概率和 softmax 的最小概念
 
-**【补充解释】**softmax 把一组任意实数 logits 变成总和为 1 的正数：
+**【补充解释】** softmax 把一组任意实数 logits 变成总和为 1 的正数：
 
 ```math
 p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.
@@ -201,7 +201,7 @@ p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.
 
 ### 2.1 一个语言模型的外壳
 
-**【课程，PDF 第 2–4 页】**课程先把原始 Transformer 与现代常见变体并排比较。无论细节怎样改，decoder-only 语言模型的主干可以画成：
+**【课程，PDF 第 2–4 页】** 课程先把原始 Transformer 与现代常见变体并排比较。无论细节怎样改，decoder-only 语言模型的主干可以画成：
 
 ```text
 token IDs [B,T]
@@ -241,7 +241,7 @@ $`F`$ 可以代表 attention 或 FFN。这个加法要求 $`x`$ 和 $`F(x)`$ 的
 
 ### 2.3 本讲的改动可归成六个旋钮
 
-**【课程】**67 页材料看似列了很多模型名，实际围绕六类旋钮：
+**【课程】** 67 页材料看似列了很多模型名，实际围绕六类旋钮：
 
 | 旋钮 | 它回答的问题 | 主要代价/收益 |
 |---|---|---|
@@ -252,11 +252,11 @@ $`F`$ 可以代表 attention 或 FFN。这个加法要求 $`x`$ 和 $`F(x)`$ 的
 | 超参数 | 宽度、深度、头、词表怎样配？ | 参数、质量、并行和通信 |
 | attention 变体 | K/V 是否共享、看多远？ | KV cache、带宽、长上下文 |
 
-**【视频补充，约 [00:05](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5s)】**老师强调，本讲更像一份跨模型“调查地图”。最可靠的学习方式仍是自己实现和跑小实验；模型报告里的单次结果不能自动变成永恒定律。
+**【视频补充，约 [00:05](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5s)】** 老师强调，本讲更像一份跨模型“调查地图”。最可靠的学习方式仍是自己实现和跑小实验；模型报告里的单次结果不能自动变成永恒定律。
 
 ### 2.4 原始版本与现代版本的第一眼差别
 
-**【课程，PDF 第 3–4 页】**课程用一个简化对比建立方向：
+**【课程，PDF 第 3–4 页】** 课程用一个简化对比建立方向：
 
 | 部件 | 2017 原始 Transformer 的典型选择 | 课程总结的现代常见选择 |
 |---|---|---|
@@ -274,7 +274,7 @@ $`F`$ 可以代表 attention 或 FFN。这个加法要求 $`x`$ 和 $`F(x)`$ 的
 
 ### 3.1 先规定一个可以手数的世界
 
-**【补充例子】**设：
+**【补充例子】** 设：
 
 - batch size $`B=1`$；
 - 序列长度 $`T=3`$；
@@ -326,7 +326,7 @@ X_0=
 
 ### 3.3 attention 的 Q、K、V：shape 先不丢
 
-**Q（query，查询）**、**K（key，键）**、**V（value，值）**都是由 $`X`$ 乘不同权重得到。**符号复用警告：**这里的张量 $`V`$ 是 attention 的 value；本讲别处单独出现的标量 $`V`$ 是 vocabulary size（词表大小）。必须根据 shape 和上下文区分。
+**Q（query，查询）**、**K（key，键）**、**V（value，值）** 都是由 $`X`$ 乘不同权重得到。**符号复用警告：** 这里的张量 $`V`$ 是 attention 的 value；本讲别处单独出现的标量 $`V`$ 是 vocabulary size（词表大小）。必须根据 shape 和上下文区分。
 
 ```math
 Q=XW_Q,\quad K=XW_K,\quad V=XW_V.
@@ -480,7 +480,7 @@ softmax over V        [1,3,6]
 
 ### 4.1 原始版本不是“错误版本”
 
-**【课程，PDF 第 3 页】**2017 年 Transformer 的代表性选择包括：
+**【课程，PDF 第 3 页】** 2017 年 Transformer 的代表性选择包括：
 
 - sinusoidal positional encoding（正弦位置编码）；
 - ReLU 激活的普通 FFN；
@@ -491,7 +491,7 @@ softmax over V        [1,3,6]
 
 ### 4.2 课程的现代简化版本
 
-**【课程，PDF 第 4 页】**课程用下列组合作为现代 decoder-only LM 的教学起点：
+**【课程，PDF 第 4 页】** 课程用下列组合作为现代 decoder-only LM 的教学起点：
 
 - pre-norm；
 - RMSNorm；
@@ -503,7 +503,7 @@ softmax over V        [1,3,6]
 
 ### 4.3 为什么不能只背模型清单
 
-**【视频补充，约 [05:00](https://www.youtube.com/watch?v=lVynu4bo1rY&t=300s)】**老师把大量发布模型放在同一张时间线上，是为了看共识怎样形成。正确问题不是“某模型用了什么，所以我也用什么”，而是：
+**【视频补充，约 [05:00](https://www.youtube.com/watch?v=lVynu4bo1rY&t=300s)】** 老师把大量发布模型放在同一张时间线上，是为了看共识怎样形成。正确问题不是“某模型用了什么，所以我也用什么”，而是：
 
 **FLOPs** 在这里指完成一次给定计算所需的浮点加法、乘法等操作次数，是工作量；它不是经过了多少秒，也不是表示每秒速度的 FLOP/s。
 
@@ -534,13 +534,13 @@ softmax over V        [1,3,6]
 
 ### 5.1 norm 先做什么
 
-**normalization（归一化）**在这里指：把某个 token 的 $`d`$ 个特征按统计量重新缩放，使数值尺度更可控。它不是把概率归一到和为 1；那是 softmax 的工作。
+**normalization（归一化）** 在这里指：把某个 token 的 $`d`$ 个特征按统计量重新缩放，使数值尺度更可控。它不是把概率归一到和为 1；那是 softmax 的工作。
 
 令 $`F`$ 代表 attention 或 FFN。下面只画一个子层，实际 block 通常有 attention 子层和 FFN 子层各一次。
 
 ### 5.2 post-norm：先做子层与残差，再 norm
 
-**【课程，PDF 第 10 页】**原始 Transformer 常写为：
+**【课程，PDF 第 10 页】** 原始 Transformer 常写为：
 
 ```math
 y=\mathrm{Norm}(x+F(x)).
@@ -565,7 +565,7 @@ x ───────────────┐
 
 ### 5.3 pre-norm：先 norm 再进入子层，主路直接通过
 
-**【课程，PDF 第 10–12 页】**pre-norm 写为：
+**【课程，PDF 第 10–12 页】** pre-norm 写为：
 
 ```math
 y=x+F(\mathrm{Norm}(x)).
@@ -585,11 +585,11 @@ x ────────────────────┐
 └→ Norm → F ──────────┘
 ```
 
-**【视频补充，约 [09:40](https://www.youtube.com/watch?v=lVynu4bo1rY&t=580s)】**早期解释常强调 pre-norm 可以减轻深层训练难题。现代大模型仍常使用 learning-rate warmup，所以不能把 pre-norm 简化成“用了它就不需要 warmup”。更稳妥的直觉是：它保留了更干净的 residual stream（残差流），信息和梯度有直接路径。
+**【视频补充，约 [09:40](https://www.youtube.com/watch?v=lVynu4bo1rY&t=580s)】** 早期解释常强调 pre-norm 可以减轻深层训练难题。现代大模型仍常使用 learning-rate warmup，所以不能把 pre-norm 简化成“用了它就不需要 warmup”。更稳妥的直觉是：它保留了更干净的 residual stream（残差流），信息和梯度有直接路径。
 
 ### 5.4 什么叫“干净的 residual stream”
 
-**【补充解释】**先看连续两层 pre-norm：
+**【补充解释】** 先看连续两层 pre-norm：
 
 ```math
 x_1=x_0+F_0(N(x_0)),
@@ -609,7 +609,7 @@ x_2=x_0+F_0(N(x_0))+F_1(N(x_1)).
 
 ### 5.5 用二维数字手算一次 residual 路径
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 x=[1,3].
@@ -633,7 +633,7 @@ shape 也必须一致：`[2]+[2]→[2]`。对实际 tensor 则是 `[B,T,d]+[B,T,
 
 ### 5.6 non-residual post-norm：在支路出口再 norm
 
-**【课程，PDF 第 13、19 页】**如果担心把 norm 放在整个残差和之后会破坏主路，可以只对支路输出再做一次 norm：
+**【课程，PDF 第 13、19 页】** 如果担心把 norm 放在整个残差和之后会破坏主路，可以只对支路输出再做一次 norm：
 
 ```math
 y=x+\mathrm{Norm}_{out}\left(F(\mathrm{Norm}_{in}(x))\right).
@@ -691,7 +691,7 @@ y                         [B,T,d]
 
 ### 6.1 LayerNorm 逐符号解释
 
-**【课程，PDF 第 14 页】**对一个 token 的特征向量 $`x=[x_1,\ldots,x_d]`$，LayerNorm（层归一化）先算均值和方差：
+**【课程，PDF 第 14 页】** 对一个 token 的特征向量 $`x=[x_1,\ldots,x_d]`$，LayerNorm（层归一化）先算均值和方差：
 
 ```math
 \mu=\frac{1}{d}\sum_{i=1}^{d}x_i,
@@ -722,7 +722,7 @@ LayerNorm 对 `[B,T,d]` 的最后一轴分别做统计。不同 batch、不同 t
 
 ### 6.2 二维 LayerNorm 完整手算
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 x=[1,3],\quad d=2,\quad \gamma=[1,1],\quad\beta=[0,0],
@@ -874,7 +874,7 @@ x=[1,3],\quad d=2,\quad\gamma=[1,1],\quad\varepsilon=0.
 
 ### 6.6 为什么有 $`\varepsilon`$
 
-**【补充解释】**若 $`x=[0,0]`$，RMS 是 0；直接除会变成 `0/0`，没有定义。加入例如 $`\varepsilon=10^{-6}`$：
+**【补充解释】** 若 $`x=[0,0]`$，RMS 是 0；直接除会变成 `0/0`，没有定义。加入例如 $`\varepsilon=10^{-6}`$：
 
 ```math
 \sqrt{0+10^{-6}}=10^{-3},
@@ -903,7 +903,7 @@ x=[1,3],\quad d=2,\quad\gamma=[1,1],\quad\varepsilon=0.
 
 总 FLOPs 少不保证时间短，因为运行时间还受 FLOP/s、内存带宽、启动一次 GPU 底层计算程序（kernel）和数据移动影响。架构选择会同时改变工作量与硬件实际利用率。
 
-**【课程，PDF 第 15–17 页】**课程引用的一个极端小模型工作负载中：
+**【课程，PDF 第 15–17 页】** 课程引用的一个极端小模型工作负载中：
 
 | 算子类 | FLOPs 占比 | runtime 占比 |
 |---|---:|---:|
@@ -917,7 +917,7 @@ x=[1,3],\quad d=2,\quad\gamma=[1,1],\quad\varepsilon=0.
 61.0\%+25.5\%+13.5\%=100.0\%.
 ```
 
-**【视频补充，约 [15:49](https://www.youtube.com/watch?v=lVynu4bo1rY&t=949s)】**老师明确提醒，这是为了展示“FLOPs 不是 runtime”的极端例子，不应把 `25.5%` 当成所有现代大模型的固定比例。
+**【视频补充，约 [15:49](https://www.youtube.com/watch?v=lVynu4bo1rY&t=949s)】** 老师明确提醒，这是为了展示“FLOPs 不是 runtime”的极端例子，不应把 `25.5%` 当成所有现代大模型的固定比例。
 
 为什么可能这样？矩阵乘能让大量计算复用已加载的数据；norm 的算术很少，却仍需扫描 activation、求统计量、再写回。若受 memory bandwidth（内存带宽）限制，少几次统计和参数搬运仍可能带来实际速度收益。
 
@@ -933,7 +933,7 @@ y=xW+b.
 - $`b`$ 是 bias（偏置），shape 为 `[d_out]`；
 - 同一个 $`b`$ 会加到每个 batch、每个 token 位置。
 
-**【补充例子】**若：
+**【补充例子】** 若：
 
 ```math
 xW=[2,-1],\qquad b=[0.5,0.25],
@@ -947,7 +947,7 @@ y=[2+0.5,-1+0.25]=[2.5,-0.75].
 
 bias 给每个输出维度一个可学习的平移量。删除它不会改变输出 shape，但少了参数、一次读取和逐元素加法。
 
-**【课程，PDF 第 18–19 页】**许多现代 Transformer 在线性层和 RMSNorm 中删除 bias。课程给出的动机包括内存/数据移动和优化稳定性；这里应理解为经验设计选择，不是“bias 永远没用”的数学定理。
+**【课程，PDF 第 18–19 页】** 许多现代 Transformer 在线性层和 RMSNorm 中删除 bias。课程给出的动机包括内存/数据移动和优化稳定性；这里应理解为经验设计选择，不是“bias 永远没用”的数学定理。
 
 ### 6.10 一次把三组概念分开
 
@@ -975,7 +975,7 @@ bias 给每个输出维度一个可学习的平移量。删除它不会改变输
 
 ### 7.1 只有线性层叠线性层，仍然只是一个线性层
 
-**【补充解释】**假设没有激活函数：
+**【补充解释】** 假设没有激活函数：
 
 ```math
 y=(xW_1)W_2.
@@ -1004,7 +1004,7 @@ y=x(W_1W_2).
 
 ### 7.2 一个普通 FFN 的完整小数组
 
-**【补充例子】**令单个 token 的隐藏向量：
+**【补充例子】** 令单个 token 的隐藏向量：
 
 ```math
 x=[1,-2],
@@ -1084,7 +1084,7 @@ FFN(x)            [2]
 
 ### 7.3 ReLU：负数归零
 
-**【课程，PDF 第 20–21 页】**ReLU 是 Rectified Linear Unit（修正线性单元）：
+**【课程，PDF 第 20–21 页】** ReLU 是 Rectified Linear Unit（修正线性单元）：
 
 ```math
 \mathrm{ReLU}(z)=\max(0,z).
@@ -1172,9 +1172,9 @@ Swish 常写为：
 | 1 | 1 | 0.841 | 0.731 |
 | 2 | 2 | 1.954 | 1.762 |
 
-**【课程】**原始 Transformer 使用 ReLU；GPT 系模型推动了 GELU；许多 2023 年以后的模型使用 SwiGLU 等 gated 变体。
+**【课程】** 原始 Transformer 使用 ReLU；GPT 系模型推动了 GELU；许多 2023 年以后的模型使用 SwiGLU 等 gated 变体。
 
-**【视频补充，约 [20:15](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1215s)】**老师展示“激活函数动物园”，重点不是记下所有缩写，而是先区分普通逐元素激活和下一节的 gated FFN。视频的判断是：门控本身带来的差异常比 GeGLU 与 SwiGLU 两种门之间的差异更重要。
+**【视频补充，约 [20:15](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1215s)】** 老师展示“激活函数动物园”，重点不是记下所有缩写，而是先区分普通逐元素激活和下一节的 gated FFN。视频的判断是：门控本身带来的差异常比 GeGLU 与 SwiGLU 两种门之间的差异更重要。
 
 ### 7.7 普通 FFN 的主权重参数量
 
@@ -1191,7 +1191,7 @@ N_{FFN}
 =2d d_{ff}.
 ```
 
-**【补充例子】**若 $`d=6,d_{ff}=12`$：
+**【补充例子】** 若 $`d=6,d_{ff}=12`$：
 
 ```math
 N_{FFN}=2\times6\times12=144.
@@ -1211,7 +1211,7 @@ N_{FFN}=2\times6\times12=144.
 
 ### 8.1 gated 到底多了什么
 
-**【课程，PDF 第 22–26 页】**普通 FFN 只有一份向上投影：
+**【课程，PDF 第 22–26 页】** 普通 FFN 只有一份向上投影：
 
 ```math
 h=\phi(xW_{up}).
@@ -1244,7 +1244,7 @@ $`\odot`$ 是逐元素乘。`up` 和 `gate` 必须 shape 相同，才能一格�
 
 ### 8.2 一个两维 gate 的完整手算
 
-**【补充例子】**假设两条投影已经得到：
+**【补充例子】** 假设两条投影已经得到：
 
 ```math
 u=[2,-1],\qquad g=[-1,2].
@@ -1322,7 +1322,7 @@ N_{gated}
 
 ### 8.6 等参数预算为什么要乘 $`2/3`$
 
-**【课程，PDF 第 23–24、37–38 页】**现在从头推，不背结论。
+**【课程，PDF 第 23–24、37–38 页】** 现在从头推，不背结论。
 
 普通 FFN 的矩阵参数：
 
@@ -1404,7 +1404,7 @@ d_{ff,gated}
 
 因此 `8/3 ≈ 2.667` 不是“所有 SwiGLU 必须用的宽度”，而是 **从普通 FFN 的 `4d` 基准出发，再做等矩阵参数换算** 的结果。
 
-**【补充例子】**若 $`d=3072`$：
+**【补充例子】** 若 $`d=3072`$：
 
 ```math
 d_{ff,gated}=\frac83\times3072.
@@ -1420,7 +1420,7 @@ d_{ff,gated}=\frac83\times3072.
 
 ### 8.9 门控的效果证据怎样读
 
-**【视频补充，约 [21:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1292s)–[25:01](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1501s)】**课程的总结是：gating 在多项比较中带来小但较一致的收益，而 GeGLU 与 SwiGLU 之间的差通常更小。老师也提醒，论文里的小差异要看重复实验和误差条；一次跑分领先不等于可靠定律。
+**【视频补充，约 [21:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1292s)–[25:01](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1501s)】** 课程的总结是：gating 在多项比较中带来小但较一致的收益，而 GeGLU 与 SwiGLU 之间的差通常更小。老师也提醒，论文里的小差异要看重复实验和误差条；一次跑分领先不等于可靠定律。
 
 首次阅读应记住的不是模型榜单，而是：
 
@@ -1436,7 +1436,7 @@ gated FFN：内容支路 × 门支路，再 down，三个矩阵
 
 ### 9.1 serial：FFN 能看到 attention 刚写入的内容
 
-**【课程，PDF 第 27–29 页】**常见 serial（串联）pre-norm block：
+**【课程，PDF 第 27–29 页】** 常见 serial（串联）pre-norm block：
 
 ```math
 u=x+\mathrm{Attn}(N_1(x)),
@@ -1488,7 +1488,7 @@ parallel 的加法是三个同 shape tensor 逐元素相加。它不是在特征
 
 ### 9.4 二维数值例子看数据依赖
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 x=[1,2].
@@ -1536,7 +1536,7 @@ y_{parallel}
 
 ### 9.5 parallel 为什么有机会更快
 
-**【视频补充，约 [27:19](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1639s)–[28:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1712s)】**可能的系统收益：
+**【视频补充，约 [27:19](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1639s)–[28:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1712s)】** 可能的系统收益：
 
 1. attention 与 FFN 没有前后依赖，可同时调度一部分工作；
 2. 两条支路可共享一次输入 norm；
@@ -1546,7 +1546,7 @@ y_{parallel}
 
 ### 9.6 速度与表达深度的交换
 
-**【课程/视频补充】**PaLM 报告过 parallel block 在其规模和实现下约 15% 的训练速度收益，且报告中没有明显质量下降。但老师同时指出：后来的许多模型没有继续采用，可能因为串联结构让每层拥有两步依次加工的语义深度；公开材料缺少足够干净、跨规模的受控消融。
+**【课程/视频补充】** PaLM 报告过 parallel block 在其规模和实现下约 15% 的训练速度收益，且报告中没有明显质量下降。但老师同时指出：后来的许多模型没有继续采用，可能因为串联结构让每层拥有两步依次加工的语义深度；公开材料缺少足够干净、跨规模的受控消融。
 
 因此应写成：
 
@@ -1560,7 +1560,7 @@ y_{parallel}
 
 ### 10.1 为什么 token 内容本身不够
 
-**【补充解释】**假设只有两个 token 向量 `A` 和 `B`。不加任何位置信号时，self-attention 对集合 `{A,B}` 做同样的点积规则。把输入从 `[A,B]` 换成 `[B,A]`，输出也只是对应地交换；模型没有一个固定信号说明“这是第 0 位”或“二者相距 1”。
+**【补充解释】** 假设只有两个 token 向量 `A` 和 `B`。不加任何位置信号时，self-attention 对集合 `{A,B}` 做同样的点积规则。把输入从 `[A,B]` 换成 `[B,A]`，输出也只是对应地交换；模型没有一个固定信号说明“这是第 0 位”或“二者相距 1”。
 
 语言顺序却会改变意思：
 
@@ -1573,7 +1573,7 @@ token 种类相同，角色不同。因此要把位置或相对距离送进 atte
 
 ### 10.2 sinusoidal absolute position：固定正弦表
 
-**【课程，PDF 第 30 页】**原始 Transformer 使用固定 sinusoidal（正弦）编码。常见公式为：
+**【课程，PDF 第 30 页】** 原始 Transformer 使用固定 sinusoidal（正弦）编码。常见公式为：
 
 ```math
 PE(pos,2r)=\sin\left(\frac{pos}{10000^{2r/d}}\right),
@@ -1628,7 +1628,7 @@ s_{ij}=\frac{q_i\cdot k_j}{\sqrt{d_h}}+b_{i-j}.
 
 这里是 relative-bias 方法自行选择的索引约定。后面的 RoPE 仍按课件命名 $`\delta=i-j`$，但在本文 query-left/key-right 的点积矩阵中出现 $`R(j-i)=R(-\delta)`$；不要因为都叫“相对位置”就忽略符号方向。
 
-**【补充例子】**若内容点积分数是 1.2，位置 $`i=5`$ 看 $`j=3`$，相对距离为 $`5-3=2`$，而 $`b_2=-0.1`$：
+**【补充例子】** 若内容点积分数是 1.2，位置 $`i=5`$ 看 $`j=3`$，相对距离为 $`5-3=2`$，而 $`b_2=-0.1`$：
 
 ```math
 s_{5,3}=1.2+(-0.1)=1.1.
@@ -1655,7 +1655,7 @@ RoPE 是 Rotary Position Embedding（旋转位置编码）。它不是把一条�
 | relative bias/embedding | attention logit 或相对项 | 取决于实现 | 是 |
 | RoPE | 每层 attention 的 Q、K | 常见基础版 0 | 是，出现在旋转后的点积 |
 
-**【课程/视频补充，约 [31:04](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1864s)–[32:34](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1954s)】**课程把 RoPE 视为 2024 年后模型中的强势默认趋势。这是课程对其模型调查时间点的经验总结，不是说其他位置方案已经数学失效。
+**【课程/视频补充，约 [31:04](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1864s)–[32:34](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1954s)】** 课程把 RoPE 视为 2024 年后模型中的强势默认趋势。这是课程对其模型调查时间点的经验总结，不是说其他位置方案已经数学失效。
 
 ---
 
@@ -1744,7 +1744,7 @@ k_j'=R(j\omega)k_j.
 
 注意：下标 $`i,j`$ 表示 token 位置；向量内容 $`q_i,k_j`$ 仍来自模型投影。RoPE 没有把所有位置变成相同向量。
 
-**相对位移的符号约定：**课件把 query 位置减 key 位置记作：
+**相对位移的符号约定：** 课件把 query 位置减 key 位置记作：
 
 ```math
 \delta=i-j.
@@ -1907,7 +1907,7 @@ RoPE 不是只按距离决定注意力，也不是把绝对位置完全从整个
 
 ### 11.7 一个带具体角度的完整验证
 
-**【补充例子】**取频率 $`\omega=90^\circ`$ 每位置，原始向量：
+**【补充例子】** 取频率 $`\omega=90^\circ`$ 每位置，原始向量：
 
 ```math
 q=\begin{bmatrix}1\\0\end{bmatrix},\qquad
@@ -1990,7 +1990,7 @@ q^{\mathsf T}R(90^\circ)k
 
 其中 $`r=0,1,2,3`$。通常有的坐标对转得快，表达短距离变化；有的转得慢，表达较长尺度。
 
-**【视频补充，约 [36:20](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2180s)–[36:38](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2198s)】**视频字幕一处转写成 “3D”，但幻灯片矩阵、前后解释和实现都明确是把坐标按 **二维对** 分组。这里以官方图和数学式为准。
+**【视频补充，约 [36:20](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2180s)–[36:38](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2198s)】** 视频字幕一处转写成 “3D”，但幻灯片矩阵、前后解释和实现都明确是把坐标按 **二维对** 分组。这里以官方图和数学式为准。
 
 ### 11.9 Q、K、V 的边界：通常只旋转 Q 和 K
 
@@ -2029,7 +2029,7 @@ layer 1 hidden → W_Q1/W_K1 → Q1/K1 → RoPE → attention 1
 
 ### 11.11 安装匹配 PyTorch 后可运行的最小实现
 
-**【补充解释】**下面代码只演示 RoPE 的 shape 和二维配对，不包含完整 attention。安装与本机环境匹配的 PyTorch 后，它可以独立运行：
+**【补充解释】** 下面代码只演示 RoPE 的 shape 和二维配对，不包含完整 attention。安装与本机环境匹配的 PyTorch 后，它可以独立运行：
 
 ```python
 import torch
@@ -2070,7 +2070,7 @@ assert k_rot.shape == (1, 2, 3, 4)
 assert v.shape == (1, 2, 3, 4)  # 标准 RoPE 中 V 原样保留
 ```
 
-> **代码验证状态：**该代码块已通过 Python AST 语法解析；本次编写环境没有安装 `torch`，因此没有做 PyTorch 运行时实跑。shape、broadcast 和旋转公式已分别用独立算术检查，但读者首次执行仍需先安装与环境匹配的 PyTorch。
+> **代码验证状态：** 该代码块已通过 Python AST 语法解析；本次编写环境没有安装 `torch`，因此没有做 PyTorch 运行时实跑。shape、broadcast 和旋转公式已分别用独立算术检查，但读者首次执行仍需先安装与环境匹配的 PyTorch。
 
 逐行翻成人话：
 
@@ -2091,22 +2091,22 @@ assert v.shape == (1, 2, 3, 4)  # 标准 RoPE 中 V 原样保留
 
 ### 11.12 RoPE 最容易犯的五个错
 
-1. **错：**RoPE 给 token embedding 加一个向量。  
-   **正：**标准 RoPE 在每层 attention 内旋转投影后的 Q、K。
+1. **错：** RoPE 给 token embedding 加一个向量。  
+   **正：** 标准 RoPE 在每层 attention 内旋转投影后的 Q、K。
 
 2. **错：**`R(i)^T R(j)` 还依赖两个绝对位置，或可随意写成 $`R(i-j)`$。  
-   **正：**按本文 query-left/key-right 的列向量约定，它等于 $`R(j-i)=R(-\delta)`$，其中课件 $`\delta=i-j`$；只剩相对差，但符号方向不可互换。
+   **正：** 按本文 query-left/key-right 的列向量约定，它等于 $`R(j-i)=R(-\delta)`$，其中课件 $`\delta=i-j`$；只剩相对差，但符号方向不可互换。
 
-3. **错：**旋转后 attention 只看距离，不看内容。  
-   **正：**最终仍有 $`q_i^{\mathsf T}`$ 和 $`k_j`$。
+3. **错：** 旋转后 attention 只看距离，不看内容。  
+   **正：** 最终仍有 $`q_i^{\mathsf T}`$ 和 $`k_j`$。
 
 4. **错：**“二维配对”表示 head dimension 必须是 2。  
    **正：**$`d_h`$ 可很大，只需拆成很多二维对；常见实现要求 $`d_h`$ 为偶数。
 
-5. **错：**Q/K/V 都必须旋转。  
-   **正：**标准 RoPE 旋转 Q、K；V 通常不旋转。
+5. **错：** Q/K/V 都必须旋转。  
+   **正：** 标准 RoPE 旋转 Q、K；V 通常不旋转。
 
-**【课程/视频补充，约 [33:01](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1981s)–[38:24](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2304s)】**PDF 第 31–35 页和视频按“把相对距离命名为 $`\delta=i-j`$ → 二维旋转 → 多频率配对 → 每层 Q/K 应用”的顺序展开。按本文点积约定矩阵中出现的是 $`R(-\delta)=R(j-i)`$。本节保留课程因果链，并补上了差角公式、四格矩阵乘法和数值验证。
+**【课程/视频补充，约 [33:01](https://www.youtube.com/watch?v=lVynu4bo1rY&t=1981s)–[38:24](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2304s)】** PDF 第 31–35 页和视频按“把相对距离命名为 $`\delta=i-j`$ → 二维旋转 → 多频率配对 → 每层 Q/K 应用”的顺序展开。按本文点积约定矩阵中出现的是 $`R(-\delta)=R(j-i)`$。本节保留课程因果链，并补上了差角公式、四格矩阵乘法和数值验证。
 
 ---
 
@@ -2114,7 +2114,7 @@ assert v.shape == (1, 2, 3, 4)  # 标准 RoPE 中 V 原样保留
 
 ### 12.1 两个宽度分别控制什么
 
-**【课程，PDF 第 36–41 页】**先重新定义：
+**【课程，PDF 第 36–41 页】** 先重新定义：
 
 - $`d_{model}`$，本笔记也简写为 $`d`$：residual stream 中每个 token 的宽度；
 - $`d_{ff}`$：FFN 中间层的宽度。
@@ -2158,7 +2158,7 @@ d_{ff}=4d_{model}.
 d_{ff,gated}=\frac23\times4d=\frac83d\approx2.667d.
 ```
 
-**【课程，PDF 第 38 页；课程 2026 模型调查快照】**讲义列出的部分公开模型报告值包括：
+**【课程，PDF 第 38 页；课程 2026 模型调查快照】** 讲义列出的部分公开模型报告值包括：
 
 | 模型 | 报告的 $`d_{ff}/d_{model}`$ | 如何理解 |
 |---|---:|---|
@@ -2175,7 +2175,7 @@ d_{ff,gated}=\frac23\times4d=\frac83d\approx2.667d.
 
 ### 12.4 T5 11B 的 64 倍例外逐位复算
 
-**【课程，PDF 第 39 页】**原始 T5 11B 配置：
+**【课程，PDF 第 39 页】** 原始 T5 11B 配置：
 
 ```math
 d_{ff}=65{,}536,\qquad d_{model}=1{,}024.
@@ -2202,11 +2202,11 @@ d_{ff}=65{,}536,\qquad d_{model}=1{,}024.
 
 这说明极端宽 FFN 也可以被成功训练。它不说明 64 倍更优：课程指出后续 T5 v1.1 转为 GeGLU，比例约 2.5，更接近主流范围。
 
-**【视频补充，约 [47:03](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2823s)】**老师提出一种系统直觉：极大的 FFN 会形成很大的矩阵乘，在某些硬件上可能有较好利用率；但这不是对 T5 选择的唯一因果证明。大矩阵也会增加参数、计算、模型切分和通信负担。
+**【视频补充，约 [47:03](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2823s)】** 老师提出一种系统直觉：极大的 FFN 会形成很大的矩阵乘，在某些硬件上可能有较好利用率；但这不是对 T5 选择的唯一因果证明。大矩阵也会增加参数、计算、模型切分和通信负担。
 
 ### 12.5 更新近年的其他例外，必须带时间边界
 
-**【课程，PDF 第 39 页；2026 讲义快照】**课程还列出 Gemma 2 约 `8×`，以及 SmolLM、Gemma 3、Gemma 4 等 gated 配置约 `4×`。这些名字是 2026 课程对当时公开模型的观察，不能向未来外推为“新模型都在变宽”。
+**【课程，PDF 第 39 页；2026 讲义快照】** 课程还列出 Gemma 2 约 `8×`，以及 SmolLM、Gemma 3、Gemma 4 等 gated 配置约 `4×`。这些名字是 2026 课程对当时公开模型的观察，不能向未来外推为“新模型都在变宽”。
 
 对于 gated FFN，`4×` 还意味着三个矩阵预算约：
 
@@ -2230,7 +2230,7 @@ d_{ff}=65{,}536,\qquad d_{model}=1{,}024.
 
 ### 12.6 课程图表的轴到底说了什么
 
-**【课程，PDF 第 40 页；Kaplan et al., 2020 的 50M 参数实验】**图中：
+**【课程，PDF 第 40 页；Kaplan et al., 2020 的 50M 参数实验】** 图中：
 
 - 横轴是 Feed-Forward Ratio，即 $`d_{ff}/d_{model}`$；使用对数刻度；
 - 纵轴是 Loss Increase（损失相对最佳点增加多少百分比）；越低越好；
@@ -2248,11 +2248,11 @@ d_{ff}=65{,}536,\qquad d_{model}=1{,}024.
 - gated 与普通 FFN 可不做参数匹配直接比较；
 - 训练速度、显存和通信也在纵轴中被同时优化。
 
-**【视频补充，约 [48:03](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2883s)】**老师用这张图强调“经验 basin（低谷/宽容区）”，而不是宣称精确常数。
+**【视频补充，约 [48:03](https://www.youtube.com/watch?v=lVynu4bo1rY&t=2883s)】** 老师用这张图强调“经验 basin（低谷/宽容区）”，而不是宣称精确常数。
 
 ### 12.7 初学者怎样选一个起点
 
-**【补充解释】**如果只是实现课程作业、没有预算做大规模搜索：
+**【补充解释】** 如果只是实现课程作业、没有预算做大规模搜索：
 
 1. 普通 ReLU/GELU FFN 可从 $`d_{ff}=4d`$ 起；
 2. SwiGLU/GeGLU 若想匹配普通 `4d` FFN 的矩阵参数，可从 $`d_g\approx8d/3`$ 起；
@@ -2266,7 +2266,7 @@ d_{ff}=65{,}536,\qquad d_{model}=1{,}024.
 
 ### 13.1 `num_heads × head_dim = model_dim` 是常见选择，不是 shape 定律
 
-**【课程，PDF 第 42–43 页】**定义：
+**【课程，PDF 第 42–43 页】** 定义：
 
 - $`H`$：attention query head 数；
 - $`d_h`$：每个 head 的宽度；
@@ -2337,7 +2337,7 @@ N_{attn}=4r_{attn}d^2.
 
 ### 13.4 课程表中可独立复算的几行
 
-**【课程，PDF 第 43 页；模型报告跨越不同年份】**下面只列能从幻灯片打印数字直接复算的行：
+**【课程，PDF 第 43 页；模型报告跨越不同年份】** 下面只列能从幻灯片打印数字直接复算的行：
 
 | 模型 | $`H`$ | $`d_h`$ | $`d`$ | $`Hd_h/d`$ 复算 |
 |---|---:|---:|---:|---:|
@@ -2362,7 +2362,7 @@ N_{attn}=4r_{attn}d^2.
 
 ### 13.5 aspect ratio 在本讲里是什么意思
 
-**【课程，PDF 第 44 页】**这里的 architecture aspect ratio（架构深宽比）定义为：
+**【课程，PDF 第 44 页】** 这里的 architecture aspect ratio（架构深宽比）定义为：
 
 ```math
 A=\frac{d_{model}}{L},
@@ -2377,7 +2377,7 @@ $`L`$ 是 block 层数。
 
 ### 13.6 课程模型表的经验范围与边界
 
-**【课程，PDF 第 44、51 页；2026 讲义对跨年代公开配置的汇总】**表中许多模型落在约 `100–200`，但也列有更低或更高的例子：BLOOM 约 205、PaLM 540B 约 156、一组 GPT-3/OPT/Mistral/Qwen/OLMo 3 约 128、LLaMA/LLaMA 2 约 102、Gemma 3 约 87、Gemma 4 约 61、T5 11B 约 33。
+**【课程，PDF 第 44、51 页；2026 讲义对跨年代公开配置的汇总】** 表中许多模型落在约 `100–200`，但也列有更低或更高的例子：BLOOM 约 205、PaLM 540B 约 156、一组 GPT-3/OPT/Mistral/Qwen/OLMo 3 约 128、LLaMA/LLaMA 2 约 102、Gemma 3 约 87、Gemma 4 约 61、T5 11B 约 33。
 
 正确说法是“该课程调查样本中有一个宽的常见带”，而不是“aspect ratio 必须等于 128”。
 
@@ -2392,7 +2392,7 @@ $`L`$ 是 block 层数。
 
 这些概念解释为什么参数量相近的深窄与宽浅模型可能有不同实际速度。
 
-**【课程，PDF 第 45–46 页】**第 45 页的流水线图用 4 个 layer 顺序跨 GPU：forward 必须由 layer 0 走到 layer 3，backward 反向返回。它表达：
+**【课程，PDF 第 45–46 页】** 第 45 页的流水线图用 4 个 layer 顺序跨 GPU：forward 必须由 layer 0 走到 layer 3，backward 反向返回。它表达：
 
 - depth 方向有数据依赖，单个样本不能让后层越过前层；
 - 极深模型会增加串行 latency；
@@ -2414,11 +2414,11 @@ $`L`$ 是 block 层数。
 
 图支持“较宽范围可达到相近表现，系统约束会影响最终选择”。它没有单独给出一条适用于所有数据与训练预算的解析最优式。
 
-**【视频补充，约 [51:31](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3091s)–[54:18](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3258s)】**老师强调：宽度通常更容易做 tensor parallel，深度更适合切 pipeline 但增加串行性；最终选择常由硬件拓扑和 latency 目标推动。
+**【视频补充，约 [51:31](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3091s)–[54:18](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3258s)】** 老师强调：宽度通常更容易做 tensor parallel，深度更适合切 pipeline 但增加串行性；最终选择常由硬件拓扑和 latency 目标推动。
 
 ### 13.8 参数/shape 例 1：标准内宽、普通 FFN、12 层
 
-**【补充例子；合成配置，不对应某个具体模型】**设：
+**【补充例子；合成配置，不对应某个具体模型】** 设：
 
 ```text
 d=768, H=12, d_h=64, L=12
@@ -2505,7 +2505,7 @@ A=d/L=768/12=64.
 
 ### 13.9 参数/shape 例 2：更深、gated FFN
 
-**【补充例子；合成配置】**设：
+**【补充例子；合成配置】** 设：
 
 ```text
 d=512, H=8, d_h=64, L=24
@@ -2575,7 +2575,7 @@ aspect ratio：
 
 ### 13.10 参数/shape 例 3：attention 内宽为模型宽 2 倍
 
-**【补充例子；合成配置】**设：
+**【补充例子；合成配置】** 设：
 
 ```text
 d=1024, H=16, d_h=128, L=8
@@ -2680,7 +2680,7 @@ aspect ratio：
 
 ### 14.1 词表大小同时影响输入和输出
 
-**【课程，PDF 第 47 页】**词表大小记为 $`V`$。
+**【课程，PDF 第 47 页】** 词表大小记为 $`V`$。
 
 输入 embedding 表：
 
@@ -2710,7 +2710,7 @@ N_{out}=dV.
 
 ### 14.2 `V=32,000,d=4,096` 的完整显存账
 
-**MiB（mebibyte，二进制兆字节）**满足：
+**MiB（mebibyte，二进制兆字节）** 满足：
 
 ```math
 1\ \text{MiB}=2^{20}=1{,}048{,}576\ \text{bytes}.
@@ -2718,7 +2718,7 @@ N_{out}=dV.
 
 它与十进制 MB（$`10^6`$ bytes）不同。显存百分比和“能否装下模型”取决于使用哪种单位，必须写清。
 
-**【补充例子】**embedding 参数：
+**【补充例子】** embedding 参数：
 
 ```math
 32{,}000\times4{,}096=131{,}072{,}000.
@@ -2794,7 +2794,7 @@ N_{out}=dV.
 
 ### 14.5 课程表格怎样读
 
-**【课程，PDF 第 47 页；2026 课程汇总的跨年代公开配置】**部分表中值：
+**【课程，PDF 第 47 页；2026 课程汇总的跨年代公开配置】** 部分表中值：
 
 | 类型/模型 | 词表大小 |
 |---|---:|
@@ -2812,11 +2812,11 @@ N_{out}=dV.
 
 课程将单语模型的传统常见带概括为约 `30k–50k`，多语种/生产系统常见约 `100k–250k`。这只是样本概括：表中的 Gemma 4 为 262,144，已经略高于 250k；不同 tokenizer 的 normalization、byte fallback 和特殊 token 也会改变可比性。
 
-**【视频补充，约 [55:11](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3311s)】**老师把多语言覆盖视为大词表的重要推动因素；更大的模型也更有参数预算承受大词表。
+**【视频补充，约 [55:11](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3311s)】** 老师把多语言覆盖视为大词表的重要推动因素；更大的模型也更有参数预算承受大词表。
 
 ### 14.6 课堂问答：怎样公平比较 tokenizer
 
-**【视频补充，约 [57:12](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3432s)】**课堂问到 tokenizer 质量比较。老师提到 bits per byte（每字节比特）可作为较可比的语言建模度量，但前提是：
+**【视频补充，约 [57:12](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3432s)】** 课堂问到 tokenizer 质量比较。老师提到 bits per byte（每字节比特）可作为较可比的语言建模度量，但前提是：
 
 - 两个系统覆盖同样的原始字节信息；
 - normalization 没有不可逆地丢掉不同内容；
@@ -2830,7 +2830,7 @@ N_{out}=dV.
 
 ### 15.1 regularization 不只是“防止背训练集”
 
-**regularization（正则化）**是对训练过程加入约束或噪声的一大类方法。小数据监督学习里常说它防 overfitting（过拟合）；大模型预训练却有不同语境：
+**regularization（正则化）** 是对训练过程加入约束或噪声的一大类方法。小数据监督学习里常说它防 overfitting（过拟合）；大模型预训练却有不同语境：
 
 - 训练数据可能有万亿 token；
 - 常只对语料做一遍或很少几遍；
@@ -2841,7 +2841,7 @@ N_{out}=dV.
 
 ### 15.2 dropout 的公式与手算
 
-**dropout（随机失活）**在训练时随机把一些 activation 设为 0。常用 inverted dropout：
+**dropout（随机失活）** 在训练时随机把一些 activation 设为 0。常用 inverted dropout：
 
 ```math
 y_i=\frac{m_i}{1-p}x_i,
@@ -2853,7 +2853,7 @@ y_i=\frac{m_i}{1-p}x_i,
 - $`m_i\in\{0,1\}`$：随机 mask；保留概率是 $`1-p`$；
 - 除以 $`1-p`$：让训练输出的期望保持不变。
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 x=[2,4,-6],\qquad p=0.5,
@@ -2890,7 +2890,7 @@ y=[1\times2\times2,\;0\times2\times4,\;1\times2\times(-6)]
 
 ### 15.3 weight decay 的最小更新式
 
-**weight decay（权重衰减）**在更新时把参数向 0 缩一点。用简单 SGD 方向说明 decoupled 形式：
+**weight decay（权重衰减）** 在更新时把参数向 0 缩一点。用简单 SGD 方向说明 decoupled 形式：
 
 ```math
 w_{new}=(1-\eta\lambda)w-\eta g.
@@ -2907,7 +2907,7 @@ AdamW 中的梯度方向会经过一阶、二阶 moment 归一化；这里用 $`
 
 ### 15.4 小向量的一次 weight-decay 更新
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 w=[2,-1],\quad g=[0.3,-0.4],\quad
@@ -2971,13 +2971,13 @@ w-\eta g
 
 ### 15.6 课程模型调查的时间边界
 
-**【课程，PDF 第 48–50 页；2026 讲义对公开报告的汇总】**表中：原始 Transformer、GPT-2、T5、GPT-3、OPT 等较早模型常报告 dropout 0.1；T5 v1.1、PaLM、LLaMA 等报告或开源配置中 dropout 为 0；不少模型仍使用 weight decay 0.1。Qwen 14B 在表中同时为 dropout 0.1、weight decay 0.1。
+**【课程，PDF 第 48–50 页；2026 讲义对公开报告的汇总】** 表中：原始 Transformer、GPT-2、T5、GPT-3、OPT 等较早模型常报告 dropout 0.1；T5 v1.1、PaLM、LLaMA 等报告或开源配置中 dropout 为 0；不少模型仍使用 weight decay 0.1。Qwen 14B 在表中同时为 dropout 0.1、weight decay 0.1。
 
 幻灯片脚注非常重要：论文常不讨论 dropout；对开源模型可从配置确认，对 closed model，“没写”不一定等于 0。因此不能把缺失报告补成确定事实。
 
 ### 15.7 为什么 weight decay 可能主要影响优化动态
 
-**【课程/视频补充，约 [59:21](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3561s)–[62:24](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3744s)】**课程引用 Andriushchenko et al. 2023 的观察：LLM 中 weight decay 的作用不能只说成控制 overfitting，它会与 learning-rate schedule（学习率日程）相互作用。
+**【课程/视频补充，约 [59:21](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3561s)–[62:24](https://www.youtube.com/watch?v=lVynu4bo1rY&t=3744s)】** 课程引用 Andriushchenko et al. 2023 的观察：LLM 中 weight decay 的作用不能只说成控制 overfitting，它会与 learning-rate schedule（学习率日程）相互作用。
 
 从更新式即可看到：
 
@@ -2999,7 +2999,7 @@ w-\eta g
 
 ### 16.1 课程稳定性图先读坐标轴
 
-**【课程，PDF 第 52 页】**图比较两个约 7B 模型训练轨迹：
+**【课程，PDF 第 52 页】** 图比较两个约 7B 模型训练轨迹：
 
 - 横轴：训练 step，从 0 到约 600,000；
 - 上图纵轴：loss，约 2.0–3.0；
@@ -3032,7 +3032,7 @@ p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.
 
 ### 16.3 普通小 logits 的完整 softmax
 
-**【补充例子 1】**令：
+**【补充例子 1】** 令：
 
 ```math
 z=[1,2,3].
@@ -3096,7 +3096,7 @@ c=\max_j z_j.
 
 ### 16.5 `[1000,1001,1002]` 的稳定手算
 
-**【补充例子 2】**直接计算 $`e^{1000}`$ 在常见浮点格式会溢出。先减最大值 1002：
+**【补充例子 2】** 直接计算 $`e^{1000}`$ 在常见浮点格式会溢出。先减最大值 1002：
 
 ```math
 z-\max(z)=[-2,-1,0].
@@ -3127,7 +3127,7 @@ e^0=1.
 
 ### 16.6 全是大负数也用同一招
 
-**【补充例子 3】**令：
+**【补充例子 3】** 令：
 
 ```math
 z=[-1000,-1001].
@@ -3207,7 +3207,7 @@ L=L_{CE}+L_z.
 
 ### 16.8 z-loss 的两组相同概率、不同惩罚
 
-**【补充例子】**为了看清差异，手算取较大的 $`\alpha=0.01`$；真实模型常小得多。
+**【补充例子】** 为了看清差异，手算取较大的 $`\alpha=0.01`$；真实模型常小得多。
 
 第一组：
 
@@ -3255,13 +3255,13 @@ L_z'=0.01\times10.6931^2
 
 所以 z-loss 给优化器一个理由阻止整组 logits 无意义地共同变大。
 
-**【课程/视频补充，PDF 第 54 页；约 [67:06](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4026s)–[69:23](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4163s)】**课程追溯到 Devlin 2014，并列出 PaLM、Baichuan 2、DCLM、OLMo 2/3 等采用案例。PaLM 报告的系数例为 $`10^{-4}`$；这是具体配方，不是通用最佳值。
+**【课程/视频补充，PDF 第 54 页；约 [67:06](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4026s)–[69:23](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4163s)】** 课程追溯到 Devlin 2014，并列出 PaLM、Baichuan 2、DCLM、OLMo 2/3 等采用案例。PaLM 报告的系数例为 $`10^{-4}`$；这是具体配方，不是通用最佳值。
 
 z-loss 是 **训练目标附加项**：推理时不需要再给 loss 加它；但它已经改变了训练出的参数。
 
 ### 16.9 QK norm：在 attention softmax 前控制 Q、K 尺度
 
-**【课程，PDF 第 55 页】**标准 attention logit：
+**【课程，PDF 第 55 页】** 标准 attention logit：
 
 ```math
 s_{ij}=\frac{q_i\cdot k_j}{\sqrt{d_h}}.
@@ -3285,7 +3285,7 @@ s_{ij}=\frac{\hat q_i\cdot\hat k_j}{\sqrt{d_h}}.
 
 ### 16.10 QK norm 的二维手算
 
-**【补充例子】**取：
+**【补充例子】** 取：
 
 ```math
 q=[3,4],\qquad k=[6,8],\qquad d_h=2.
@@ -3353,13 +3353,13 @@ s\approx2/1.4142\approx1.4142.
 
 真实 RMSNorm 有 $`\varepsilon`$ 和可学习 $`\gamma`$，所以 QK norm 是“控制尺度”，不是证明所有 logits 永远被硬限制在某个常数内。
 
-**【视频补充，约 [69:27](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4167s)–[71:40](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4300s)】**老师把它概括为在进入 QK 矩阵乘前再放 norm，使 attention softmax 输入尺度更一致；课程将其视为近年常见的稳定化手段。幻灯片列出的模型名是 2026 时点的样本，不构成“所有模型都必须用”的证明。
+**【视频补充，约 [69:27](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4167s)–[71:40](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4300s)】** 老师把它概括为在进入 QK 矩阵乘前再放 norm，使 attention softmax 输入尺度更一致；课程将其视为近年常见的稳定化手段。幻灯片列出的模型名是 2026 时点的样本，不构成“所有模型都必须用”的证明。
 
 QK norm 若是模型架构的一部分，训练和推理都要执行。
 
 ### 16.11 logit soft-capping：不是截断，是平滑压到范围内
 
-**【课程，PDF 第 56 页】**给定 cap $`c>0`$：
+**【课程，PDF 第 56 页】** 给定 cap $`c>0`$：
 
 ```math
 \mathrm{softcap}(z)
@@ -3382,7 +3382,7 @@ QK norm 若是模型架构的一部分，训练和推理都要执行。
 
 ### 16.12 `c=2` 的 soft-cap 与概率手算
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```math
 z=[-10,0,10],\qquad c=2.
@@ -3465,11 +3465,11 @@ capped 后指数约 `[0.3968,1,2.5197]`，分母：
 
 ### 16.14 课程表格怎样读，不夸大 soft-cap
 
-**【课程，PDF 第 56 页；讲义引用的具体实验】**幻灯片引用 Gemma 风格配置：attention logits cap 50、final logits cap 30。下方消融表的 perplexity：baseline 11.19，单独 soft-cap 11.24，而若干 QK/QKV norm 配置约 10.8–11.0。
+**【课程，PDF 第 56 页；讲义引用的具体实验】** 幻灯片引用 Gemma 风格配置：attention logits cap 50、final logits cap 30。下方消融表的 perplexity：baseline 11.19，单独 soft-cap 11.24，而若干 QK/QKV norm 配置约 10.8–11.0。
 
 图表想表达：soft-cap 是强干预，能提高安全边界，但单独使用可能损害质量；QK norm 在该实验里权衡更好。不能把这几个 perplexity 数字直接迁移到别的数据、规模和训练配方。
 
-**【视频补充，约 [72:07](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4327s)–[73:50](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4430s)】**老师称它更像 Google/Gemma 系特定技巧，而不如 QK norm 普遍。其理由正是：cap 会限制 softmax 可表达的置信度。
+**【视频补充，约 [72:07](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4327s)–[73:50](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4430s)】** 老师称它更像 Google/Gemma 系特定技巧，而不如 QK norm 普遍。其理由正是：cap 会限制 softmax 可表达的置信度。
 
 如果模型定义在 attention 或 final logits 上使用 soft-cap，训练与推理必须一致执行；它不是只在 loss 中出现的训练正则项。
 
@@ -3502,7 +3502,7 @@ soft-cap：直接平滑限制 logits，但可能牺牲表达/质量
 
 ### 17.1 MHA 的四个整数
 
-**【课程，PDF 第 57–60 页】**MHA 是 Multi-Head Attention（多头注意力）。这一节使用课程符号：
+**【课程，PDF 第 57–60 页】** MHA 是 Multi-Head Attention（多头注意力）。这一节使用课程符号：
 
 - $`b`$：batch size；
 - $`n`$：当前序列长度；
@@ -3552,7 +3552,7 @@ merged heads              [b,n,h*k] = [b,n,d]
 
 ### 17.3 一个 head 的三位置 attention 手算
 
-**【补充例子】**只看一个 head，令 $`k=2`$。第三个位置的 query：
+**【补充例子】** 只看一个 head，令 $`k=2`$。第三个位置的 query：
 
 ```math
 q_2=[1,1].
@@ -3632,7 +3632,7 @@ v_0=[10,0],\quad v_1=[0,10],\quad v_2=[10,10].
 
 ### 17.4 prefill 是什么
 
-**prefill（提示词预填充）**是推理的第一阶段：用户一次给出整段 prompt，模型并行处理这些已知 token，并为每层建立 K/V。
+**prefill（提示词预填充）** 是推理的第一阶段：用户一次给出整段 prompt，模型并行处理这些已知 token，并为每层建立 K/V。
 
 若 prompt 长度 $`n=4`$：
 
@@ -3650,7 +3650,7 @@ causal score              [b,h,4,4]
 
 ### 17.5 incremental decode 为什么必须一步一步
 
-**incremental decode（增量解码）**是生成阶段：
+**incremental decode（增量解码）** 是生成阶段：
 
 ```text
 根据 prompt 生成 token 4
@@ -3683,7 +3683,7 @@ new attention output      [b,h,1,k]
 
 ### 17.6 KV cache 真正保存什么
 
-**KV cache（键值缓存）**在每个 attention layer 保存过去 token 投影后的：
+**KV cache（键值缓存）** 在每个 attention layer 保存过去 token 投影后的：
 
 - K tensor；
 - V tensor。
@@ -3694,7 +3694,7 @@ new attention output      [b,h,1,k]
 - 完整 $`QK^{\mathsf T}`$ 分数矩阵；新 query 的分数要与 cached K 重新点积；
 - softmax 概率矩阵。
 
-**【视频口头表述精确化，约 [77:23](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4643s)】**视频有一段把 cache 口语化描述成保留过去的“keys and queries”或已算子矩阵。严格实现应以上述 K/V 为准；缓存名称本身也是 KV，而不是 QKV 或 score cache。
+**【视频口头表述精确化，约 [77:23](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4643s)】** 视频有一段把 cache 口语化描述成保留过去的“keys and queries”或已算子矩阵。严格实现应以上述 K/V 为准；缓存名称本身也是 KV，而不是 QKV 或 score cache。
 
 ### 17.7 MHA 的 KV cache 元素数
 
@@ -3727,7 +3727,7 @@ M_{cache,total}=2Lbnhk\,s\ \text{bytes}.
 
 ### 17.8 一个微型 cache 手算
 
-**【补充例子】**令：
+**【补充例子】** 令：
 
 ```text
 b=1, n=4, h=4, k=2, dtype=BF16
@@ -3779,7 +3779,7 @@ V 也是 32，所以总元素：
 
 ### 18.1 三种结构先用等式定义
 
-**【课程，PDF 第 61–63 页】**令：
+**【课程，PDF 第 61–63 页】** 令：
 
 - $`H_q`$：query head 数；
 - $`H_{kv}`$：key/value head 数；
@@ -3814,7 +3814,7 @@ g=\frac{H_q}{H_{kv}}.
 
 ### 18.2 “one dimension”绝不表示 `head_dim=1`
 
-**【课程图示精确化，PDF 第 61 页】**幻灯片标题/口语用了 “one dimension for keys and values”。图中真正含义是“一组共享的 K/V head”，不是 key/value 向量只剩 1 个数字。
+**【课程图示精确化，PDF 第 61 页】** 幻灯片标题/口语用了 “one dimension for keys and values”。图中真正含义是“一组共享的 K/V head”，不是 key/value 向量只剩 1 个数字。
 
 在 MQA 中可以同时有：
 
@@ -3878,7 +3878,7 @@ batch、长度、K/V 两份和 head width 都约掉，缩减倍数就是每组 q
 
 ### 18.5 cache 例 1：32 query heads、2048 token、BF16
 
-**【补充例子】**统一配置：
+**【补充例子】** 统一配置：
 
 ```text
 b=1, n=2048, H_q=32, k=128, dtype=BF16=2 bytes
@@ -3970,7 +3970,7 @@ MQA     1 MiB/layer × 32 =   32 MiB
 
 ### 18.6 cache 例 2：更大 batch 和长度、64 query heads、FP16
 
-**【补充例子】**统一配置：
+**【补充例子】** 统一配置：
 
 ```text
 b=4, n=4096, H_q=64, k=128, dtype=FP16=2 bytes
@@ -4080,8 +4080,8 @@ N_{MQA}=2dH_qk+2dk.
 I=\frac{F_{ops}}{Q_{traffic}}.
 ```
 
-- $`F_{ops}`$：算术操作数，课程在这些页只看数量级。**符号复用警告：**它是一个工作量标量，不是 §5 中代表子层的函数 $`F(x)`$；
-- $`Q_{traffic}`$：从目标内存层级搬的数据量。**符号复用警告：**它不是 attention 的 query tensor $`Q`$；若以 bytes 计，强度单位是 FLOP/byte；
+- $`F_{ops}`$：算术操作数，课程在这些页只看数量级。**符号复用警告：** 它是一个工作量标量，不是 §5 中代表子层的函数 $`F(x)`$；
+- $`Q_{traffic}`$：从目标内存层级搬的数据量。**符号复用警告：** 它不是 attention 的 query tensor $`Q`$；若以 bytes 计，强度单位是 FLOP/byte；
 - $`I`$ 高：每搬一个 byte 做很多计算，较容易用满计算单元；
 - $`I`$ 低：搬很多、算很少，较容易被带宽限制。
 
@@ -4097,7 +4097,7 @@ I=\frac{F_{ops}}{Q_{traffic}}.
 
 因此，课件的访存式必须注明它假设的实现；架构公式相同不保证 HBM traffic 相同。
 
-**【课程，PDF 第 58 页】**课程先假设：
+**【课程，PDF 第 58 页】** 课程先假设：
 
 ```math
 n<d,\qquad d=hk.
@@ -4172,7 +4172,7 @@ O\left(\left[\frac1k+\frac1{bn}\right]^{-1}\right).
 
 ### 18.10 incremental decode 的强度为什么下降
 
-**【课程，PDF 第 59–60 页】**把 append 后总长度从 1 累积到 $`n`$ 的 decode 过程加总；这里的 $`n`$ 仍表示最终 append 后的总长度。课程近似算术工作：
+**【课程，PDF 第 59–60 页】** 把 append 后总长度从 1 累积到 $`n`$ 的 decode 过程加总；这里的 $`n`$ 仍表示最终 append 后的总长度。课程近似算术工作：
 
 ```math
 F_{decode}=O(bnd^2).
@@ -4211,11 +4211,11 @@ I_{decode}
 - 序列 $`n`$ 相对 $`d`$ 越长，读 cache 的负担越重；
 - 小 batch 的逐 token decode 常比 prefill 更 memory-bound。
 
-**【视频补充，约 [75:53](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4553s)–[79:28](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4768s)】**老师用“生成不能并行、参数要一遍遍读”解释 $`1/b`$ 项。这里的“算术操作相同”指对整段生成的数量级仍类似，调度和复用却完全不同。
+**【视频补充，约 [75:53](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4553s)–[79:28](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4768s)】** 老师用“生成不能并行、参数要一遍遍读”解释 $`1/b`$ 项。这里的“算术操作相同”指对整段生成的数量级仍类似，调度和复用却完全不同。
 
 ### 18.11 MQA 的强度式怎样出现 head 数收益
 
-**【课程，PDF 第 61 页】**MQA 只有一个 K/V head，cache 宽从所有 heads 合计的 $`d=hk`$ 降到 $`k`$。课程内存式：
+**【课程，PDF 第 61 页】** MQA 只有一个 K/V head，cache 宽从所有 heads 合计的 $`d=hk`$ 降到 $`k`$。课程内存式：
 
 ```math
 Q_{MQA}
@@ -4336,7 +4336,7 @@ I_{GQA}
 
 ### 18.14 表达能力与系统成本的折中
 
-**【课程/视频补充，约 [79:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4772s)–[82:54](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4974s)】**课程引用早期对比图：
+**【课程/视频补充，约 [79:32](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4772s)–[82:54](https://www.youtube.com/watch?v=lVynu4bo1rY&t=4974s)】** 课程引用早期对比图：
 
 - 横向关注 time per sample，越低越好；
 - 纵向关注下游模型表现，越高越好；
@@ -4357,7 +4357,7 @@ MLA 是 Multi-head Latent Attention（多头潜变量注意力），由 DeepSeek
 - GQA：让多个 query heads 共享离散的 KV heads；
 - MLA：通过低秩/潜变量投影压缩 K/V 表示，并要处理位置编码相关部分。
 
-**【课程】**本讲只在第 62 页列出 MLA，视频说下一讲再详细讨论。本笔记也只保留定位，不在没有完整铺垫时展开实现公式。
+**【课程】** 本讲只在第 62 页列出 MLA，视频说下一讲再详细讨论。本笔记也只保留定位，不在没有完整铺垫时展开实现公式。
 
 ---
 
@@ -4402,7 +4402,7 @@ j\in[\max(0,i-w+1),i].
 
 ### 19.3 `n=8,w=3` 的每个位置完整列表
 
-**【补充例子】**位置编号 0–7：
+**【补充例子】** 位置编号 0–7：
 
 | query 位置 | 可见 key 位置 | 数量 |
 |---:|---|---:|
@@ -4482,7 +4482,7 @@ O(nw)\ll O(n^2).
 
 ### 19.6 sparse attention 不只一种图案
 
-**【课程，PDF 第 64 页】**早期 sparse attention 图案包括：
+**【课程，PDF 第 64 页】** 早期 sparse attention 图案包括：
 
 - local/banded：只看附近；
 - strided：每隔固定距离看一个位置；
@@ -4493,7 +4493,7 @@ O(nw)\ll O(n^2).
 
 ### 19.7 interleaved full attention：三层近看，一层远看
 
-**【课程，PDF 第 65 页】**课程以 Cohere Command A 风格举例：每 4 层中 3 层 sliding-window，1 层 full attention。
+**【课程，PDF 第 65 页】** 课程以 Cohere Command A 风格举例：每 4 层中 3 层 sliding-window，1 层 full attention。
 
 ```text
 layer 1   local window
@@ -4548,7 +4548,7 @@ pair 数缩减倍数：
 
 ### 19.9 一个长序列数量级例子
 
-**【补充例子；用非 causal 方阵数量级便于比较】**令：
+**【补充例子；用非 causal 方阵数量级便于比较】** 令：
 
 ```math
 n=8{,}192,\qquad w=1{,}024.
@@ -4612,7 +4612,7 @@ NoPE full layer 不等于整个模型完全不知道顺序：
 
 ### 19.11 课程列出的模型趋势要带日期
 
-**【课程/视频补充，PDF 第 64–66 页；约 [85:08](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5108s)–[88:34](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5314s)】**课程回顾：
+**【课程/视频补充，PDF 第 64–66 页；约 [85:08](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5108s)–[88:34](https://www.youtube.com/watch?v=lVynu4bo1rY&t=5314s)】** 课程回顾：
 
 - GPT-3 时代已有 full 与 sparse/banded pattern 交替的设计；
 - 2026 讲义将 Command A 视为近期 open-model 复兴中的突出例子；
@@ -4636,7 +4636,7 @@ NoPE full layer 不等于整个模型完全不知道顺序：
 
 ### 20.1 如果你只想先搭一个可工作的现代小模型
 
-**【补充总结；不是唯一最佳配方】**按本讲证据，一个保守起点是：
+**【补充总结；不是唯一最佳配方】** 按本讲证据，一个保守起点是：
 
 ```text
 先固定 residual stream 宽度 d 与层数 L

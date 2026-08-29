@@ -195,7 +195,7 @@ A 得 $`0.7\times90+0.3\times48=77.4`$；B 得 $`0.7\times86+0.3\times52=75.8`$�
 
 ### 3.1 Probability 是 0 到 1 的数
 
-**Probability（概率）**表示事件发生的相信程度：0 是不可能，1 是确定。若公平硬币正面概率为 0.5，连续两次正面在独立假设下概率为
+**Probability（概率）** 表示事件发生的相信程度：0 是不可能，1 是确定。若公平硬币正面概率为 0.5，连续两次正面在独立假设下概率为
 
 
 ```math
@@ -206,7 +206,7 @@ A 得 $`0.7\times90+0.3\times48=77.4`$；B 得 $`0.7\times86+0.3\times52=75.8`$�
 
 ### 3.2 Token、tokenizer 与条件概率
 
-**Token（词元）**是模型处理的离散编号单位，可能是一个字、半个词或标点。**Tokenizer（分词器）**是把文字变成 token IDs 的规则。不同 tokenizer 会把同一句话切成不同数量的 token。
+**Token（词元）** 是模型处理的离散编号单位，可能是一个字、半个词或标点。**Tokenizer（分词器）** 是把文字变成 token IDs 的规则。不同 tokenizer 会把同一句话切成不同数量的 token。
 
 
 ```math
@@ -248,7 +248,7 @@ p(x_{1:2})=0.5\times0.25=0.125.
 
 ### 3.5 Log loss 与 NLL
 
-**Log loss（对数损失）**把真实答案的概率 $`p`$ 变成 $`-\ln p`$。**NLL（negative log-likelihood，负对数似然）**是这些损失之和：
+**Log loss（对数损失）** 把真实答案的概率 $`p`$ 变成 $`-\ln p`$。**NLL（negative log-likelihood，负对数似然）** 是这些损失之和：
 
 
 ```math
@@ -273,7 +273,7 @@ p(x_{1:2})=0.5\times0.25=0.125.
 
 ### 3.6 Cross-entropy 是什么
 
-**Cross-entropy（交叉熵）**衡量真实分布 $`q`$ 下，模型分布 $`p`$ 给真实结果多少平均 log loss：
+**Cross-entropy（交叉熵）** 衡量真实分布 $`q`$ 下，模型分布 $`p`$ 给真实结果多少平均 log loss：
 
 
 ```math
@@ -305,7 +305,7 @@ H(q,p)=-[0.5\ln0.8+0.5\ln0.2]
 
 ### 4.1 定义和每个符号
 
-【课程内容，源码 60–72；视频 [05:23](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=323s)】**Perplexity（困惑度，PPL）**是平均 NLL 的指数：
+【课程内容，源码 60–72；视频 [05:23](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=323s)】**Perplexity（困惑度，PPL）** 是平均 NLL 的指数：
 
 
 ```math
@@ -383,7 +383,7 @@ H(q,p)=-\sum_i q_i\ln p_i.
 H(q)=-\sum_i q_i\ln q_i.
 ```
 
-**KL divergence（Kullback–Leibler divergence，KL 散度）**定义为：
+**KL divergence（Kullback–Leibler divergence，KL 散度）** 定义为：
 
 ```math
 D_{\mathrm{KL}}(q\Vert p)=\sum_i q_i\ln\frac{q_i}{p_i}.
@@ -418,7 +418,7 @@ H(q)
 \end{aligned}
 ```
 
-**模型 A：$`p=q=[0.75,0.25]`$。**每一项 $`q_i/p_i=1`$，而 $`\ln1=0`$，所以：
+**模型 A：$`p=q=[0.75,0.25]`$。** 每一项 $`q_i/p_i=1`$，而 $`\ln1=0`$，所以：
 
 ```math
 D_{\mathrm{KL}}(q\Vert p)=0,
@@ -426,7 +426,7 @@ D_{\mathrm{KL}}(q\Vert p)=0,
 H(q,p)=H(q)+0=0.5623.
 ```
 
-**模型 B：$`p=[0.5,0.5]`$。**先算 KL：
+**模型 B：$`p=[0.5,0.5]`$。** 先算 KL：
 
 ```math
 \begin{aligned}
@@ -460,7 +460,7 @@ KL 非负要求 $`q,p`$ 是有效概率分布，而且所有 $`q_i>0`$ 的位置
 
 ### 5.1 ID 与 OOD
 
-**ID（in-distribution，分布内）**指评测数据与训练目标分布近似；**OOD（out-of-distribution，分布外）**指来源、领域、时期或格式改变。
+**ID（in-distribution，分布内）** 指评测数据与训练目标分布近似；**OOD（out-of-distribution，分布外）** 指来源、领域、时期或格式改变。
 
 【课程内容，源码 73–83】旧语言模型常在 Penn Treebank、WikiText-103、One Billion Word 等固定语料上比 PPL。视频 [07:52](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=472s) 转到 GPT-2：WebText 训练后，在多个未专门训练的数据集上做 zero-shot（零样例）评测。
 
@@ -539,9 +539,9 @@ P(\text{correct})=\frac1m.
 
 ### 6.2 MMLU 测什么
 
-【课程内容，源码 108–121；视频 [19:07](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1147s)】**MMLU（Massive Multitask Language Understanding，大规模多任务语言理解）**包含 57 个学科的选择题。名称写“理解”，但题目主要抽样知识和考试解题能力。
+【课程内容，源码 108–121；视频 [19:07](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1147s)】**MMLU（Massive Multitask Language Understanding，大规模多任务语言理解）** 包含 57 个学科的选择题。名称写“理解”，但题目主要抽样知识和考试解题能力。
 
-**Few-shot（少样例）**是在正式问题前给少量示例。视频 [20:09](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1209s) 展示 GPT-3 时代随规模提高的 few-shot 成绩。
+**Few-shot（少样例）** 是在正式问题前给少量示例。视频 [20:09](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1209s) 展示 GPT-3 时代随规模提高的 few-shot 成绩。
 
 构念偏差例：
 
@@ -553,7 +553,7 @@ P(\text{correct})=\frac1m.
 
 ### 6.3 饱和为什么会发生
 
-**Saturation（饱和）**指大量模型已接近高分，继续进步难以区分。若 100 题中 A=96、B=97，只差 1 题；换一批题可能倒序。
+**Saturation（饱和）** 指大量模型已接近高分，继续进步难以区分。若 100 题中 A=96、B=97，只差 1 题；换一批题可能倒序。
 
 视频 [21:13](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1273s) 提醒原 MMLU 对强模型逐渐不够难。饱和不等于能力已完美；可能只是尺子太短。
 
@@ -563,16 +563,16 @@ P(\text{correct})=\frac1m.
 
 - 清理较噪、过于简单的问题；
 - 选项从 4 增到 10；
-- 强调 **CoT（chain-of-thought，思维链）**设置，即让系统生成中间推理再答；
+- 强调 **CoT（chain-of-thought，思维链）** 设置，即让系统生成中间推理再答；
 - 课程引用论文观察：一些模型相对 MMLU 下降约 16–33 个百分点。
 
 这些是特定评测和模型集合的观察，不是“加 6 个选项必降 16–33 点”的定律。
 
-污染不只来自“测试题原文”。若一道题由某本教材或论文改写，而那份题源文档进入训练集，模型可能见过同一事实、同一推导甚至相近句子，却没有见过 benchmark 的最终题面。这种 **隐蔽 source overlap（题源重叠）**比字符串查重难发现，所以考试报告还应追踪题目由哪些原始文档派生。
+污染不只来自“测试题原文”。若一道题由某本教材或论文改写，而那份题源文档进入训练集，模型可能见过同一事实、同一推导甚至相近句子，却没有见过 benchmark 的最终题面。这种 **隐蔽 source overlap（题源重叠）** 比字符串查重难发现，所以考试报告还应追踪题目由哪些原始文档派生。
 
 ### 6.5 GPQA：专家和非专家的落差
 
-【课程内容，源码 131–139；视频 [23:18](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1398s)】**GPQA（Graduate-Level Google-Proof Q&A，研究生级、难以靠普通搜索回答的问答）**由博士领域作者设计并验证。
+【课程内容，源码 131–139；视频 [23:18](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1398s)】**GPQA（Graduate-Level Google-Proof Q&A，研究生级、难以靠普通搜索回答的问答）** 由博士领域作者设计并验证。
 
 图片流程是：作者写题 → 专家验证并修订 → 非专家尝试。**GPQA Diamond** 是筛得更严格的子集。课程快照中的人类/模型数字只说明当时该协议的难度；不能拿来给今天的模型排实时名次。
 
@@ -580,7 +580,7 @@ P(\text{correct})=\frac1m.
 
 ### 6.6 HLE：把难度继续向上推
 
-【课程内容，源码 140–148；视频 [27:25](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1645s)】**HLE（Humanity's Last Exam）**包含多学科、部分多模态问题。**Multimodal（多模态）**表示输入不只有文字，也可能有图。
+【课程内容，源码 140–148；视频 [27:25](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=1645s)】**HLE（Humanity's Last Exam）** 包含多学科、部分多模态问题。**Multimodal（多模态）** 表示输入不只有文字，也可能有图。
 
 课件流程图给出的数量链是：
 
@@ -635,13 +635,13 @@ SE=\sqrt{0.8\times0.2/100}=\sqrt{0.0016}=0.04.
 0.8\pm1.96\times0.04=0.8\pm0.0784,
 ```
 
-约 $`[0.722,0.878]`$。**Confidence interval（置信区间）**是重复抽样程序的覆盖性质，不是说“这一次区间有 95% 概率包含固定真值”；小样本或相关题目还应使用更合适方法。
+约 $`[0.722,0.878]`$。**Confidence interval（置信区间）** 是重复抽样程序的覆盖性质，不是说“这一次区间有 95% 概率包含固定真值”；小样本或相关题目还应使用更合适方法。
 
-**Calibration（校准）**问概率是否与长期频率相符。例如把模型所有“80% confidence”的题收成一组，若长期约 100 题中答对 80 题，这一组较校准；若只对 45 题，虽然某些 top-1 仍可能正确，80% 这个信心数却过高。
+**Calibration（校准）** 问概率是否与长期频率相符。例如把模型所有“80% confidence”的题收成一组，若长期约 100 题中答对 80 题，这一组较校准；若只对 45 题，虽然某些 top-1 仍可能正确，80% 这个信心数却过高。
 
 ### 6.9 从模型文本到 accuracy：中间还有 extractor
 
-选择题模型先输出 text，再由 **extractor/parser（抽取器/解析器）**变成标准 label，最后做 **exact match（完全匹配：规范化后的预测标签必须与标准标签相同）**：
+选择题模型先输出 text，再由 **extractor/parser（抽取器/解析器）** 变成标准 label，最后做 **exact match（完全匹配：规范化后的预测标签必须与标准标签相同）**：
 
     模型文本 -> extractor/parser -> 标准 label -> 与参考 label 完全比较
 
@@ -655,7 +655,7 @@ SE=\sqrt{0.8\times0.2/100}=\sqrt{0.0016}=0.04.
 | 第二项 | 若标签顺序 A/B/C/D，需映射到 B | 取决于协议 |
 | B、C 都可能 | parser 需规定多标签怎么办 | 取决于协议 |
 
-**Parser fail（解析失败）**是系统输出存在，但评分程序无法映射到合法标签；它不等于模型完全没有知识。
+**Parser fail（解析失败）** 是系统输出存在，但评分程序无法映射到合法标签；它不等于模型完全没有知识。
 
 以下都属于 evaluation protocol（评测协议），必须预先固定并报告：
 
@@ -688,9 +688,9 @@ SE=\sqrt{0.8\times0.2/100}=\sqrt{0.0016}=0.04.
 
 ### 7.2 Pairwise preference 不是事实裁判
 
-**Pairwise preference（成对偏好）**问“两个中更喜欢哪个”。视频 [36:29](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2189s) 强调它把很多东西混在一起：正确、详细、礼貌、有趣、迎合。
+**Pairwise preference（成对偏好）** 问“两个中更喜欢哪个”。视频 [36:29](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2189s) 强调它把很多东西混在一起：正确、详细、礼貌、有趣、迎合。
 
-若用户不知道事实答案，他可能偏爱自信但错误的长回答。**Sycophancy（迎合）**是模型顺着用户观点而非诚实纠正；视频 [37:25](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2245s) 把它列为偏好评测风险。
+若用户不知道事实答案，他可能偏爱自信但错误的长回答。**Sycophancy（迎合）** 是模型顺着用户观点而非诚实纠正；视频 [37:25](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2245s) 把它列为偏好评测风险。
 
 ### 7.3 Elo 胜率公式逐项解释
 
@@ -734,7 +734,7 @@ Elo 只看差值，所以整体平移不改变预测。原 ratings：
 
 ### 7.4 分数怎样从很多比赛拟合
 
-**Likelihood（似然）**是在给定 rating 时观察到现有胜负数据的概率。拟合选择让全部比赛结果联合 likelihood 最大的 ratings。
+**Likelihood（似然）** 是在给定 rating 时观察到现有胜负数据的概率。拟合选择让全部比赛结果联合 likelihood 最大的 ratings。
 
 最小例：A 对 B 打 10 场，A 赢 7。若暂忽略平局，经验胜率 0.7。反推分差：
 
@@ -774,7 +774,7 @@ Elo 只看差值，所以整体平移不改变预测。原 ratings：
 
 #### Rating 的置信区间不能套独立 accuracy 的 SE
 
-Arena 里一个用户可能投很多票，同一 conversation 里的判断也相关。**Cluster（簇）**是一组可能相关的观察，例如同一用户或同一对话。**Bootstrap（自助重采样）**是从已有样本中有放回抽取，重复构造许多“仿真数据集”。
+Arena 里一个用户可能投很多票，同一 conversation 里的判断也相关。**Cluster（簇）** 是一组可能相关的观察，例如同一用户或同一对话。**Bootstrap（自助重采样）** 是从已有样本中有放回抽取，重复构造许多“仿真数据集”。
 
 较稳妥的 rating 区间流程：
 
@@ -788,7 +788,7 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 
 ### 7.5 比较图必须连通
 
-若 A 只和 B 比，C 只和 D 比，两个小组之间没有比赛，就无法确定 A 与 C 谁高。**Connected comparison graph（连通比较图）**把模型看成节点、比赛看成边；只有能沿边连接，才能把 ratings 放到共同尺度。
+若 A 只和 B 比，C 只和 D 比，两个小组之间没有比赛，就无法确定 A 与 C 谁高。**Connected comparison graph（连通比较图）** 把模型看成节点、比赛看成边；只有能沿边连接，才能把 ratings 放到共同尺度。
 
 视频 [37:42](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2262s) 把稀疏但连通的比较看作 Arena 的优点；[38:10](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2290s) 也提醒排行榜随数据和模型变化。
 
@@ -809,13 +809,13 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 
 ### 8.1 LLM judge 是什么
 
-**LLM judge（语言模型裁判）**是让另一个语言模型按规则给候选回答打分或做成对选择。优点是便宜、快、规模大；风险是裁判也有偏差、知识错误和提示敏感性。
+**LLM judge（语言模型裁判）** 是让另一个语言模型按规则给候选回答打分或做成对选择。优点是便宜、快、规模大；风险是裁判也有偏差、知识错误和提示敏感性。
 
 “与人类分数相关”不等于“有效”：两个指标可能都偏爱长度，所以相关很高，却都没更好地测事实性。
 
 ### 8.2 AlpacaEval 的长度问题
 
-【课程内容，源码 184–193；视频 [38:21](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2301s)】AlpacaEval 用固定指令集，让裁判比较候选回答与参考系统回答。**Win rate（胜率）**是候选被选中的比例。
+【课程内容，源码 184–193；视频 [38:21](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2301s)】AlpacaEval 用固定指令集，让裁判比较候选回答与参考系统回答。**Win rate（胜率）** 是候选被选中的比例。
 
 课程强调的漏洞：较长答案往往更易获胜。模型可以增加不必要细节来刷分。AlpacaEval 2.0 报告 **length-controlled win rate（长度控制胜率）**，用统计回归尽量扣除长度关系。
 
@@ -847,11 +847,11 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 
 ### 8.5 Rubric 和 reliability
 
-**Rubric（评分量规）**是明确列出的判分标准。**Reliability（信度）**问重复评或换相似裁判时结果稳不稳。**Validity（效度）**问分数是否真的代表目标。
+**Rubric（评分量规）** 是明确列出的判分标准。**Reliability（信度）** 问重复评或换相似裁判时结果稳不稳。**Validity（效度）** 问分数是否真的代表目标。
 
 高信度不保证测量就好。一把永远多量 5 厘米的尺子，每次量同一物体都得到几乎相同结果，所以它的 **reliability（信度）高**；但它有固定的 **systematic bias（系统性偏差）**，绝对长度不准确。这个例子本身只证明“稳定但有偏”，不能单凭它断言 criterion validity 高低，因为我们还没有指定要预测的外部效标。
 
-**Criterion validity（效标效度）**问：这个分数能否对应或预测一个外部目标。例：一套极冷门 trivia（冷知识）考试每次重测都很稳定，却不能预测客服是否能正确处理退货；它相对“真实客服成功”这个外部效标的效标效度就低。
+**Criterion validity（效标效度）** 问：这个分数能否对应或预测一个外部目标。例：一套极冷门 trivia（冷知识）考试每次重测都很稳定，却不能预测客服是否能正确处理退货；它相对“真实客服成功”这个外部效标的效标效度就低。
 
 ### 8.6 一个 judge 评测的最小审计
 
@@ -863,7 +863,7 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 - 检查长度和自家模型偏好；
 - 给 disagreement（分歧）案例，不只给相关系数。
 
-这里的 **$`R^2`$（决定系数）**粗略问“拟合关系解释了结果变化的多大比例”。高 $`R^2`$ 只说明平均关系贴得好，不保证概率校准、不保证每个群体都好，也不证明指标真的测到了目标构念。
+这里的 **$`R^2`$（决定系数）** 粗略问“拟合关系解释了结果变化的多大比例”。高 $`R^2`$ 只说明平均关系贴得好，不保证概率校准、不保证每个群体都好，也不证明指标真的测到了目标构念。
 
 ---
 
@@ -872,9 +872,9 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 
 ### 9.1 Agent 从零定义
 
-【课程内容，源码 208–215；视频 [44:58](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2698s)】**Agent（智能体）**是语言模型加上 scaffold（脚手架）后，在环境中反复观察、计划、行动、再观察的系统。
+【课程内容，源码 208–215；视频 [44:58](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2698s)】**Agent（智能体）** 是语言模型加上 scaffold（脚手架）后，在环境中反复观察、计划、行动、再观察的系统。
 
-**Scaffold（脚手架）**包括：system prompt、工具调用、记忆、待办清单、重试、上下文压缩、子任务分派等。
+**Scaffold（脚手架）** 包括：system prompt、工具调用、记忆、待办清单、重试、上下文压缩、子任务分派等。
 
 
 ```text
@@ -891,7 +891,7 @@ Arena 里一个用户可能投很多票，同一 conversation 里的判断也相
 
 ### 9.3 Budget 也是规则
 
-**Budget（预算）**可包括：
+**Budget（预算）** 可包括：
 
 - 最多生成 token 数；
 - 最多工具调用次数；
@@ -945,7 +945,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 10.1 SWE-bench：修真实仓库 issue
 
-【课程内容，源码 216–222；视频 [45:56](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2756s)】**SWE-bench（Software Engineering Benchmark）**给 agent 一个代码仓库和 issue（问题报告），要求生成 patch（代码补丁），再跑测试判断。
+【课程内容，源码 216–222；视频 [45:56](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2756s)】**SWE-bench（Software Engineering Benchmark）** 给 agent 一个代码仓库和 issue（问题报告），要求生成 patch（代码补丁），再跑测试判断。
 
 最小数据流：
 
@@ -953,13 +953,13 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 仓库 + issue -> agent 修改文件 -> patch -> 单元测试 -> pass/fail
 ```
 
-**Unit test（单元测试）**是自动检查某段软件行为的程序。测试通过很有用，但只证明已覆盖断言通过；没覆盖的安全性、可读性和性能仍可能坏。
+**Unit test（单元测试）** 是自动检查某段软件行为的程序。测试通过很有用，但只证明已覆盖断言通过；没覆盖的安全性、可读性和性能仍可能坏。
 
 ### 10.2 Terminal-Bench：在容器终端中完成任务
 
 【课程内容，源码 223–230；视频 [47:53](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=2873s)】**Terminal-Bench**把 agent 放进 container（隔离运行环境），给自然语言任务和终端工具，再用隐藏测试评分。
 
-**Hidden tests（隐藏测试）**不提前给参赛者看，减少针对公开测试硬编码。仍要固定：容器镜像、CPU/GPU、网络、超时、工具版本和重试预算。
+**Hidden tests（隐藏测试）** 不提前给参赛者看，减少针对公开测试硬编码。仍要固定：容器镜像、CPU/GPU、网络、超时、工具版本和重试预算。
 
 课程中的任务数、榜单和人类耗时是当时版本快照；版本更新后可能不同。
 
@@ -971,13 +971,13 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 10.4 MLE-bench：完整机器学习工程
 
-【课程内容，源码 239–243；视频 [50:59](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3059s)】**MLE-bench（Machine Learning Engineering Benchmark）**把竞赛式数据、说明和计算环境交给 agent，最终用 submission 文件评分。
+【课程内容，源码 239–243；视频 [50:59](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3059s)】**MLE-bench（Machine Learning Engineering Benchmark）** 把竞赛式数据、说明和计算环境交给 agent，最终用 submission 文件评分。
 
 它评的不只是“知道算法”，还包括：读数据、调试、训练、管理时间、生成正确格式文件。
 
 ### 10.5 为什么 agent benchmark 要看 trace
 
-**Trace（轨迹）**是 agent 每一步观察、思考摘要、工具调用和结果的记录。只看最终 pass/fail 看不到：
+**Trace（轨迹）** 是 agent 每一步观察、思考摘要、工具调用和结果的记录。只看最终 pass/fail 看不到：
 
 - 是否误打误撞；
 - 是否利用测试漏洞；
@@ -1007,7 +1007,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 11.1 Fluid intelligence 是什么
 
-【课程内容，源码 257–284；视频 [53:56](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3236s)】**Fluid intelligence（流体智力）**粗略指不依赖已背知识、面对新问题发现规律的能力。ARC-AGI 用彩色网格转换任务，给几个输入/输出例子，让系统推断新网格的规则。
+【课程内容，源码 257–284；视频 [53:56](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3236s)】**Fluid intelligence（流体智力）** 粗略指不依赖已背知识、面对新问题发现规律的能力。ARC-AGI 用彩色网格转换任务，给几个输入/输出例子，让系统推断新网格的规则。
 
 例：训练例都把红格右移一格，测试输入有红格在第 2 列；合理输出在第 3 列。这比问“法国首都是哪”更少依赖事实知识。
 
@@ -1031,7 +1031,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 11.4 难题集的选择效应
 
-若只保留“现有模型做不出的题”，新 benchmark 会很难，但它不代表全部真实工作。**Selection effect（选择效应）**是筛选规则改变样本分布。
+若只保留“现有模型做不出的题”，新 benchmark 会很难，但它不代表全部真实工作。**Selection effect（选择效应）** 是筛选规则改变样本分布。
 
 正确表述：ARC-AGI 为少知识依赖的抽象任务提供一把有用尺子；它不是“通用智能证书”。
 
@@ -1042,7 +1042,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 12.1 Safety 的构念依赖上下文
 
-【课程内容，源码 286–312；视频 [60:12](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3612s)】**Safety evaluation（安全评测）**问系统在可能造成伤害的情境中怎样表现。
+【课程内容，源码 286–312；视频 [60:12](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3612s)】**Safety evaluation（安全评测）** 问系统在可能造成伤害的情境中怎样表现。
 
 同一句内容，在教育、防御、医疗、犯罪等上下文里风险可能不同；法律和社会规范也随国家变化。视频 [63:30](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3810s) 明确强调 contextual（情境相关）。
 
@@ -1062,7 +1062,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 12.4 Jailbreak 与 GCG 的安全边界
 
-**Jailbreak（越狱提示）**是试图绕过模型安全约束的输入。课程提到 **GCG（Greedy Coordinate Gradient）** 可自动搜索攻击性提示并发生迁移；视频 [62:28](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3748s)。
+**Jailbreak（越狱提示）** 是试图绕过模型安全约束的输入。课程提到 **GCG（Greedy Coordinate Gradient）** 可自动搜索攻击性提示并发生迁移；视频 [62:28](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3748s)。
 
 本笔记只讲评测思想：
 
@@ -1093,7 +1093,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 13.1 Ecological validity
 
-【课程内容，源码 314–337；视频 [65:23](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3923s)】**Ecological validity（生态效度）**问实验环境、任务和参与者是否接近模型真正被使用的环境。
+【课程内容，源码 314–337；视频 [65:23](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=3923s)】**Ecological validity（生态效度）** 问实验环境、任务和参与者是否接近模型真正被使用的环境。
 
 四选题容易评分但不像多数工作；真实工作文件、工具和多轮修改更像部署，却更贵、更隐私敏感、更难重复。
 
@@ -1113,7 +1113,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 【课程内容；视频 [67:34](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=4054s)】Clio 用模型辅助对真实对话做隐私保护的聚合分析。课程图片比较人工 ground truth 类别数量与自动分类的 true positive/false positive。
 
-**Ground truth（参考真值）**是评测采用的人工或权威标签；它也可能有错误。**True positive（真正例）**是正确识别的目标项；false positive 是误报。
+**Ground truth（参考真值）** 是评测采用的人工或权威标签；它也可能有错误。**True positive（真正例）** 是正确识别的目标项；false positive 是误报。
 
 ### 13.5 现实性—隐私—可复现三角
 
@@ -1155,7 +1155,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 14.3 Exchangeability 检测直觉
 
-【课程内容，源码 347–350；视频 [69:46](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=4186s)】**Exchangeability（可交换性）**粗略指：若样本来自同一机制，改变无关的排列顺序，不应系统性改变联合概率规律。
+【课程内容，源码 347–350；视频 [69:46](https://www.youtube.com/watch?v=JpAxdTWQJxM&t=4186s)】**Exchangeability（可交换性）** 粗略指：若样本来自同一机制，改变无关的排列顺序，不应系统性改变联合概率规律。
 
 课程图示：benchmark 的 canonical order（官方顺序）与 shuffled order（打乱顺序）相比，模型对后续问题的 log probability 若异常依赖官方次序，可能曾见过整段顺序。
 
@@ -1191,7 +1191,7 @@ $`n=10,c=2,k=3`$：失败样本数 $`n-c=8`$，$`\binom{8}{3}=56,\binom{10}{3}=1
 
 ### 15.1 Gold label 也可能错
 
-**Gold label（标准标签）**是数据集认定的答案，不代表绝对真理。题目歧义、版本变化、标注者错误都可能让正确模型被判错。
+**Gold label（标准标签）** 是数据集认定的答案，不代表绝对真理。题目歧义、版本变化、标注者错误都可能让正确模型被判错。
 
 抽样审计例：从 1000 题随机查 100 题，发现 8 题标签或题干有问题，样本问题率 $`8/100=8\%`$。这不能断言全体正好 8%，但足以提醒榜单分差 1% 可能没意义。
 
@@ -1268,7 +1268,7 @@ LLM 审计器也可能漏检或误报，所以应该：规则检查 + 人类抽�
 
 ### 17.1 先写 evaluation card
 
-**Evaluation card（评测卡）**是运行前写下的评测契约：
+**Evaluation card（评测卡）** 是运行前写下的评测契约：
 
 1. 决策：这份结果要支持什么决定？
 2. 构念：真正想测什么，明确不测什么？
@@ -1281,7 +1281,7 @@ LLM 审计器也可能漏检或误报，所以应该：规则检查 + 人类抽�
 9. 失败：分层错误、最坏案例、人工审计。
 10. 版本：代码、模型、依赖、硬件和时间。
 
-**Temperature（温度）**是调节采样随机性的参数；temperature=0 常近似使用最高概率输出，但具体 API 行为要查实现。
+**Temperature（温度）** 是调节采样随机性的参数；temperature=0 常近似使用最高概率输出，但具体 API 行为要查实现。
 
 ### 17.2 一个客服评测的 worked example
 
@@ -1301,7 +1301,7 @@ LLM 审计器也可能漏检或误报，所以应该：规则检查 + 人类抽�
 
 ### 17.3 Anti-gaming checklist
 
-**Anti-gaming（防刷指标）**不等于不让系统发挥，而是检查“高分路径是否偏离目标”：
+**Anti-gaming（防刷指标）** 不等于不让系统发挥，而是检查“高分路径是否偏离目标”：
 
 - 隐藏一部分测试；
 - 每轮加入新题并保留版本；
@@ -1364,7 +1364,7 @@ LLM 审计器也可能漏检或误报，所以应该：规则检查 + 人类抽�
 - 按样本加权总准确率：$`(90\times0.9+10\times0.1)/100=82/100=82\%`$；
 - 类别宏平均：$`(90\%+10\%)/2=50\%`$。
 
-**Macro average（宏平均）**让每类等权；**micro/sample-weighted average（微平均/样本加权）**让每个样本等权。必须说明口径。
+**Macro average（宏平均）** 让每类等权；**micro/sample-weighted average（微平均/样本加权）** 让每个样本等权。必须说明口径。
 
 ### 18.2 Confusion matrix、precision、recall
 
@@ -1433,7 +1433,7 @@ P(\text{至少一次成功})=1-(1-p)^k.
 
 ### 18.7 成本和 goodput
 
-**Throughput（吞吐）**是单位时间完成的总请求数；**goodput（有效吞吐）**是同时满足质量、延迟和安全门槛的请求数。
+**Throughput（吞吐）** 是单位时间完成的总请求数；**goodput（有效吞吐）** 是同时满足质量、延迟和安全门槛的请求数。
 
 60 秒完成 120 个请求，throughput $`=120/60=2`$ 请求/秒。若只有 90 个满足全部门槛，goodput $`=90/60=1.5`$ 请求/秒。
 

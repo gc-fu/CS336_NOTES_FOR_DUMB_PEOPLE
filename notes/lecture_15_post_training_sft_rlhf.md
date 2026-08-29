@@ -180,7 +180,7 @@ prompt 是“法国首都是什么？”时：
 
 ### 4.1 instruction tuning
 
-【课程内容，PDF p.6–15】**instruction tuning（指令微调）**是在大量“指令 → 理想输出”上训练。
+【课程内容，PDF p.6–15】**instruction tuning（指令微调）** 是在大量“指令 → 理想输出”上训练。
 
 ~~~text
 instruction: 把下面句子翻译成英文
@@ -204,7 +204,7 @@ SFT 数据
 student model
 ~~~
 
-**teacher model（教师模型）**提供示范或评分；**student model（学生模型）**是被训练对象。teacher 流畅不等于正确；只检查格式会批量复制错误。
+**teacher model（教师模型）** 提供示范或评分；**student model（学生模型）** 是被训练对象。teacher 流畅不等于正确；只检查格式会批量复制错误。
 
 ### 4.3 开放与社区数据
 
@@ -244,7 +244,7 @@ student model
 
 ### 5.1 chat template
 
-【补充解释；连接 PDF p.28–31 的因果语言模型训练】**chat template（聊天模板）**把结构化消息变成 token 序列。课件 p.28–30 讲 fine-tuning/mid-training，并未逐字给出下面模板；这是为理解实现补的桥。
+【补充解释；连接 PDF p.28–31 的因果语言模型训练】**chat template（聊天模板）** 把结构化消息变成 token 序列。课件 p.28–30 讲 fine-tuning/mid-training，并未逐字给出下面模板；这是为理解实现补的桥。
 
 ~~~text
 <|system|>你是数学助手。<|end|>
@@ -256,7 +256,7 @@ student model
 
 ### 5.2 因果预测
 
-**causal（因果）**表示位置 $`t`$ 只能看左侧。完整序列为
+**causal（因果）** 表示位置 $`t`$ 只能看左侧。完整序列为
 
 ```math
 z_1,z_2,\ldots,z_T,
@@ -298,7 +298,7 @@ prompt 仍输入模型、作为回答条件，只是不要求模型模仿用户 
 
 ### 5.4 多轮与 padding
 
-多轮样本可以训练全部 assistant turns，也可只训练最后一轮；必须写清协议。**padding（填充）**是为把不同长度样本组成矩形 batch 而补的假 token，也必须 mask 掉。
+多轮样本可以训练全部 assistant turns，也可只训练最后一轮；必须写清协议。**padding（填充）** 是为把不同长度样本组成矩形 batch 而补的假 token，也必须 mask 掉。
 
 ## 6. SFT 交叉熵：从一个 token 算到一个 batch
 
@@ -383,7 +383,7 @@ batch 中 A 长 2 token，B 长 8 token：
 
 ### 7.3 长度是混杂变量
 
-**confound（混杂因素）**是同时影响某个特征和评分，让我们误判因果的变量。若长答案常被偏好，reward model 可能学成“越长越好”。
+**confound（混杂因素）** 是同时影响某个特征和评分，让我们误判因果的变量。若长答案常被偏好，reward model 可能学成“越长越好”。
 
 检查方法：
 
@@ -444,7 +444,7 @@ batch 中 A 长 2 token，B 长 8 token：
 
 ### 10.1 为什么需要过渡
 
-【课程内容，PDF p.28–30】从海量预训练文本突然跳到少量聊天数据，分布变化很大。**distribution shift（分布偏移）**指训练数据与将来输入的统计规律不同。
+【课程内容，PDF p.28–30】从海量预训练文本突然跳到少量聊天数据，分布变化很大。**distribution shift（分布偏移）** 指训练数据与将来输入的统计规律不同。
 
 mid-training 可引入长上下文、领域文本、文档问答、工具格式或初步指令数据。它像预科班，但没有行业统一边界。
 
@@ -480,7 +480,7 @@ for batch in dataloader:
     optimizer.step()
 ~~~
 
-**forward（前向）**从输入算 logits/loss；**backward（反向）**从 loss 反推参数梯度；zero_grad 清上一批梯度。
+**forward（前向）** 从输入算 logits/loss；**backward（反向）** 从 loss 反推参数梯度；zero_grad 清上一批梯度。
 
 ### 11.2 三个检查
 
@@ -488,13 +488,13 @@ for batch in dataloader:
 2. logits 与 label 必须右移一位。
 3. 多卡有效 token 数不等时，不能把各卡局部均值不加权平均；应按总有效 token 数加权。
 
-**gradient accumulation（梯度累积）**是做多个小 microbatch 的 forward/backward 后才更新。4 个 microbatch × 8 条样本对应最多 32 条/step，但有效 assistant token 数仍由长度决定。
+**gradient accumulation（梯度累积）** 是做多个小 microbatch 的 forward/backward 后才更新。4 个 microbatch × 8 条样本对应最多 32 条/step，但有效 assistant token 数仍由长度决定。
 
 ## 12. 从 imitation 到 optimization
 
 ### 12.1 imitation：只学数据里出现的答案
 
-【课程内容，PDF p.32】**imitation（模仿）**试图让模型分布 $`\hat p(y\mid x)`$ 接近示范分布 $`p^*(y\mid x)`$：
+【课程内容，PDF p.32】**imitation（模仿）** 试图让模型分布 $`\hat p(y\mid x)`$ 接近示范分布 $`p^*(y\mid x)`$：
 
 ```math
 \hat p(y\mid x)\approx p^*(y\mid x).
@@ -641,7 +641,7 @@ BT 公式本身只写二选一。若允许 tie（平局），数据契约必须�
 | p.46–47 | UltraFeedback、Zephyr、Tulu3 与 Constitutional AI 的生成—批评—修订/偏好链 | 模型反馈可扩反馈规模 | judge 偏差、提示与自我风格仍会复制；不能当成人类真值 |
 | p.48 | 同一例子 SFT(before) 59 tokens、RLHF(after) 243 tokens，输出相似但后者更长；另有 length-reward 散点 | RLHF 可能主要改变长度/细节 | 单例不证明所有 RLHF 都放大 4.12 倍；$`243/59\approx4.1186`$ 只属于该样例；一手论文：[Singhal et al.](https://openreview.net/forum?id=G8LaO1P0xv) |
 
-**Spearman correlation（斯皮尔曼等级相关）**比较两个排序是否一致；1 表示完全同序。**$`R^2`$（决定系数）**描述给定回归在这组点上解释的变异比例。两者都不是“每个 pair 判对概率”。
+**Spearman correlation（斯皮尔曼等级相关）** 比较两个排序是否一致；1 表示完全同序。**$`R^2`$（决定系数）** 描述给定回归在这组点上解释的变异比例。两者都不是“每个 pair 判对概率”。
 
 ### 15.2 专家何时必要
 
@@ -649,7 +649,7 @@ BT 公式本身只写二选一。若允许 tie（平局），数据契约必须�
 
 ### 15.3 AI feedback 与 Constitutional AI
 
-【课程内容，PDF p.45–48】可以让语言模型批评、修订或比较回答。**Constitutional AI（宪法式 AI）**用一组文字原则指导自我批评和偏好反馈。
+【课程内容，PDF p.45–48】可以让语言模型批评、修订或比较回答。**Constitutional AI（宪法式 AI）** 用一组文字原则指导自我批评和偏好反馈。
 
 收益：扩大规模、统一格式、减少部分有害内容的人类暴露。风险：judge model 的偏差、长度偏好和错误会被复制；模型同意自己风格不等于人类真偏好。
 
@@ -683,7 +683,7 @@ PPO 更新 policy 与 value
 重复生成—评分—更新
 ~~~
 
-**rollout（采样展开）**是让当前策略实际生成一批轨迹。因为模型在改变，新 rollout 的分布也在改变，这称为 online/on-policy 味道。
+**rollout（采样展开）** 是让当前策略实际生成一批轨迹。因为模型在改变，新 rollout 的分布也在改变，这称为 online/on-policy 味道。
 
 ### 16.2 五个角色：old 不是 reference
 
@@ -797,7 +797,7 @@ r_t=\frac{\pi_\theta(a_t|s_t)}{\pi_{\rm old}(a_t|s_t)}
 
 ### 18.3 return 与 value
 
-**return（回报）**是从当前时刻往后奖励之和。若结尾 reward 为 3，每 token KL 代价依次 0.1、0.2，则从开头的回报可简化为
+**return（回报）** 是从当前时刻往后奖励之和。若结尾 reward 为 3，每 token KL 代价依次 0.1、0.2，则从开头的回报可简化为
 
 ```math
 3-0.1-0.2=2.7.
@@ -979,7 +979,7 @@ reference KL 可放进 token reward 或 loss，具体实现要声明。old/refer
 
 ### 21.0 control token：最小但无保证的替代想法
 
-【课程内容，PDF p.54】**control token（控制 token）**是放在序列前、告诉模型要生成哪类回答的特殊标记。对同一偏好 pair，可构造两条 SFT 序列：
+【课程内容，PDF p.54】**control token（控制 token）** 是放在序列前、告诉模型要生成哪类回答的特殊标记。对同一偏好 pair，可构造两条 SFT 序列：
 
 ~~~text
 prompt + [GOOD] + chosen response
@@ -1017,13 +1017,13 @@ prompt + [GOOD]
 
 ### 21.2 rejection sampling
 
-本讲的 **rejection-sampling fine-tuning（拒绝采样微调）**常指生成多份候选，丢弃低分答案，把高分答案当新 SFT 数据。它与概率论里为精确保持目标分布的经典 rejection sampling 不完全是同一具体算法。
+本讲的 **rejection-sampling fine-tuning（拒绝采样微调）** 常指生成多份候选，丢弃低分答案，把高分答案当新 SFT 数据。它与概率论里为精确保持目标分布的经典 rejection sampling 不完全是同一具体算法。
 
 每个 prompt 生成 8 条、保留最高 2 条时，100 个 prompt 共生成 800 条，最多保留 200 条。生成成本看 800，训练集大小看 200。
 
 ### 21.3 expert iteration
 
-【课程内容，PDF p.59】**expert iteration（专家迭代）**反复执行：
+【课程内容，PDF p.59】**expert iteration（专家迭代）** 反复执行：
 
 ~~~text
 当前模型生成多个候选
@@ -1036,7 +1036,7 @@ prompt + [GOOD]
 
 ### 21.4 RLVR 只作下一讲预告
 
-【视频补充】**RLVR（Reinforcement Learning with Verifiable Rewards，可验证奖励强化学习）**用可程序验证的结果，如数学答案或单元测试，提供奖励。本讲结尾只预告，完整方法属于后续课程；不可假装本讲已教完 GRPO/RLVR。
+【视频补充】**RLVR（Reinforcement Learning with Verifiable Rewards，可验证奖励强化学习）** 用可程序验证的结果，如数学答案或单元测试，提供奖励。本讲结尾只预告，完整方法属于后续课程；不可假装本讲已教完 GRPO/RLVR。
 
 可验证只表示“按这套检查器能判”，不表示用户意图被完整验证。程序可能通过弱测试但仍错误。
 
@@ -1062,7 +1062,7 @@ L_{\mathcal D}=\frac1M\sum_{i=1}^{M}\ell_i.
 
 训练时不会每步都装下全部 $`M`$ 对。若当前 mini-batch 有 $`m`$ 对，该 step 计算 $`m^{-1}\sum_{j=1}^{m}\ell_j`$；经过 shuffle/多个 steps 才覆盖完整 dataset。不能把完整数据量 $`M`$ 与当前 mini-batch size $`m`$ 写成同一个分母。
 
-数据通常由某个 behavior policy/多模型候选和标注协议产生。若当前 policy 跑到离线数据支持范围外，DPO 没有新在线标签纠正它。**support（支持集）**是数据分布给非零概率的区域；下面出现的 log-ratio 还要求 chosen/rejected 在 reference 下概率 $`>0`$，否则 $`\log0`$ 不有限。
+数据通常由某个 behavior policy/多模型候选和标注协议产生。若当前 policy 跑到离线数据支持范围外，DPO 没有新在线标签纠正它。**support（支持集）** 是数据分布给非零概率的区域；下面出现的 log-ratio 还要求 chosen/rejected 在 reference 下概率 $`>0`$，否则 $`\log0`$ 不有限。
 
 有限 logits 的数学 softmax 对词表每项给严格正概率；但计算机有限精度中，先算很小的 `exp(logit)` 或把大量 token 概率相乘，可能被舍入成 0。这叫 **underflow（下溢）**：真实正小数小到存储格式表示不了。防守方法是直接用稳定 `log_softmax` 得每 token log-prob，再对 response token 求和，不先把 sequence probability 乘出来再取 log。
 
@@ -1089,7 +1089,7 @@ r(x,y)-\beta\ln\frac{\pi(y\mid x)}
 
 ### 22.3 加入概率和为 1 的约束
 
-**Lagrange multiplier（拉格朗日乘子）**是在目标中加一项来强制约束。令 $`\pi_y=\pi(y\mid x)`$：
+**Lagrange multiplier（拉格朗日乘子）** 是在目标中加一项来强制约束。令 $`\pi_y=\pi(y\mid x)`$：
 
 ```math
 \mathcal J
@@ -1192,7 +1192,7 @@ DPO 鼓励 policy **相对 reference** 更偏爱 chosen。它的推导依赖固�
 
 ### 22.6 nonparametric assumption 与有限网络边界
 
-PDF/视频推导先假设 $`\pi`$ 是 **nonparametric（非参数化）**的：对每个 response 概率都能自由选择，可表达任意合法分布，因此 KL 正则目标能闭式解出
+PDF/视频推导先假设 $`\pi`$ 是 **nonparametric（非参数化）** 的：对每个 response 概率都能自由选择，可表达任意合法分布，因此 KL 正则目标能闭式解出
 $`\pi_r\propto\pi_{\rm ref}\exp(r/\beta)`$。
 
 真实 Transformer 是有限参数网络：许多 response 概率由共享参数耦合，只能近似这个闭式分布；optimizer 也未必找到全局最优。故“DPO loss 可算”不等于“有限模型严格达到推导中的 $`\pi_r`$”。
@@ -1337,19 +1337,19 @@ for pairs in dataloader:                 # x, chosen, rejected
 | 中段 | 0.75 | 0.72 |
 | 后段 | 0.92 | 0.60 |
 
-只看 reward 会错选后段。**checkpoint（检查点）**是某一步保存的模型状态。
+只看 reward 会错选后段。**checkpoint（检查点）** 是某一步保存的模型状态。
 
 ### 25.3 mode collapse
 
-【课程内容，PDF p.64】**mode collapse（模式坍缩）**是生成分布失去多样性，许多 prompt 都得到相似模板。对同一 prompt 多次采样，可检查不同答案数、重复片段、语义聚类和成功率。
+【课程内容，PDF p.64】**mode collapse（模式坍缩）** 是生成分布失去多样性，许多 prompt 都得到相似模板。对同一 prompt 多次采样，可检查不同答案数、重复片段、语义聚类和成功率。
 
 ### 25.4 calibration
 
-【课程内容，PDF p.64】**calibration（校准）**指置信度与长期正确率匹配。若模型对 100 道题都说“80% 确信”，理想情况约 80 道正确。更自信的语气不等于更正确。PDF p.63 是 overoptimization 的详细 proxy-vs-gold 图；p.64 才把 calibration 与 mode collapse 放在同一风险页。
+【课程内容，PDF p.64】**calibration（校准）** 指置信度与长期正确率匹配。若模型对 100 道题都说“80% 确信”，理想情况约 80 道正确。更自信的语气不等于更正确。PDF p.63 是 overoptimization 的详细 proxy-vs-gold 图；p.64 才把 calibration 与 mode collapse 放在同一风险页。
 
 ### 25.5 alignment tax 与分布偏移
 
-**alignment tax（对齐税）**指目标行为改善时，某些原能力或效率下降；不是固定税率。要对 base、SFT、偏好模型同时测能力、安全、帮助、长度和延迟。
+**alignment tax（对齐税）** 指目标行为改善时，某些原能力或效率下降；不是固定税率。要对 base、SFT、偏好模型同时测能力、安全、帮助、长度和延迟。
 
 离线 pair 来自旧 policy，新 policy 可能生成完全不同文本；reward model 会外推失败。需要新采样/标注、保守更新和独立测试。
 

@@ -64,7 +64,7 @@ Lecture 9 讲了“模型、数据和训练计算增加时，loss 大致怎样�
 - **Parameter（参数）**：模型训练中会被更新的数字，例如矩阵权重。
 - **Width（宽度）**：一层里向量或隐藏维度的大小；本讲常用 $`n`$ 或 $`d_m`$ 表示。
 - **Depth（深度）**：层数。
-- **Aspect ratio（形状比例）**：宽度、**FFN（feed-forward network，前馈网络）中间宽度**、attention **head（注意力头，即并行处理不同关系的一组 query/key/value，查询/键/值子空间）**数、深度之间如何按固定比例一起变。
+- **Aspect ratio（形状比例）**：宽度、**FFN（feed-forward network，前馈网络）中间宽度**、attention **head（注意力头，即并行处理不同关系的一组 query/key/value，查询/键/值子空间）** 数、深度之间如何按固定比例一起变。
 - **Gradient（梯度）**：参数增加一点时，loss 会朝哪个方向、变化多快的局部变化率。
 - **Learning rate，LR（学习率）**：每次更新沿负梯度方向走多大一步。
 - **Optimizer（优化器）**：把梯度变成参数更新的规则，例如 AdamW、Muon、Lion。
@@ -136,7 +136,7 @@ Lecture 9 讲了“模型、数据和训练计算增加时，loss 大致怎样�
 
 1. B 的 2.02 是否在误差范围内？
 2. A 会不会因为更大 batch 导致显存不足？
-3. **Downstream（下游）**任务——预训练之后的具体任务或评测——是否同样排序？
+3. **Downstream（下游）** 任务——预训练之后的具体任务或评测——是否同样排序？
 4. 训练走到 80% 才发现 LR 太大，能否恢复？
 
 所以 recipe 是多目标决策，不是把某个幂律代入一次。
@@ -145,11 +145,11 @@ Lecture 9 讲了“模型、数据和训练计算增加时，loss 大致怎样�
 
 一次训练 step：
 
-1. **Forward pass（前向）**：token 经 **embedding（把 token ID 查成连续向量的表）**、Transformer 层得到 **logits（softmax 前、尚未归一化的每个候选 token 分数）**和 loss。
+1. **Forward pass（前向）**：token 经 **embedding（把 token ID 查成连续向量的表）**、Transformer 层得到 **logits（softmax 前、尚未归一化的每个候选 token 分数）** 和 loss。
 2. **Backward pass（反向）**：从 loss 往回计算每个参数的 gradient。
 3. Optimizer 用 gradient 更新参数。
 
-**Activation（激活）**是 forward 中间算出的向量；**activation gradient** 是 loss 对中间向量的梯度；**weight gradient** 是 loss 对权重的梯度。
+**Activation（激活）** 是 forward 中间算出的向量；**activation gradient** 是 loss 对中间向量的梯度；**weight gradient** 是 loss 对权重的梯度。
 
 形状例：batch $`B=2`$，序列长 $`S=3`$，hidden width $`M=4`$，则一层输入 $`X`$ shape 为 $`[2,3,4]`$。线性权重 $`W`$ shape 为 $`[4,8]`$，输出为 $`[2,3,8]`$。宽度从 4 改成 8，权重和 activation 的 shape 都会变，这正是超参数可能漂移的来源。
 
@@ -188,13 +188,13 @@ Lecture 9 讲了“模型、数据和训练计算增加时，loss 大致怎样�
 
 ### 3.2 FLOP 与 compute
 
-**FLOP（floating-point operation，浮点运算）**是一次浮点加、乘等操作。FLOPs 在“工作量”语境中指很多次操作，不是每秒速度。稠密 Transformer 训练常用粗略式
+**FLOP（floating-point operation，浮点运算）** 是一次浮点加、乘等操作。FLOPs 在“工作量”语境中指很多次操作，不是每秒速度。稠密 Transformer 训练常用粗略式
 
 ```math
 C\approx6ND.
 ```
 
-含义：$`N`$ 个参数、$`D`$ 个训练 token，每个 token 的 forward 约 $`2N`$ FLOPs，backward 约 forward 的两倍，总约 $`6N`$。它忽略 attention 的额外项、embedding/loss、通信和 data movement；**MoE（Mixture of Experts，混合专家）**让每个 token 只经过一部分专家，因此应用每 token 激活参数而非专家总参数。它是粗账，不是硬件实测。
+含义：$`N`$ 个参数、$`D`$ 个训练 token，每个 token 的 forward 约 $`2N`$ FLOPs，backward 约 forward 的两倍，总约 $`6N`$。它忽略 attention 的额外项、embedding/loss、通信和 data movement；**MoE（Mixture of Experts，混合专家）** 让每个 token 只经过一部分专家，因此应用每 token 激活参数而非专家总参数。它是粗账，不是硬件实测。
 
 例：$`N=10^9`$，$`D=2\times10^{10}`$：
 
@@ -211,7 +211,7 @@ y=x^a
 
 表示把 $`x`$ 按指数 $`a`$ 缩放。若 $`a=1/2`$，就是平方根；$`16^{1/2}=4`$，因为 $`4\times4=16`$。若 $`a=-1/2`$，则 $`16^{-1/2}=1/4`$。
 
-**Log（对数）**回答“底数要乘自己多少次得到这个数”。若用自然对数 $`\ln`$，底数是 $`e\approx2.718`$。本讲图上 log 轴常只利用：
+**Log（对数）** 回答“底数要乘自己多少次得到这个数”。若用自然对数 $`\ln`$，底数是 $`e\approx2.718`$。本讲图上 log 轴常只利用：
 
 ```math
 \log(x^a)=a\log x,\qquad
@@ -427,7 +427,7 @@ BS=e^{20.91}L^{-6.24}.
 
 ### 6.1 cosine 的重复训练问题
 
-**Schedule（学习率日程）**规定训练过程中 LR 怎样变化。Cosine schedule 通常从大 LR 平滑降到接近 0；它需要预先知道训练终点。
+**Schedule（学习率日程）** 规定训练过程中 LR 怎样变化。Cosine schedule 通常从大 LR 平滑降到接近 0；它需要预先知道训练终点。
 
 假设想测试目标长度 10、20、30、40 tokens 单位。若每个 cosine run 都从头训练，工作量是：
 
@@ -451,7 +451,7 @@ BS=e^{20.91}L^{-6.24}.
 2. **Stable**：长时间保持大致稳定 LR。
 3. **Decay**：从一个 checkpoint 分叉，短时间降低 LR，收敛到较低 loss。
 
-**Checkpoint（检查点）**是训练时保存的参数、optimizer state 和进度快照，可以从那里继续。
+**Checkpoint（检查点）** 是训练时保存的参数、optimizer state 和进度快照，可以从那里继续。
 
 视频 [11:13](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=673s) 定义 WSD；[11:37](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=697s) 转入快速 decay；[12:15](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=735s) 说明回到最后一个 stable checkpoint。
 
@@ -504,7 +504,7 @@ C\approx6ND.
 
 因此固定 $`C`$ 时，$`N`$ 变大，$`D`$ 必须变小。例：忽略系数 6，只令 $`ND=100`$，候选有 $`(1,100),(2,50),(4,25),(10,10)`$。
 
-**Validation loss（验证损失）**是在没有用于参数更新的验证数据上算的 loss，用来估计泛化。它不是训练 loss，也不等于 downstream accuracy。
+**Validation loss（验证损失）** 是在没有用于参数更新的验证数据上算的 loss，用来估计泛化。它不是训练 loss，也不等于 downstream accuracy。
 
 视频 [14:09](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=849s) 回顾 Chinchilla；[14:44](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=884s) 开始读 MiniCPM 的 method 1。
 
@@ -770,7 +770,7 @@ PDF p.27 用 activated parameters 做 MoE IsoFLOP，课件例约 58.1B activated
 
 这只是比例换算，不代表报告真的训练了恰好该整数，先回查原表单位。来源：[Hunyuan-Large 一手报告](https://arxiv.org/abs/2411.02265)。
 
-PDF p.28 的 Llama 3 图在多个 compute 预算拟合二次曲线最低点，课程总结约 39 tokens/parameter。图里的 **sigmoid（S 形函数：把输入压到 0–1 区间）**用于拟合 loss 到 accuracy。视频 [25:37](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1537s) 开始 Llama 3；[26:26](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1586s) 提醒不同模型会系统偏离 loss→accuracy 拟合。来源：[Llama 3 Herd 一手报告](https://arxiv.org/abs/2407.21783)。
+PDF p.28 的 Llama 3 图在多个 compute 预算拟合二次曲线最低点，课程总结约 39 tokens/parameter。图里的 **sigmoid（S 形函数：把输入压到 0–1 区间）** 用于拟合 loss 到 accuracy。视频 [25:37](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1537s) 开始 Llama 3；[26:26](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1586s) 提醒不同模型会系统偏离 loss→accuracy 拟合。来源：[Llama 3 Herd 一手报告](https://arxiv.org/abs/2407.21783)。
 
 若 $`N=8`$B、比例 39：
 
@@ -814,7 +814,7 @@ PDF p.29 比较 softmax attention、lightning attention 和 hybrid；这里 **so
 
 【课程内容，PDF p.31–37】横轴 LR，纵轴 batch，颜色或高度是最终 loss。每个点是一条真实训练；低处形成一个“碗”。视频 [30:26](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1826s) 介绍 StepFun；[31:11](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=1871s) 转入 Step Law。
 
-**Convex surface（凸形曲面）**在这里是“实验范围内看起来像一个碗”的描述：朝最低点走，loss 降；越过后升。它不保证整个神经网络目标在数学上全局凸。
+**Convex surface（凸形曲面）** 在这里是“实验范围内看起来像一个碗”的描述：朝最低点走，loss 降；越过后升。它不保证整个神经网络目标在数学上全局凸。
 
 ### 10.2 一个可手算的小碗
 
@@ -968,7 +968,7 @@ PDF p.38–40 的图显示某些 optimizer 相对 AdamW 的优势随模型规模
 
 PDF p.41 展示小规模拟合继续外推后，大规模 run 可能偏离甚至发散。视频 [47:23](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=2843s) 开始错误外推；[48:33](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=2913s) 说必须留验证；[49:14](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=2954s) 转入 Muon。
 
-实践规则中的 **held-out scale（留出规模）**是完全不参与拟合和调参、只用于检验外推的模型规模：
+实践规则中的 **held-out scale（留出规模）** 是完全不参与拟合和调参、只用于检验外推的模型规模：
 
 1. 用一部分规模拟合；
 2. 用更大但仍负担得起的规模验证；
@@ -1011,7 +1011,7 @@ O_t=\mathrm{NewtonSchulz5}(B_t),
 
 ### 12.2 SVD 只用二维直觉
 
-**SVD（singular value decomposition，奇异值分解）**把矩阵写成：
+**SVD（singular value decomposition，奇异值分解）** 把矩阵写成：
 
 ```math
 B=U\Sigma V^\top.
@@ -1080,7 +1080,7 @@ Muon 主要针对二维矩阵参数。bias、norm gain、embedding 等其它形�
 
 ### 13.1 名字与目标
 
-**μP（Maximal Update Parameterization，最大更新参数化）**是一套规定“不同宽度下怎样初始化、怎样缩放每类参数的 LR 和输出”的规则。希腊字母 μ 读 “mu”。视频 [57:22](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3442s) 正式开始 μP；[57:54](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3474s) 说明目标是让小模型的最佳超参数迁到大模型。
+**μP（Maximal Update Parameterization，最大更新参数化）** 是一套规定“不同宽度下怎样初始化、怎样缩放每类参数的 LR 和输出”的规则。希腊字母 μ 读 “mu”。视频 [57:22](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3442s) 正式开始 μP；[57:54](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3474s) 说明目标是让小模型的最佳超参数迁到大模型。
 
 它想同时满足：
 
@@ -1124,7 +1124,7 @@ Wh=\begin{bmatrix}5\\2\end{bmatrix}.
 
 ### 13.3 Standard parameterization 的直觉问题
 
-**Standard parameterization（标准参数化）**通常让矩阵权重标准差约 $`1/\sqrt{\text{fan-in}}`$，并对很多参数使用宽度无关的 base LR。**Fan-in** 是每个输出接收多少输入，即 $`n_{l-1}`$；**fan-out** 是输出坐标数，即 $`n_l`$。
+**Standard parameterization（标准参数化）** 通常让矩阵权重标准差约 $`1/\sqrt{\text{fan-in}}`$，并对很多参数使用宽度无关的 base LR。**Fan-in** 是每个输出接收多少输入，即 $`n_{l-1}`$；**fan-out** 是输出坐标数，即 $`n_l`$。
 
 初始化可能保持 forward activation，但训练更新还会聚合许多坐标。尤其 Adam 把每个坐标的 gradient 归一化后，若矩阵实际 LR 不随输入宽度下降，整张更新矩阵的作用会随宽度变大，于是最佳 base LR 会漂。
 
@@ -1407,7 +1407,7 @@ h=\begin{bmatrix}3\\4\end{bmatrix}.
 
 视频 [65:18](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3918s) 开始 A2；[65:49](https://www.youtube.com/watch?v=vTfEyOyzV9E&t=3949s) 写 outer product。
 
-**Batch 边界：**batch gradient 是多个外积的平均，
+**Batch 边界：** batch gradient 是多个外积的平均，
 
 ```math
 G_l^{\text{batch}}
@@ -1468,7 +1468,7 @@ B=\begin{bmatrix}3&4\\5&6\end{bmatrix},
 =3+8-6=5.
 ```
 
-**Frobenius norm（F 范数）**把矩阵所有元素平方后求和再开根：
+**Frobenius norm（F 范数）** 把矩阵所有元素平方后求和再开根：
 
 ```math
 \|A\|_F=\sqrt{\sum_{i,j}A_{ij}^2}.
@@ -1689,7 +1689,7 @@ Norm gain shape $`[M]`$、bias shape $`[M]`$、embedding shape $`[V,M]`$、outpu
 
 ### 16.4 Tensor programs 的直觉
 
-**Tensor Programs（张量程序）**是一套分析宽度趋于无穷时，网络中矩阵乘、非线性、残差和梯度的随机极限如何传播的数学框架。它不是一段自动替你训练的程序。
+**Tensor Programs（张量程序）** 是一套分析宽度趋于无穷时，网络中矩阵乘、非线性、残差和梯度的随机极限如何传播的数学框架。它不是一段自动替你训练的程序。
 
 直觉流程：
 
@@ -1715,7 +1715,7 @@ Norm gain shape $`[M]`$、bias shape $`[M]`$、embedding shape $`[V,M]`$、outpu
 - attention head dimension 改变；
 - kernel、并行布局或硬件吞吐。
 
-**Regularization（正则化）**是改变训练以约束参数或表示的机制，例如 weight decay、dropout。它可能与宽度 multiplier 交互。
+**Regularization（正则化）** 是改变训练以约束参数或表示的机制，例如 weight decay、dropout。它可能与宽度 multiplier 交互。
 
 ---
 
@@ -1749,7 +1749,7 @@ PDF p.51 引用 “A Large-Scale Exploration of μ-Transfer” 的 Transformer �
 h_{\text{out}}[M,1]=W[M,N]h_{\text{in}}[N,1].
 ```
 
-Transformer/PyTorch 叙述常把一个 token 的向量放成行。**One-hot（独热向量）**只有当前 token ID 位置为 1，其余为 0：
+Transformer/PyTorch 叙述常把一个 token 的向量放成行。**One-hot（独热向量）** 只有当前 token ID 位置为 1，其余为 0：
 
 ```math
 \mathrm{onehot}[1,V]\ @\ W^E[V,M]
@@ -1837,7 +1837,7 @@ F=4M.
 
 这里“exact”是这套实现的具体常数，“$`\Theta(1/M)`$”只说宽度变大时的量级。若另一模型用 $`F=3M`$，那么 $`1/F=1/(3M)`$，不再是 $`0.25/M`$；若 $`H D_h\ne M`$，也不能把 $`1/(H D_h)`$ 直接抄成 $`1/M`$。
 
-**两步数字自检。**取 $`H=8,D_h=64,M=512,F=2048`$：
+**两步数字自检。** 取 $`H=8,D_h=64,M=512,F=2048`$：
 
 1. $`H D_h=8\times64=512=M`$，所以 $`1/(H D_h)=1/512=1/M`$。
 2. $`F=2048=4\times512=4M`$，所以 $`1/F=1/2048=1/(4M)=0.25/M`$。
@@ -1855,7 +1855,7 @@ F=4M.
 
 这里 $`H`$ 是 head 数，$`D_h`$ 是每 head 维度，$`F`$ 是 FFN 中间宽度，$`\alpha`$ 是用户调的 base Adam LR。Exact 列采用 base width $`P`$，current width $`M`$。
 
-**不要把 variance 当 std。**例如 $`M=512`$，$`W^{AQ}`$ exact variance $`=1/512=0.001953125`$，std 是
+**不要把 variance 当 std。** 例如 $`M=512`$，$`W^{AQ}`$ exact variance $`=1/512=0.001953125`$，std 是
 
 ```math
 \sqrt{1/512}\approx0.04419,
@@ -1974,7 +1974,7 @@ PDF p.52 的离散搜索列是 $`2^{-10},2^{-8},2^{-6},2^{-4},2^{-2}`$。逐行�
 | baseline μP | $`2^{-6}`$ | $`2^{-6}`$ | $`2^{-6}`$ | 三者最低采样列一致 |
 | projection biases | $`2^{-6}`$ | $`2^{-6}`$ | $`2^{-6}`$ | 三者最低采样列一致 |
 
-**Projection bias（投影偏置）**是在线性投影结果上再逐坐标加的可训练向量；p.52 这项实验说明加入这类 bias 后，三个 width 的最低采样列仍对齐。
+**Projection bias（投影偏置）** 是在线性投影结果上再逐坐标加的可训练向量；p.52 这项实验说明加入这类 bias 后，三个 width 的最低采样列仍对齐。
 
 计算：
 
@@ -2386,94 +2386,94 @@ C_{\mathrm{total}}=C_{\mathrm{stable}}+mC_{\mathrm{decay}}.
 ### 23.1 四则运算与实践 scaling（1–20）
 
 1. **【手算】**$`\theta=5,g=2,\eta=0.1`$。算一次 gradient descent 后的 $`\theta`$。
-2. **【手算】**8 GPU，每卡 4 sequences，每条 512 tokens，gradient accumulation 2 次。global batch 是多少 sequences/update 和 tokens/update？
-3. **【手算】**dense 粗账 $`N=2`$B、$`D=30`$B，按 $`C=6ND`$ 算训练 FLOPs。
-4. **【手算】**算 $`16^{-1/2}`$、$`1000^{0.30}`$。
-5. **【填式】**把 $`y=Ax^{-0.4}`$ 取 log，写成斜率与截距形式。
-6. **【判断+解释】**一个 width 为 $`n`$ 的向量，每坐标约 2。它的每坐标与整向量 norm 哪个是 $`\Theta(1)`$？norm 约多少？
-7. **【填表】**模型 A：$`d_m=4,d_{ff}=10,heads=2,L=2`$；B：8,20,4,4。算两者 $`d_{ff}/d_m`$、head width $`d_m/heads`$、$`L/d_m`$。
-8. **【手算】**base width 4、current width 16、base std 0.1、base LR 0.01。按 §4 的 $`1/\sqrt r`$ 与 $`1/r`$ 算 current std、matrix LR。
-9. **【手算】**4 层 residual，每层原增量 std 2。乘 $`1/\sqrt4`$ 后，每层 variance、总 variance、总 std 各多少？写独立近似条件。
-10. **【手算】**样本 gradients 为 $`1,3,5,7`$。算 batch 1 取第一个、batch 2 取前两个、batch 4 的平均 gradient。
-11. **【手算】**按 $`BS\propto L^{-6.24}`$，loss 从 2 降到 1，batch 比例约多少？若只用 $`6.24\approx6`$，粗估是多少？
-12. **【手算】**目标长度 10、20、30、40。四次从头 cosine 总成本；WSD stable40 加四段 decay4 的总成本与节省百分比。
-13. **【判断+手算】**若在每个整数 $`i=1,\ldots,100`$ 都接长度 $`0.1i`$ 的 decay，这部分成本是多少？它关于 100 是线性还是二次累积？
-14. **【填表】**compute 10/20/40 下，A loss 2.5/2.2/2.0，B loss 2.8/2.1/1.9。写 lower envelope 和获胜模型。
-15. **【手算】**固定 $`ND=100`$，用 $`L=1+4/\sqrt N+4/\sqrt D`$ 计算 $`(N,D)=(1,100),(4,25),(10,10),(25,4),(100,1)`$，找最低。
-16. **【手算+来源】**MiniCPM/UltraText 的 $`L=0.0754N^{-0.3}+0.292D^{-0.3}+0.25`$。算归一化 $`N=D=1`$ 的 loss，并写出课件在 $`C=10^{21}`$ 报告的 $`D_{\mathrm{opt}}/N_{\mathrm{opt}}`$。
-17. **【手算】**DeepSeek 式 $`\eta\propto C^{-0.125}`$。compute 增 16 倍，LR 比例是多少？
-18. **【手算】**DeepSeek 式 $`B\propto C^{0.3271}`$。compute 增 16 倍，batch 比例约多少？
-19. **【手算】**最低 loss 2.000，“0.25% 内”允许到多少？loss 2.006 是否在内？
+2. **【手算】** 8 GPU，每卡 4 sequences，每条 512 tokens，gradient accumulation 2 次。global batch 是多少 sequences/update 和 tokens/update？
+3. **【手算】** dense 粗账 $`N=2`$B、$`D=30`$B，按 $`C=6ND`$ 算训练 FLOPs。
+4. **【手算】** 算 $`16^{-1/2}`$、$`1000^{0.30}`$。
+5. **【填式】** 把 $`y=Ax^{-0.4}`$ 取 log，写成斜率与截距形式。
+6. **【判断+解释】** 一个 width 为 $`n`$ 的向量，每坐标约 2。它的每坐标与整向量 norm 哪个是 $`\Theta(1)`$？norm 约多少？
+7. **【填表】** 模型 A：$`d_m=4,d_{ff}=10,heads=2,L=2`$；B：8,20,4,4。算两者 $`d_{ff}/d_m`$、head width $`d_m/heads`$、$`L/d_m`$。
+8. **【手算】** base width 4、current width 16、base std 0.1、base LR 0.01。按 §4 的 $`1/\sqrt r`$ 与 $`1/r`$ 算 current std、matrix LR。
+9. **【手算】** 4 层 residual，每层原增量 std 2。乘 $`1/\sqrt4`$ 后，每层 variance、总 variance、总 std 各多少？写独立近似条件。
+10. **【手算】** 样本 gradients 为 $`1,3,5,7`$。算 batch 1 取第一个、batch 2 取前两个、batch 4 的平均 gradient。
+11. **【手算】** 按 $`BS\propto L^{-6.24}`$，loss 从 2 降到 1，batch 比例约多少？若只用 $`6.24\approx6`$，粗估是多少？
+12. **【手算】** 目标长度 10、20、30、40。四次从头 cosine 总成本；WSD stable40 加四段 decay4 的总成本与节省百分比。
+13. **【判断+手算】** 若在每个整数 $`i=1,\ldots,100`$ 都接长度 $`0.1i`$ 的 decay，这部分成本是多少？它关于 100 是线性还是二次累积？
+14. **【填表】** compute 10/20/40 下，A loss 2.5/2.2/2.0，B loss 2.8/2.1/1.9。写 lower envelope 和获胜模型。
+15. **【手算】** 固定 $`ND=100`$，用 $`L=1+4/\sqrt N+4/\sqrt D`$ 计算 $`(N,D)=(1,100),(4,25),(10,10),(25,4),(100,1)`$，找最低。
+16. **【手算+来源】** MiniCPM/UltraText 的 $`L=0.0754N^{-0.3}+0.292D^{-0.3}+0.25`$。算归一化 $`N=D=1`$ 的 loss，并写出课件在 $`C=10^{21}`$ 报告的 $`D_{\mathrm{opt}}/N_{\mathrm{opt}}`$。
+17. **【手算】** DeepSeek 式 $`\eta\propto C^{-0.125}`$。compute 增 16 倍，LR 比例是多少？
+18. **【手算】** DeepSeek 式 $`B\propto C^{0.3271}`$。compute 增 16 倍，batch 比例约多少？
+19. **【手算】** 最低 loss 2.000，“0.25% 内”允许到多少？loss 2.006 是否在内？
 20. **【手算】**$`M=4.3\times10^{11}`$ FLOPs/token，$`D=1.04\times10^{12}`$ tokens，按 $`C=MD`$ 算 compute。
 
 ### 23.2 案例、超参数曲面与 optimizer（21–40）
 
-21. **【手算+解释】**Kimi K2 课程快照中 384 个 routed experts 每 token 选 8 个。sparsity ratio 与 routed 激活比例各是多少？为什么不能把全模型 FLOPs 直接除以 sparsity ratio？
-22. **【手算】**58.1B activated parameters，96 tokens/activated-param。对应 tokens 约多少？
-23. **【手算】**Llama 3 课程比例 39 tokens/param，模型 8B。算训练 tokens。
-24. **【手算】**对 $`L(\eta,B)=2+100(\eta-0.02)^2+0.01(B-16)^2`$，计算 $`(.02,16),(.01,16),(.02,20),(.01,20)`$。
-25. **【手算】**Step Law 固定 $`N`$，$`D`$ 增 4 倍。算 LR 比例 $`4^{0.307}`$ 和 batch 比例 $`4^{0.571}`$。
-26. **【判断+手算】**把 0.571 偷换成 0.5，$`D`$ 增 4 倍时预测分别多少？相对差约多少？
-27. **【手算】**不做 bias correction：$`g=2,m_0=v_0=0,\beta_1=.9,\beta_2=.99`$。算 $`m_1,v_1,m_1/\sqrt{v_1}`$。
-28. **【手算】**只看 AdamW decay，$`\theta=10,\eta=.1,\lambda=.2`$。更新后多少？
-29. **【填表】**Optimizer A 1000 steps×1.0s；B 800×1.4s。谁 step-efficient，谁 wall-clock 快？
+21. **【手算+解释】** Kimi K2 课程快照中 384 个 routed experts 每 token 选 8 个。sparsity ratio 与 routed 激活比例各是多少？为什么不能把全模型 FLOPs 直接除以 sparsity ratio？
+22. **【手算】** 58.1B activated parameters，96 tokens/activated-param。对应 tokens 约多少？
+23. **【手算】** Llama 3 课程比例 39 tokens/param，模型 8B。算训练 tokens。
+24. **【手算】** 对 $`L(\eta,B)=2+100(\eta-0.02)^2+0.01(B-16)^2`$，计算 $`(.02,16),(.01,16),(.02,20),(.01,20)`$。
+25. **【手算】** Step Law 固定 $`N`$，$`D`$ 增 4 倍。算 LR 比例 $`4^{0.307}`$ 和 batch 比例 $`4^{0.571}`$。
+26. **【判断+手算】** 把 0.571 偷换成 0.5，$`D`$ 增 4 倍时预测分别多少？相对差约多少？
+27. **【手算】** 不做 bias correction：$`g=2,m_0=v_0=0,\beta_1=.9,\beta_2=.99`$。算 $`m_1,v_1,m_1/\sqrt{v_1}`$。
+28. **【手算】** 只看 AdamW decay，$`\theta=10,\eta=.1,\lambda=.2`$。更新后多少？
+29. **【填表】** Optimizer A 1000 steps×1.0s；B 800×1.4s。谁 step-efficient，谁 wall-clock 快？
 30. **【手算+解释】**$`B=\mathrm{diag}(3,1)`$。写 SVD 的 $`U,\Sigma,V`$ 和理想 $`UV^\top`$。两个方向的更新比例怎样变？
 31. **【画 shape】**$`h_{l-1}`$ 宽 3，$`W_l`$ 输出宽 2。写 $`h_{l-1},W_l,h_l`$ shapes；用 §13 的矩阵算输出。
-32. **【手算】**算向量 $`[3,4]`$ 的 norm；$`\mathrm{diag}(3,1)`$ 的 spectral norm。
-33. **【手算】**p47 式取 $`n_{in}=n_{out}=100`$，算 $`\sigma`$、近似谱范数和输入 norm10 对应的最坏方向上界/设计目标量级；它是否保证随机输入实际取等号？
-34. **【手算】**p47 式取 $`n_{in}=100,n_{out}=25`$，算 $`\sigma`$、近似谱范数、最坏方向上界/设计目标量级。
-35. **【手算】**p47 式取 $`n_{in}=25,n_{out}=100`$，重复第34题，并说明不是实际输出长度等式。
-36. **【判断+手算】**对第34题，若只用 $`1/\sqrt{100}=0.1`$，近似谱范数和输入长度10的上界量级是多少？和目标5比较。
+32. **【手算】** 算向量 $`[3,4]`$ 的 norm；$`\mathrm{diag}(3,1)`$ 的 spectral norm。
+33. **【手算】** p47 式取 $`n_{in}=n_{out}=100`$，算 $`\sigma`$、近似谱范数和输入 norm10 对应的最坏方向上界/设计目标量级；它是否保证随机输入实际取等号？
+34. **【手算】** p47 式取 $`n_{in}=100,n_{out}=25`$，算 $`\sigma`$、近似谱范数、最坏方向上界/设计目标量级。
+35. **【手算】** p47 式取 $`n_{in}=25,n_{out}=100`$，重复第34题，并说明不是实际输出长度等式。
+36. **【判断+手算】** 对第34题，若只用 $`1/\sqrt{100}=0.1`$，近似谱范数和输入长度10的上界量级是多少？和目标5比较。
 37. **【手算】**$`\delta=[2,-1]^\top,h=[3,4]^\top`$。算 outer product $`\delta h^\top`$ 并写 shape。
-38. **【手算】**矩阵 $`A=[[1,2],[0,-1]]`$、$`B=[[3,4],[5,6]]`$。算内积 $`\langle A,B\rangle`$。
+38. **【手算】** 矩阵 $`A=[[1,2],[0,-1]]`$、$`B=[[3,4],[5,6]]`$。算内积 $`\langle A,B\rangle`$。
 39. **【手算】**$`n_{in}=100,n_{out}=25`$。A2 目标 update spectral norm 是多少？
-40. **【手算+条件】**同一宽度，目标 gradient norm 是多少？与第39题相乘验证 loss-change 量级；完整复述把 Frobenius norm 连到 spectral norm 所需的条件。
+40. **【手算+条件】** 同一宽度，目标 gradient norm 是多少？与第39题相乘验证 loss-change 量级；完整复述把 Frobenius norm 连到 spectral norm 所需的条件。
 
 ### 23.3 μP 更新、失败边界与实验设计（41–60）
 
-41. **【手算】**SGD μP multiplier $`n_{out}/n_{in}`$：分别算 100→25、25→100、64→64。
-42. **【手算】**Adam matrix LR $`\propto1/n_{in}`$。fan-in 从 256 变 1024，实际 LR 比例是多少？
-43. **【手算】**全 1 矩阵 shape $`[25,100]`$ 的 spectral norm 是多少？乘 LR $`1/100`$ 后是多少？是否等于 $`\sqrt{25}/\sqrt{100}`$？
-44. **【填表】**base width $`P=256`$，current $`M=256,512,1024`$，base LR .004。填 $`r`$、matrix multiplier $`1/r`$、effective LR。
-45. **【手算】**初始化 variance 0.04，width ratio $`r=4`$，variance 除 4 后是多少？std 从多少变多少？
+41. **【手算】** SGD μP multiplier $`n_{out}/n_{in}`$：分别算 100→25、25→100、64→64。
+42. **【手算】** Adam matrix LR $`\propto1/n_{in}`$。fan-in 从 256 变 1024，实际 LR 比例是多少？
+43. **【手算】** 全 1 矩阵 shape $`[25,100]`$ 的 spectral norm 是多少？乘 LR $`1/100`$ 后是多少？是否等于 $`\sqrt{25}/\sqrt{100}`$？
+44. **【填表】** base width $`P=256`$，current $`M=256,512,1024`$，base LR .004。填 $`r`$、matrix multiplier $`1/r`$、effective LR。
+45. **【手算】** 初始化 variance 0.04，width ratio $`r=4`$，variance 除 4 后是多少？std 从多少变多少？
 46. **【手算】**$`x=[3,4]`$，RMSNorm gain $`[1,1]`$，忽略 $`\epsilon`$。算 RMS 与输出。
 47. **【手算+解释】**$`\lambda=.1`$。effective LR .004 与 .001 时 decay factor 各多少？哪个 decay 更弱？
-48. **【手算】**算 $`2^{-6},2^{-8},2^{-10}`$，相邻两者比例多少？
-49. **【填表】**固定 $`ND=1`$B²，给 $`N=.25,.5,1`$B，算 $`D`$。
-50. **【手算】**3 个模型×3 batches×3 LRs×2 seeds，共多少 runs？每 run 100 GPU-hours，总多少？
+48. **【手算】** 算 $`2^{-6},2^{-8},2^{-10}`$，相邻两者比例多少？
+49. **【填表】** 固定 $`ND=1`$B²，给 $`N=.25,.5,1`$B，算 $`D`$。
+50. **【手算】** 3 个模型×3 batches×3 LRs×2 seeds，共多少 runs？每 run 100 GPU-hours，总多少？
 51. **【判断+解释】**$`\|Wh\|\le\|W\|_*\|h\|`$ 是否表示每个随机 $`h`$ 都取等号？
-52. **【手算+解释】**100 个坐标都为 2，向量 norm 是多少？每坐标与 norm 哪个保持常数？
-53. **【手算】**若 raw Adam update 谱范数随方阵宽度 $`n`$ 为 $`n`$，分别用 LR $`1,1/n,1/n^2`$ 时 update norm 是什么？
-54. **【判断+推导】**WSD 最大主干 $`C`$，$`m`$ 个固定长度 $`d`$ 的 decay，总成本什么式？什么条件下关于 $`C`$ 线性？
-55. **【判断+解释】**StepFun 局部曲面像碗，能否推出神经网络参数空间全局凸？
-56. **【填四本账】**MoE 总参数、activated parameters、每 token FLOPs、通信分别受什么影响？
-57. **【判断+解释】**两个 recipe pretraining loss 2.00 与 2.01，可否直接说前者所有 downstream 都更好？
-58. **【判断+解释】**比较 AdamW 与 Muon 时共用同一个 LR，是否公平？最低限度怎样做？
-59. **【设计题】**用 width $`P,2P,4P`$ 拟合后，怎样设置一个 held-out scale？
-60. **【画分类表】**用行向量约定写 one-hot→embedding→hidden→unembedding/logits 的 shapes；再写成列向量约定。为什么 embedding、hidden matrix、unembedding、norm gain 不能同用一条 multiplier？
+52. **【手算+解释】** 100 个坐标都为 2，向量 norm 是多少？每坐标与 norm 哪个保持常数？
+53. **【手算】** 若 raw Adam update 谱范数随方阵宽度 $`n`$ 为 $`n`$，分别用 LR $`1,1/n,1/n^2`$ 时 update norm 是什么？
+54. **【判断+推导】** WSD 最大主干 $`C`$，$`m`$ 个固定长度 $`d`$ 的 decay，总成本什么式？什么条件下关于 $`C`$ 线性？
+55. **【判断+解释】** StepFun 局部曲面像碗，能否推出神经网络参数空间全局凸？
+56. **【填四本账】** MoE 总参数、activated parameters、每 token FLOPs、通信分别受什么影响？
+57. **【判断+解释】** 两个 recipe pretraining loss 2.00 与 2.01，可否直接说前者所有 downstream 都更好？
+58. **【判断+解释】** 比较 AdamW 与 Muon 时共用同一个 LR，是否公平？最低限度怎样做？
+59. **【设计题】** 用 width $`P,2P,4P`$ 拟合后，怎样设置一个 held-out scale？
+60. **【画分类表】** 用行向量约定写 one-hot→embedding→hidden→unembedding/logits 的 shapes；再写成列向量约定。为什么 embedding、hidden matrix、unembedding、norm gain 不能同用一条 multiplier？
 
 ### 23.4 概念与综合（61–80）
 
-61. **【概念】**Scaling recipe 比 scaling law 多包含哪些东西？
-62. **【概念】**Fixed aspect ratio 的收益和主要风险各是什么？
-63. **【概念】**WSD 的 warmup、stable、decay 各做什么？
-64. **【概念】**Method 1、2、3 各用什么数据找 compute-optimal 点？
-65. **【判断+解释】**为什么 DeepSeek 式与 Step Law 的 LR 指数不能直接比正负？
-66. **【判断+解释】**为什么模型总参数、activated parameters 和 non-embedding FLOPs/token 不能混用？
+61. **【概念】** Scaling recipe 比 scaling law 多包含哪些东西？
+62. **【概念】** Fixed aspect ratio 的收益和主要风险各是什么？
+63. **【概念】** WSD 的 warmup、stable、decay 各做什么？
+64. **【概念】** Method 1、2、3 各用什么数据找 compute-optimal 点？
+65. **【判断+解释】** 为什么 DeepSeek 式与 Step Law 的 LR 指数不能直接比正负？
+66. **【判断+解释】** 为什么模型总参数、activated parameters 和 non-embedding FLOPs/token 不能混用？
 67. **【判断+解释】**“0.25% 内的低谷很平”对工程选择有什么用？
-68. **【判断+解释】**为什么 optimizer 比较要同时报 steps 和 wall-clock？
-69. **【概念】**Muon 的 Newton–Schulz 在直觉上改变矩阵的什么？
-70. **【概念】**A1 与 A2 分别约束什么？
-71. **【推导】**为什么 activation 每坐标 $`\Theta(1)`$ 时整向量 norm 是 $`\Theta(\sqrt n)`$？
-72. **【推导】**p47 初始化式为什么同时看 fan-in 和 fan-out？
-73. **【判断+解释】**μP 的 base LR transfer 与实际 tensor LR 有何区别？
+68. **【判断+解释】** 为什么 optimizer 比较要同时报 steps 和 wall-clock？
+69. **【概念】** Muon 的 Newton–Schulz 在直觉上改变矩阵的什么？
+70. **【概念】** A1 与 A2 分别约束什么？
+71. **【推导】** 为什么 activation 每坐标 $`\Theta(1)`$ 时整向量 norm 是 $`\Theta(\sqrt n)`$？
+72. **【推导】** p47 初始化式为什么同时看 fan-in 和 fan-out？
+73. **【判断+解释】** μP 的 base LR transfer 与实际 tensor LR 有何区别？
 74. **【判断+解释】**“Maximal update”为什么既不能太大也不能太小？
-75. **【概念】**Tensor Programs 在本讲扮演什么角色？
-76. **【判断+解释】**Attention scale $`1/\sqrt{D_h}`$ 与 $`1/D_h`$ 在固定 $`D_h`$ 时都对 width 是常数，为什么仍不能随便互换？
-77. **【判断+解释】**RMSNorm gain、Lion、weight decay 的课程 stress test 各显示什么？
-78. **【概念+例子】**什么叫 confound？给本讲一个例子。
-79. **【设计题】**大 run 前至少做哪五项检查？
-80. **【综合】**用一句完整因果链总结本讲。
+75. **【概念】** Tensor Programs 在本讲扮演什么角色？
+76. **【判断+解释】** Attention scale $`1/\sqrt{D_h}`$ 与 $`1/D_h`$ 在固定 $`D_h`$ 时都对 width 是常数，为什么仍不能随便互换？
+77. **【判断+解释】** RMSNorm gain、Lion、weight decay 的课程 stress test 各显示什么？
+78. **【概念+例子】** 什么叫 confound？给本讲一个例子。
+79. **【设计题】** 大 run 前至少做哪五项检查？
+80. **【综合】** 用一句完整因果链总结本讲。
 
 ---
 

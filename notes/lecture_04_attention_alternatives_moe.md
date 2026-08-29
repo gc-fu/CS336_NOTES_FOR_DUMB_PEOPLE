@@ -5,7 +5,7 @@
 > 视频：[Lecture 4](https://www.youtube.com/watch?v=cKSwj_qZ8Jg)（约 86:15）  
 > 官方讲义：[lecture_04.pdf](https://github.com/stanford-cs336/lectures/blob/main/lecture_04.pdf)（60 页）
 
-> **资料核对说明：**本笔记逐页检查了官方 PDF 的 60 页渲染结果；全部页面先以 contact sheet 巡检，公式、模型结构图、路由图和对比表再按原分辨率复核。视频主字幕使用 YouTube 人工轨 `English (United States)`（语言代码 `en-US`），共 1938 个片段；最后一段从 86:13 开始、约在 86:15 结束。YouTube 同时提供 `English (auto-generated)` 轨，但本笔记没有把它当作主字幕。笔记不是字幕直译，而是用讲义定主线、用人工字幕补出口头限定，再加入可手算的教学例子。
+> **资料核对说明：** 本笔记逐页检查了官方 PDF 的 60 页渲染结果；全部页面先以 contact sheet 巡检，公式、模型结构图、路由图和对比表再按原分辨率复核。视频主字幕使用 YouTube 人工轨 `English (United States)`（语言代码 `en-US`），共 1938 个片段；最后一段从 86:13 开始、约在 86:15 结束。YouTube 同时提供 `English (auto-generated)` 轨，但本笔记没有把它当作主字幕。笔记不是字幕直译，而是用讲义定主线、用人工字幕补出口头限定，再加入可手算的教学例子。
 
 本讲使用以下来源标签：
 
@@ -34,7 +34,7 @@
 
 ## 0. 五分钟复习卡
 
-> **第一次学习请跳到第 1 节。**这一节是复习索引，会提前使用后文才逐字解释的术语。
+> **第一次学习请跳到第 1 节。** 这一节是复习索引，会提前使用后文才逐字解释的术语。
 
 ### 0.1 一句话主线
 
@@ -117,7 +117,7 @@ $`f_i`$ 是硬分配比例，$`P_i`$ 是平均软概率质量；它抑制 expert
 
 ### 1.1 scalar、vector、matrix、tensor
 
-**【补充理解】**先分清数字放在什么盒子里：
+**【补充理解】** 先分清数字放在什么盒子里：
 
 - **scalar（标量）**：一个数字，例如 $`0.5`$；
 - **vector（向量）**：一排数字，例如 $`[1,2]`$；
@@ -147,7 +147,7 @@ $`f_i`$ 是硬分配比例，$`P_i`$ 是平均软概率质量；它抑制 expert
 
 ### 1.2 token、Q、K、V 到底是什么
 
-**【补充理解】**一个 token 经过前面网络后有一条 hidden state（隐藏状态）向量。attention 用三个学习矩阵把它投影成：
+**【补充理解】** 一个 token 经过前面网络后有一条 hidden state（隐藏状态）向量。attention 用三个学习矩阵把它投影成：
 
 - **query（查询，$`q_t`$）**：“当前位置想找什么？”
 - **key（键，$`k_j`$）**：“历史位置 $`j`$ 提供什么检索标签？”
@@ -185,7 +185,7 @@ a=\begin{bmatrix}a_1\\a_2\end{bmatrix},
 b=\begin{bmatrix}b_1\\b_2\end{bmatrix}.
 ```
 
-**dot product（点积）**把对应位置相乘再相加，结果是一个标量：
+**dot product（点积）** 把对应位置相乘再相加，结果是一个标量：
 
 ```math
 a^\top b=a_1b_1+a_2b_2.
@@ -199,7 +199,7 @@ a^\top b=a_1b_1+a_2b_2.
 =2\times3+(-1)\times4=2.
 ```
 
-**outer product（外积）**让左边每个元素乘右边每个元素，结果是矩阵：
+**outer product（外积）** 让左边每个元素乘右边每个元素，结果是矩阵：
 
 ```math
 ab^\top
@@ -258,7 +258,7 @@ a_2b_1&a_2b_2
 - $`O(n^2)`$：$`n`$ 翻倍，主工作量约变成 4 倍；
 - $`O(n^2d)`$：还要再乘每个向量的宽度 $`d`$。
 
-**FLOP（floating-point operation，浮点运算）**是一次浮点加法或乘法。`FLOPs` 在本笔记表示“完成一次任务需要多少次运算”；`FLOP/s` 才是设备每秒能做多少次。为了和课件的式子完全对应，第 2–3 节主要数“标量乘法项”；若把乘和加分别记作一个 FLOP，主数量级通常再乘约 2，但两种写法的 $`n`$ 次方不会改变。
+**FLOP（floating-point operation，浮点运算）** 是一次浮点加法或乘法。`FLOPs` 在本笔记表示“完成一次任务需要多少次运算”；`FLOP/s` 才是设备每秒能做多少次。为了和课件的式子完全对应，第 2–3 节主要数“标量乘法项”；若把乘和加分别记作一个 FLOP，主数量级通常再乘约 2，但两种写法的 $`n`$ 次方不会改变。
 
 一个 tensor 的内存为：
 
@@ -266,20 +266,20 @@ a_2b_1&a_2b_2
 \text{元素数}\times\text{每元素字节数}.
 ```
 
-**dtype（data type，数据类型）**是 tensor 每个元素采用的数字存储格式。FP32 每元素 4 bytes，BF16 每元素 2 bytes。$`1\ \text{MiB}=2^{20}=1,048,576`$ bytes。
+**dtype（data type，数据类型）** 是 tensor 每个元素采用的数字存储格式。FP32 每元素 4 bytes，BF16 每元素 2 bytes。$`1\ \text{MiB}=2^{20}=1,048,576`$ bytes。
 
 ### 1.6 本讲两条主线
 
-**【课程内容】**老师在 [00:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=25s) 把本讲称为建立在普通 Transformer 之上的高级架构思路，并在 [00:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=49s) 给出两大主题：
+**【课程内容】** 老师在 [00:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=25s) 把本讲称为建立在普通 Transformer 之上的高级架构思路，并在 [00:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=49s) 给出两大主题：
 
 1. **attention alternatives（注意力替代方案）**：目标主要是把上下文长度的二次成本降下来；
 2. **Mixture of Experts，MoE（混合专家）**：让每个 token 只走少数 FFN 专家，以较少的激活计算承载更多总参数。
 
 这两条线优化的部位不同：前者主要改 attention，后者主要改 FFN。不要把“线性 attention”和“MoE 只激活少数专家”混成同一个技巧。
 
-**【课程内容】**课件第 2 页和视频 [01:32](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=92s) 指出模型支持的 context window（上下文窗口）快速增长。视频 [02:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=131s) 进一步说明：短序列时 FFN 可能占较多计算，$`n`$ 足够长后，attention 的 $`n^2`$ 项会占主导。
+**【课程内容】** 课件第 2 页和视频 [01:32](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=92s) 指出模型支持的 context window（上下文窗口）快速增长。视频 [02:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=131s) 进一步说明：短序列时 FFN 可能占较多计算，$`n`$ 足够长后，attention 的 $`n^2`$ 项会占主导。
 
-**【视频补充】**在 [02:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=169s)，老师先提醒两个较基础的办法：混合 local/global attention，以及系统优化。到 [03:18](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=198s) 提到 FlashAttention 时，重点是减少 GPU 不同存储层之间的数据搬运；它能显著改善速度和显存，却没有把 full attention 的数学配对数从 $`n^2`$ 变成 $`n`$。
+**【视频补充】** 在 [02:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=169s)，老师先提醒两个较基础的办法：混合 local/global attention，以及系统优化。到 [03:18](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=198s) 提到 FlashAttention 时，重点是减少 GPU 不同存储层之间的数据搬运；它能显著改善速度和显存，却没有把 full attention 的数学配对数从 $`n^2`$ 变成 $`n`$。
 
 ---
 
@@ -287,7 +287,7 @@ a_2b_1&a_2b_2
 
 ### 2.1 先看公式和每一步 shape
 
-**【课程内容｜PDF 第 4 页｜视频 [06:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=363s)】**课程把一般 attention 写成：
+**【课程内容｜PDF 第 4 页｜视频 [06:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=363s)】** 课程把一般 attention 写成：
 
 ```math
 \mathrm{Attn}(Q,K,V)=\rho(QK^\top)V.
@@ -348,7 +348,7 @@ n^2d_k+n^2d_v
 32\ \text{MiB}\times8\times32=8192\ \text{MiB}=8\ \text{GiB}.
 ```
 
-**【补充理解】**这不是说所有现代实现都真的常驻这样一块数组。FlashAttention 会分块计算，尽量不把完整 $`n\times n`$ 中间结果写回 HBM（GPU 的大容量外部显存）；训练反向也可重算一些量。但每个允许的 query-key 位置对仍要参与数学计算，所以 exact full attention 的主算术量仍是二次的。
+**【补充理解】** 这不是说所有现代实现都真的常驻这样一块数组。FlashAttention 会分块计算，尽量不把完整 $`n\times n`$ 中间结果写回 HBM（GPU 的大容量外部显存）；训练反向也可重算一些量。但每个允许的 query-key 位置对仍要参与数学计算，所以 exact full attention 的主算术量仍是二次的。
 
 causal mask（因果遮罩）只允许位置 $`i`$ 看自己和前面的位置，允许的配对数为：
 
@@ -360,7 +360,7 @@ causal mask（因果遮罩）只允许位置 $`i`$ 看自己和前面的位置�
 
 ### 2.3 一组贯穿三节的 $`Q,K,V`$
 
-**【补充例子】**取 $`n=4,d_k=d_v=2`$：
+**【补充例子】** 取 $`n=4,d_k=d_v=2`$：
 
 ```math
 Q=
@@ -501,7 +501,7 @@ y_4^\top
 
 ### 2.5 本讲计算器数学：平方根、$`e^x`$ 与自然对数
 
-> **【补充理解｜只会四则运算也能学】**后面的 softmax、router z-loss 和 MTP loss 都会用到本小节。这里不是要求先学完整高等数学，只要会按计算器。
+> **【补充理解｜只会四则运算也能学】** 后面的 softmax、router z-loss 和 MTP loss 都会用到本小节。这里不是要求先学完整高等数学，只要会按计算器。
 
 #### 2.5.1 $`\sqrt{x}`$ 是“哪个非负数自乘得到 $`x`$”
 
@@ -594,7 +594,7 @@ e^{\ln y}=y\quad(y>0).
 
 ### 2.6 普通 softmax attention 多了什么
 
-**【课程内容｜视频 [06:22](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=382s)】**普通 scaled dot-product attention 会先除以 $`\sqrt{d_k}`$，再按行做 softmax。以第一行 logits 为例：
+**【课程内容｜视频 [06:22](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=382s)】** 普通 scaled dot-product attention 会先除以 $`\sqrt{d_k}`$，再按行做 softmax。以第一行 logits 为例：
 
 ```math
 \frac{[1,0,1,1]}{\sqrt2}
@@ -639,7 +639,7 @@ y_{1,2}&=0.2863(2)+0.1412(1)+0.2863(0)+0.2863(1)\\
 
 ### 3.1 结合律做了什么
 
-**【课程内容｜PDF 第 4 页｜视频 [05:58](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=358s)】**矩阵乘法满足 associativity（结合律）：只要 shape 合法，三个矩阵相乘时可以先算左边，也可以先算右边：
+**【课程内容｜PDF 第 4 页｜视频 [05:58](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=358s)】** 矩阵乘法满足 associativity（结合律）：只要 shape 合法，三个矩阵相乘时可以先算左边，也可以先算右边：
 
 ```math
 (AB)C=A(BC).
@@ -782,7 +782,7 @@ Q(K^\top V)
 
 ### 3.4 两种括号的算术账
 
-**【课程内容｜视频 [06:52](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=412s)、[07:02](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=422s)】**左括号的标量乘法项：
+**【课程内容｜视频 [06:52](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=412s)、[07:02](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=422s)】** 左括号的标量乘法项：
 
 ```math
 C_{\text{standard}}
@@ -845,7 +845,7 @@ $`n_*`$ 是只按上述乘法项估计的 crossover（交叉点）。若 $`d_k=d
 n_*=\frac{2d^2}{2d}=d.
 ```
 
-**例 1：$`d_k=d_v=2`$。**交叉点 $`n_*=2`$。在 $`n=4`$ 时，刚才算出标准 64，线性 32。
+**例 1：$`d_k=d_v=2`$。** 交叉点 $`n_*=2`$。在 $`n=4`$ 时，刚才算出标准 64，线性 32。
 
 **例 2：$`d_k=d_v=64`$。**
 
@@ -888,7 +888,7 @@ n_*=\frac{2\times64\times128}{64+128}
 
 ### 3.6 为什么普通 softmax 不能直接交换
 
-**【课程内容｜视频 [06:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=398s)】**老师明确说这里暂时把 $`\rho`$，尤其 softmax，拿掉。原因是：
+**【课程内容｜视频 [06:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=398s)】** 老师明确说这里暂时把 $`\rho`$，尤其 softmax，拿掉。原因是：
 
 ```math
 \mathrm{softmax}(QK^\top)V
@@ -904,7 +904,7 @@ softmax 需要先看到同一 query 对所有 key 的分数，计算指数和分
 
 ### 3.7 可核化 attention 怎样恢复线性形式
 
-**【课程内容 + 延伸】**课件第 4 页提到 kernel version。核心不是“把 softmax 硬删掉后还假装一样”，而是选择能分解的相似度：
+**【课程内容 + 延伸】** 课件第 4 页提到 kernel version。核心不是“把 softmax 硬删掉后还假装一样”，而是选择能分解的相似度：
 
 ```math
 \mathrm{sim}(q,k)=\phi(q)^\top\phi(k).
@@ -934,7 +934,7 @@ y_t^\top
 - 若 $`\phi`$ 只是用有限特征近似 softmax kernel，那么结果是对 softmax attention 的近似；
 - 课程接下来讲的递归式先从最简单的恒等/纯线性情形出发。
 
-**【视频补充】**老师在 [20:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1241s) 回答问题时再次划清边界：损失来自拿掉或改变 $`\rho`$/softmax；一旦已经定义了纯线性 attention，它的 dense 形式与 recurrent 形式之间是精确等价的。
+**【视频补充】** 老师在 [20:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1241s) 回答问题时再次划清边界：损失来自拿掉或改变 $`\rho`$/softmax；一旦已经定义了纯线性 attention，它的 dense 形式与 recurrent 形式之间是精确等价的。
 
 ---
 
@@ -942,7 +942,7 @@ y_t^\top
 
 ### 4.1 “因果”先限制能看哪些位置
 
-**causal（因果）**表示位置 $`t`$ 只能读取 $`1,2,\ldots,t`$，不能偷看未来 $`t+1,t+2,\ldots`$。在自回归语言模型里，这是为了保证模型预测下一个 token 时没有提前看到答案。
+**causal（因果）** 表示位置 $`t`$ 只能读取 $`1,2,\ldots,t`$，不能偷看未来 $`t+1,t+2,\ldots`$。在自回归语言模型里，这是为了保证模型预测下一个 token 时没有提前看到答案。
 
 先继续使用 $`\rho`$ 为恒等映射的纯线性 attention。第 $`t`$ 个输出为：
 
@@ -997,7 +997,7 @@ S_t=\sum_{j=1}^{t}k_jv_j^\top.
 
 ### 4.2 用 4 个 token 逐次更新 $`2\times2`$ 状态
 
-**【补充例子】**继续使用第 2.3 节的 $`Q,K,V`$。初始化：
+**【补充例子】** 继续使用第 2.3 节的 $`Q,K,V`$。初始化：
 
 ```math
 S_0=
@@ -1101,11 +1101,11 @@ y_4^\top
 
 它与第 4.2 节逐 token 的答案逐项相同。
 
-第 2.4 节的 **non-causal（非因果）**完整矩阵给前两行得到 `[2,3]`、`[6,0]`，是因为前两行还读取了未来位置。不要拿非因果答案去检查因果递归，然后误以为公式出错。
+第 2.4 节的 **non-causal（非因果）** 完整矩阵给前两行得到 `[2,3]`、`[6,0]`，是因为前两行还读取了未来位置。不要拿非因果答案去检查因果递归，然后误以为公式出错。
 
 ### 4.4 为什么它像 RNN
 
-**【课程内容｜PDF 第 5 页｜视频 [08:09](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=489s)】****RNN（recurrent neural network，循环神经网络）**的核心特征是：按顺序读输入，并维护一个会更新的 state。
+**【课程内容｜PDF 第 5 页｜视频 [08:09](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=489s)】** **RNN（recurrent neural network，循环神经网络）** 的核心特征是：按顺序读输入，并维护一个会更新的 state。
 
 这里每一步只有两件事：
 
@@ -1122,18 +1122,18 @@ y_4^\top
 
 在本例里，不论 $`t=1`$ 还是 $`t=1,000,000`$，状态 shape 都是 `[2,2]`。这就是 fixed-size state（固定大小状态）。
 
-**【视频补充】**老师在 [08:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=513s) 逐步解释了把当前 $`k_tv_t^\top`$ 累加到 $`S`$，并在 [08:50](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=530s) 强调：对已经定义好的纯线性 attention，矩阵形式和递归形式完全相同。
+**【视频补充】** 老师在 [08:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=513s) 逐步解释了把当前 $`k_tv_t^\top`$ 累加到 $`S`$，并在 [08:50](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=530s) 强调：对已经定义好的纯线性 attention，矩阵形式和递归形式完全相同。
 
 ### 4.5 训练为什么喜欢并行形式，解码为什么喜欢递归形式
 
-**【课程内容｜视频 [09:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=546s)、[09:19](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=559s)】**同一个数学操作可以有两种执行视图：
+**【课程内容｜视频 [09:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=546s)、[09:19](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=559s)】** 同一个数学操作可以有两种执行视图：
 
 1. **训练的并行视图**：一整段 $`Q,K,V`$ 已知，可一次交给大矩阵运算；GPU 擅长并行矩阵乘。本节最朴素的 dense causal 视图仍会做二次位置配对。
 2. **推理解码的串行视图**：第 $`t`$ 个 token 出来后，才知道第 $`t+1`$ 个输入；保留 $`S_t`$，下一步只做一次外积更新和一次查询，不必保存并重读全部历史 K/V。
 
-这里的 **prefill（提示词预填充）**是一次处理整段已知 prompt；**decode（增量解码）**是之后一次生成一个 token。递归形式尤其适合 decode。
+这里的 **prefill（提示词预填充）** 是一次处理整段已知 prompt；**decode（增量解码）** 是之后一次生成一个 token。递归形式尤其适合 decode。
 
-**【补充理解】**对每个新 token：
+**【补充理解】** 对每个新 token：
 
 - 更新 $`k_tv_t^\top`$ 约有 $`d_kd_v`$ 个乘法项；
 - 查询 $`q_t^\top S_t`$ 约有 $`d_kd_v`$ 个乘法项；
@@ -1181,9 +1181,9 @@ d_kd_v=64\times64=4096\ \text{个元素},
 
 ### 4.7 固定状态不是免费午餐
 
-**【视频补充｜[09:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=581s)】**老师指出纯线性形式的能力有限。原因可以用“多人把内容写到同一块白板”理解。
+**【视频补充｜[09:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=581s)】** 老师指出纯线性形式的能力有限。原因可以用“多人把内容写到同一块白板”理解。
 
-**【补充例子】**若两个 token 的 key 完全相同：
+**【补充例子】** 若两个 token 的 key 完全相同：
 
 ```math
 k_1=k_2=\begin{bmatrix}1\\0\end{bmatrix},
@@ -1212,7 +1212,7 @@ k_1v_1^\top+k_2v_2^\top
 
 ### 5.1 RetNet 的最小变化：乘一个 $`\gamma`$
 
-**【课程内容｜PDF 第 5 页】**课件在递归式旁注说明：若旧状态 $`S_{t-1}`$ 先乘 $`\gamma`$，就得到 RetNet 风格的 retention（保留/衰减）机制：
+**【课程内容｜PDF 第 5 页】** 课件在递归式旁注说明：若旧状态 $`S_{t-1}`$ 先乘 $`\gamma`$，就得到 RetNet 风格的 retention（保留/衰减）机制：
 
 ```math
 S_t=\gamma S_{t-1}+k_tv_t^\top.
@@ -1238,7 +1238,7 @@ S_3&=\gamma^2 k_1v_1^\top+\gamma k_2v_2^\top+k_3v_3^\top.
 
 ### 5.2 RetNet 极小数字例
 
-**【补充例子】**假设：
+**【补充例子】** 假设：
 
 ```math
 S_{t-1}=\begin{bmatrix}4&0\\0&2\end{bmatrix},
@@ -1280,7 +1280,7 @@ S_t
 
 ### 5.3 Mamba-2 的课程公式
 
-**【课程内容｜PDF 第 7 页｜视频 [11:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=671s)】**课件用下面的机制把线性 attention 连接到 Mamba-2：
+**【课程内容｜PDF 第 7 页｜视频 [11:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=671s)】** 课件用下面的机制把线性 attention 连接到 Mamba-2：
 
 ```math
 S_t=\gamma_tS_{t-1}+k_tv_t^\top,
@@ -1300,11 +1300,11 @@ y_t^\top=q_t^\top S_t+v_t^\top D,
 - $`D`$：value 的 skip matrix（跳连矩阵），shape `[d_v,d_v]`；常见讲法会把它看成对角或逐通道参数；
 - $`v_t^\top D`$：不经过历史状态、让当前 value 直接影响输出的路径。
 
-**【视频补充】**老师在 [12:16](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=736s) 强调 $`\gamma_t`$ 依赖当前输入，并控制多少旧状态继续流向现在；在 [13:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=783s) 说明这类门控仍保留可用并行/递归两种视图的 duality。
+**【视频补充】** 老师在 [12:16](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=736s) 强调 $`\gamma_t`$ 依赖当前输入，并控制多少旧状态继续流向现在；在 [13:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=783s) 说明这类门控仍保留可用并行/递归两种视图的 duality。
 
 ### 5.4 Mamba-2 极小数字例
 
-**【补充例子】**设：
+**【补充例子】** 设：
 
 ```math
 S_{t-1}=\begin{bmatrix}2&1\\0&3\end{bmatrix},
@@ -1395,11 +1395,11 @@ v_t^T [1,2] × D   [2,2] → [1,2]
 
 ### 5.5 $`D`$ 路径为什么有用，边界在哪里
 
-**【视频补充｜[15:32](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=932s)、[15:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=938s)】**老师口头回看公式后，把 $`v_t^\top D`$ 解释为当前 value 的 residual/skip（残差/直通）路径。即使历史状态压缩或门控不适合表达当前局部信息，输出仍可直接拿到当前 value 的变换。
+**【视频补充｜[15:32](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=932s)、[15:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=938s)】** 老师口头回看公式后，把 $`v_t^\top D`$ 解释为当前 value 的 residual/skip（残差/直通）路径。即使历史状态压缩或门控不适合表达当前局部信息，输出仍可直接拿到当前 value 的变换。
 
-**【边界说明】**真实 Mamba-2 是 structured state space model（结构化状态空间模型），还包含输入投影、卷积、门控、归一化、分头/分组状态和专门 kernel 等。本节严格复算的是课件用于建立“线性 attention—状态空间模型 duality”直觉的简化式，不把这两行公式冒充完整实现。
+**【边界说明】** 真实 Mamba-2 是 structured state space model（结构化状态空间模型），还包含输入投影、卷积、门控、归一化、分头/分组状态和专门 kernel 等。本节严格复算的是课件用于建立“线性 attention—状态空间模型 duality”直觉的简化式，不把这两行公式冒充完整实现。
 
-**【课程内容】**课件第 8 页给出 Nemotron 3 的 Mamba/attention hybrid 作为当时模型案例；视频约 13:25 强调它并非只使用 Mamba 层。hybrid 为什么反复出现，会在第 7 节统一解释。
+**【课程内容】** 课件第 8 页给出 Nemotron 3 的 Mamba/attention hybrid 作为当时模型案例；视频约 13:25 强调它并非只使用 Mamba 层。hybrid 为什么反复出现，会在第 7 节统一解释。
 
 ---
 
@@ -1407,7 +1407,7 @@ v_t^T [1,2] × D   [2,2] → [1,2]
 
 ### 6.1 公式先拆成四个动作
 
-**【课程内容｜PDF 第 9 页｜视频 [14:17](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=857s)】**Gated DeltaNet（门控 Delta 网络，简称 GDN）的课件式为：
+**【课程内容｜PDF 第 9 页｜视频 [14:17](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=857s)】** Gated DeltaNet（门控 Delta 网络，简称 GDN）的课件式为：
 
 ```math
 S_t
@@ -1443,7 +1443,7 @@ y_t^\top=q_t^\top S_t,
 
 ### 6.2 为什么 $`k_tk_t^\top`$ 表示“key 方向”
 
-**【补充理解】**先选最容易看的单位 key：
+**【补充理解】** 先选最容易看的单位 key：
 
 ```math
 k_t=\begin{bmatrix}1\\0\end{bmatrix}.
@@ -1477,7 +1477,7 @@ I-\beta_tk_tk_t^\top
 
 ### 6.3 完整数字例：$`\gamma=0.5,\beta=0.25`$
 
-**【补充例子】**设：
+**【补充例子】** 设：
 
 ```math
 S_{t-1}=\begin{bmatrix}4&2\\1&3\end{bmatrix},
@@ -1572,7 +1572,7 @@ y_t^\top
 
 ### 6.4 $`\beta=0`$ 的准确含义
 
-**【课程内容｜视频 [16:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=966s)】**令 $`\beta_t=0`$：
+**【课程内容｜视频 [16:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=966s)】** 令 $`\beta_t=0`$：
 
 ```math
 \begin{aligned}
@@ -1588,7 +1588,7 @@ S_t
 
 ### 6.5 $`\beta=1`$ 怎样像覆盖一行
 
-**【补充例子】**继续用单位 key $`k_t=[1,0]^\top`$，改设 $`\beta_t=1,\gamma_t=1`$：
+**【补充例子】** 继续用单位 key $`k_t=[1,0]^\top`$，改设 $`\beta_t=1,\gamma_t=1`$：
 
 ```math
 I-k_tk_t^\top
@@ -1622,7 +1622,7 @@ S_t
 
 ### 6.6 为什么老师说“投影”只是直觉
 
-**【视频补充｜[16:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1007s)、[17:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1048s)】**若 $`k_t`$ 是单位向量，即 $`k_t^\top k_t=1`$，那么 $`k_tk_t^\top`$ 的确是投到 $`k_t`$ 方向的正交 projector（投影矩阵）。
+**【视频补充｜[16:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1007s)、[17:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1048s)】** 若 $`k_t`$ 是单位向量，即 $`k_t^\top k_t=1`$，那么 $`k_tk_t^\top`$ 的确是投到 $`k_t`$ 方向的正交 projector（投影矩阵）。
 
 若 key 没有单位归一化，这个说法不能照搬。取：
 
@@ -1672,7 +1672,7 @@ P_k
 
 ### 6.8 为什么现代模型仍常做 hybrid
 
-**【课程内容】**课件第 6、8、10 页分别用 MiniMax M1、Nemotron 3、Qwen 3.5/Qwen Next 展示 linear/recurrent layer 与 full attention layer 混合的案例。视频给出的课程时点描述包括：
+**【课程内容】** 课件第 6、8、10 页分别用 MiniMax M1、Nemotron 3、Qwen 3.5/Qwen Next 展示 linear/recurrent layer 与 full attention layer 混合的案例。视频给出的课程时点描述包括：
 
 - [10:07](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=607s)：MiniMax M1 使用约 7 个线性层配 1 个 full-attention 层；
 - [10:59](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=659s)：老师强调完全线性的方案在大规模上还没有被充分证明可以无代价替代 full attention；
@@ -1681,7 +1681,7 @@ P_k
 
 这些型号和比例是课程在 2026 年的案例快照，不是所有未来模型都必须遵守的定律。
 
-**【补充理解】**recurrent 层用固定状态高效压缩大部分历史；偶尔的 full-attention 层保留逐 token 的直接寻址机会。下一节会用具体 token 路由表，比较 local、global、hybrid 与 sparse attention 的允许边数，并解释它们怎样给长程信息开“高速公路”。
+**【补充理解】** recurrent 层用固定状态高效压缩大部分历史；偶尔的 full-attention 层保留逐 token 的直接寻址机会。下一节会用具体 token 路由表，比较 local、global、hybrid 与 sparse attention 的允许边数，并解释它们怎样给长程信息开“高速公路”。
 
 ---
 
@@ -1689,7 +1689,7 @@ P_k
 
 ### 7.1 先把一层 attention 看成“有向连边”
 
-**【补充理解】**把 token 位置写成 $`1,2,\ldots,n`$。若 query $`q_i`$ 能读取 key $`k_j`$，就画一条 $`i\rightarrow j`$ 的有向边。
+**【补充理解】** 把 token 位置写成 $`1,2,\ldots,n`$。若 query $`q_i`$ 能读取 key $`k_j`$，就画一条 $`i\rightarrow j`$ 的有向边。
 
 对 causal full attention，位置 $`i`$ 能看 $`1`$ 到 $`i`$。长度 $`n=8`$ 时逐行是：
 
@@ -1716,11 +1716,11 @@ P_k
 \frac{n(n+1)}{2}=O(n^2)
 ```
 
-条允许边。**full（全）**的意思是“因果约束允许的所有历史位置都能直接读取”，不是让模型看未来。
+条允许边。**full（全）** 的意思是“因果约束允许的所有历史位置都能直接读取”，不是让模型看未来。
 
 ### 7.2 Causal local attention：只看最近窗口
 
-**local attention（局部注意力）**限制每个 query 只读取附近位置。这里定义窗口 $`w=3`$，并明确本笔记的计数口径：窗口包含当前位置和最多两个过去位置。
+**local attention（局部注意力）** 限制每个 query 只读取附近位置。这里定义窗口 $`w=3`$，并明确本笔记的计数口径：窗口包含当前位置和最多两个过去位置。
 
 因此 $`q_i`$ 能看：
 
@@ -1761,7 +1761,7 @@ $`n=8,w=3`$ 的完整表：
 
 ### 7.3 加一个 global token
 
-**global token（全局词元）**是所有 query 都允许读取的特殊位置。为避免违反因果性，本例把位置 1 当作已经出现的全局/摘要 token：所有后续位置可看它，但它不能看未来。
+**global token（全局词元）** 是所有 query 都允许读取的特殊位置。为避免违反因果性，本例把位置 1 当作已经出现的全局/摘要 token：所有后续位置可看它，但它不能看未来。
 
 在上一小节的 local 表中，$`q_1,q_2,q_3`$ 已经能看位置 1；只需给 $`q_4`$ 到 $`q_8`$ 各加一条到 key 1 的边：
 
@@ -1786,7 +1786,7 @@ $`n=8,w=3`$ 的完整表：
 
 ### 7.4 Hybrid layer：让少数层提供全局高速公路
 
-**【课程内容｜PDF 第 3、6、8、10–11 页】****hybrid（混合）**表示模型不是全用一种层，而是在不同层交替使用低成本和高表达力机制。视频 [22:27](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1347s) 总结线性 attention 后，也把这些模型与 LSTM 风格的递归对象联系起来。
+**【课程内容｜PDF 第 3、6、8、10–11 页】** **hybrid（混合）** 表示模型不是全用一种层，而是在不同层交替使用低成本和高表达力机制。视频 [22:27](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1347s) 总结线性 attention 后，也把这些模型与 LSTM 风格的递归对象联系起来。
 
 先做一个 local/full 的纯连边账。4 层中使用 3 个 `w=3` local layer 和 1 个 full layer，记作 `3:1 local/full`：
 
@@ -1822,13 +1822,13 @@ $`n=8,w=3`$ 的完整表：
 - local layer 的长程信息要逐层接力，full layer 可一步跨越很远；
 - 对复制、人名回指、代码依赖等精确 retrieval（检索）任务，少量全局通路可能很重要。
 
-**【课程边界】**视频 [19:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1143s) 提醒 hybrid 的受控 ablation（消融实验：只改一个因素再比较）仍不算多；小比例 full layer 看起来损失较低，而纯 recurrent 往往退化。不能把几个课程时点案例升级成永恒定律。
+**【课程边界】** 视频 [19:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1143s) 提醒 hybrid 的受控 ablation（消融实验：只改一个因素再比较）仍不算多；小比例 full layer 看起来损失较低，而纯 recurrent 往往退化。不能把几个课程时点案例升级成永恒定律。
 
 ### 7.5 Sparse attention 与 DSA 的两阶段思路
 
-**sparse attention（稀疏注意力）**不计算所有允许边，只挑一小部分。**DSA（DeepSeek Sparse Attention，DeepSeek 稀疏注意力）**的课程版本在 [23:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1383s) 开始介绍。
+**sparse attention（稀疏注意力）** 不计算所有允许边，只挑一小部分。**DSA（DeepSeek Sparse Attention，DeepSeek 稀疏注意力）** 的课程版本在 [23:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1383s) 开始介绍。
 
-**【课程内容｜PDF 第 12–13 页｜视频 [23:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1413s)】**DSA 先用 lightweight indexer（轻量索引器）给候选历史位置打分，再选 top-$`k`$，最后只在这 $`k`$ 个位置上做较昂贵的完整 attention：
+**【课程内容｜PDF 第 12–13 页｜视频 [23:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1413s)】** DSA 先用 lightweight indexer（轻量索引器）给候选历史位置打分，再选 top-$`k`$，最后只在这 $`k`$ 个位置上做较昂贵的完整 attention：
 
 ```text
 所有候选历史 key
@@ -1838,11 +1838,11 @@ $`n=8,w=3`$ 的完整表：
 加权读取这些位置的 V
 ```
 
-**indexer（索引器）**就是一个便宜的候选筛选器，不是数据库索引文件。视频 [24:02](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1442s) 口头描述了 query-key 内积、ReLU 和轻量权重；[24:20](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1460s) 再取 top-$`k`$ 位置。
+**indexer（索引器）** 就是一个便宜的候选筛选器，不是数据库索引文件。视频 [24:02](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1442s) 口头描述了 query-key 内积、ReLU 和轻量权重；[24:20](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1460s) 再取 top-$`k`$ 位置。
 
 ### 7.6 一个 $`n=8,k=3`$ 的 DSA 路由表
 
-**【补充例子】**设 indexer 每个位置最多选 3 个 causal key，并把当前 key 也算在 3 个以内。下面是人为构造的结果，目的是学会数边，不代表真实 DSA 必然选择这些位置：
+**【补充例子】** 设 indexer 每个位置最多选 3 个 causal key，并把当前 key 也算在 3 个以内。下面是人为构造的结果，目的是学会数边，不代表真实 DSA 必然选择这些位置：
 
 | query | indexer 选中的 key | 边数 |
 |---|---|---:|
@@ -1865,7 +1865,7 @@ $`n=8,w=3`$ 的完整表：
 
 ### 7.7 Indexer 不是免费的线性魔法
 
-**【视频补充｜[26:48](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1608s)】**老师明确说 DSA indexer 仍可能要看全体 query-key 候选，因此按 $`n`$ 的次数仍是二次。若索引维度为 $`d_{\text{idx}}`$，粗略工作量是：
+**【视频补充｜[26:48](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1608s)】** 老师明确说 DSA indexer 仍可能要看全体 query-key 候选，因此按 $`n`$ 的次数仍是二次。若索引维度为 $`d_{\text{idx}}`$，粗略工作量是：
 
 ```math
 O(n^2d_{\text{idx}})+O(nkd),
@@ -1882,7 +1882,7 @@ O(n^2d_{\text{idx}})+O(nkd),
 
 ### 7.8 Recall error：索引漏掉关键位置会怎样
 
-**recall（召回率）**在这里指真正重要的位置中，有多少被 indexer 放进 top-$`k`$。若 $`q_8`$ 的正确答案必须读取位置 3，但表中 $`q_8`$ 只选 `{2,6,8}`，正式 attention 根本看不到 $`v_3`$。
+**recall（召回率）** 在这里指真正重要的位置中，有多少被 indexer 放进 top-$`k`$。若 $`q_8`$ 的正确答案必须读取位置 3，但表中 $`q_8`$ 只选 `{2,6,8}`，正式 attention 根本看不到 $`v_3`$。
 
 后果是：
 
@@ -1892,18 +1892,18 @@ O(n^2d_{\text{idx}})+O(nkd),
 
 因此 DSA 不是“只算 21 条边但与 36 条边天然完全一样”，而是训练 indexer 在节省成本的同时尽量保留任务所需边。
 
-**【课程内容】**视频 [26:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1588s) 介绍的课程时点实验显示，经过完整 DSA 训练后，在一些困难长上下文检索任务上相对 full attention 损失不大；这是特定模型与实验的证据，不保证每个数据集、每个 $`k`$ 都不掉点。
+**【课程内容】** 视频 [26:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1588s) 介绍的课程时点实验显示，经过完整 DSA 训练后，在一些困难长上下文检索任务上相对 full attention 损失不大；这是特定模型与实验的证据，不保证每个数据集、每个 $`k`$ 都不掉点。
 
 ### 7.9 Post-hoc adaptation 是什么时候加 indexer
 
-**post-hoc adaptation（事后适配）**不是“训练结束后不再学习，直接强行删边”。课程讲的是：
+**post-hoc adaptation（事后适配）** 不是“训练结束后不再学习，直接强行删边”。课程讲的是：
 
 1. 先用较短上下文训练 dense/full-attention 模型；
 2. 长上下文 extension（扩展训练）阶段加入 indexer；
 3. 继续训练，让模型和 indexer 适应稀疏选择；
 4. 再进入后续 post-training。
 
-**【视频补充】**老师在 [24:43](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1483s) 说明无需从预训练第一步就带 indexer；[25:01](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1501s) 说明可在长上下文 extension 阶段加入；课堂问答 [28:45](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1725s) 又解释本来就常有短上下文预训练到长上下文扩展的第二阶段，因此把稀疏适配放在那里。
+**【视频补充】** 老师在 [24:43](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1483s) 说明无需从预训练第一步就带 indexer；[25:01](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1501s) 说明可在长上下文 extension 阶段加入；课堂问答 [28:45](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=1725s) 又解释本来就常有短上下文预训练到长上下文扩展的第二阶段，因此把稀疏适配放在那里。
 
 ---
 
@@ -1911,7 +1911,7 @@ O(n^2d_{\text{idx}})+O(nkd),
 
 ### 8.1 Dense FFN 先算一遍
 
-**【课程内容｜PDF 第 14–15 页｜视频 [34:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2063s)】****MoE（Mixture of Experts，混合专家）**通常替换 Transformer block 里的 FFN/MLP，不是默认替换 attention。
+**【课程内容｜PDF 第 14–15 页｜视频 [34:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2063s)】** **MoE（Mixture of Experts，混合专家）** 通常替换 Transformer block 里的 FFN/MLP，不是默认替换 attention。
 
 一个简化 dense FFN（稠密前馈网络）是：
 
@@ -1948,7 +1948,7 @@ F_{\text{FFN}}\approx2dm+2md=4dm.
 
 ### 8.2 加 $`E`$ 个 expert 和一个 router
 
-**expert（专家）**在本讲就是一套 FFN 参数，不要想象成会说“我是医学专家”的独立智能体。**router（路由器）**是一个很小的选择层：对每个 token 打 $`E`$ 个专家分数。
+**expert（专家）** 在本讲就是一套 FFN 参数，不要想象成会说“我是医学专家”的独立智能体。**router（路由器）** 是一个很小的选择层：对每个 token 打 $`E`$ 个专家分数。
 
 若路由矩阵 $`W_r`$ 的 shape 是 `[d,E]`：
 
@@ -1970,7 +1970,7 @@ y=\sum_{i\in\mathrm{TopK}(z)}g_i(x)E_i(x).
 - $`g_i(x)`$：选中 expert 的合并权重；
 - top-$`k`$：挑出分数最大的 $`k`$ 项。
 
-**【课程内容｜视频 [35:26](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2126s)】**老师从“把一个普通 MLP 替换成多个 FFN，再为每个输入挑少数 FFN”建立 MoE 心智模型。视频 [43:20](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2600s) 补充路由粒度通常是 token：同一句中的不同 token 可以去不同 expert。
+**【课程内容｜视频 [35:26](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2126s)】** 老师从“把一个普通 MLP 替换成多个 FFN，再为每个输入挑少数 FFN”建立 MoE 心智模型。视频 [43:20](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2600s) 补充路由粒度通常是 token：同一句中的不同 token 可以去不同 expert。
 
 ### 8.3 四种账不能混在一起
 
@@ -1979,11 +1979,11 @@ y=\sum_{i\in\mathrm{TopK}(z)}g_i(x)E_i(x).
 3. **per-token FLOPs（每 token 运算量）**：这些激活矩阵实际做多少浮点加乘；还包括 router、shared experts 等开销。
 4. **per-batch device work（每 batch 各设备实际工作量）**：取决于多少 token 被路由到每个 expert；即使总工作量一样，不均衡也会让某台设备成为慢尾。
 
-“增加 expert 数而不影响 FLOPs”只能在下列近似条件下理解：$`k`$ 和单个 expert 大小固定，只看主 expert 矩阵乘。它不表示总参数内存、router、通信、负载均衡、**checkpoint（检查点：保存到存储中的模型权重和训练状态快照，用来恢复训练、微调或部署）**或设备数量都不变。
+“增加 expert 数而不影响 FLOPs”只能在下列近似条件下理解：$`k`$ 和单个 expert 大小固定，只看主 expert 矩阵乘。它不表示总参数内存、router、通信、负载均衡、**checkpoint（检查点：保存到存储中的模型权重和训练状态快照，用来恢复训练、微调或部署）** 或设备数量都不变。
 
 ### 8.4 一个完整资源会计例子
 
-**【补充例子】**取 $`d=4,m=8`$。一个 dense FFN：
+**【补充例子】** 取 $`d=4,m=8`$。一个 dense FFN：
 
 ```math
 P_{\text{dense}}=2\times4\times8=64\ \text{parameters}.
@@ -2067,7 +2067,7 @@ F_{\text{MoE/token}}\approx128+32=160\ \text{FLOPs}.
 
 ### 8.6 MoE 的收益和代价都要写全
 
-**【课程内容】**视频 [36:10](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2170s) 用 4 个同尺寸 FFN 说明：FFN 参数约增 4 倍，而 top-1 主 FFN 计算只付一份。视频 [36:50](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2210s) 把目标概括为增加参数而不增加主 forward FLOPs。
+**【课程内容】** 视频 [36:10](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2170s) 用 4 个同尺寸 FFN 说明：FFN 参数约增 4 倍，而 top-1 主 FFN 计算只付一份。视频 [36:50](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2210s) 把目标概括为增加参数而不增加主 forward FLOPs。
 
 课程第 16–23 页列出的曲线和模型是课程时点证据：在若干实验里，固定 active compute、增加 sparse parameters 能改善 loss 或质量。它不是“MoE 永远免费胜出”的数学定理。
 
@@ -2076,11 +2076,11 @@ F_{\text{MoE/token}}\approx128+32=160\ \text{FLOPs}.
 - 总 expert 权重仍要存储，单卡可能放不下；
 - token 需要跨设备传输；
 - 不均衡会产生等待、溢出或额外容量；
-- sparse kernel 不自动拥有 dense **GEMM（General Matrix Multiplication，通用稠密矩阵乘；例如一次 `[b,d]×[d,m]`，通常由高度优化的底层 kernel 执行）**的高利用率；
+- sparse kernel 不自动拥有 dense **GEMM（General Matrix Multiplication，通用稠密矩阵乘；例如一次 `[b,d]×[d,m]`，通常由高度优化的底层 kernel 执行）** 的高利用率；
 - router 和训练目标可能不稳定；
 - checkpoint、加载、部署和 fine-tuning 更复杂。
 
-**【视频补充】**老师在 [39:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2395s) 说明 expert 给模型增加了新的并行切分轴；课堂问答 [42:08](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2528s) 同时强调它用更多 aggregate compute/内存分布换来通信成本，是否净收益依赖设备互联 topology（拓扑：机器怎样连接）。[42:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2558s) 又明确训练也必须保持稀疏，否则会支付全部 expert 的 FLOPs。
+**【视频补充】** 老师在 [39:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2395s) 说明 expert 给模型增加了新的并行切分轴；课堂问答 [42:08](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2528s) 同时强调它用更多 aggregate compute/内存分布换来通信成本，是否净收益依赖设备互联 topology（拓扑：机器怎样连接）。[42:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2558s) 又明确训练也必须保持稀疏，否则会支付全部 expert 的 FLOPs。
 
 ---
 
@@ -2088,7 +2088,7 @@ F_{\text{MoE/token}}\approx128+32=160\ \text{FLOPs}.
 
 ### 9.1 Router logits 手算
 
-**【课程内容｜PDF 第 31 页｜视频 [53:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3183s)】**取 token hidden vector：
+**【课程内容｜PDF 第 31 页｜视频 [53:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3183s)】** 取 token hidden vector：
 
 ```math
 x=\begin{bmatrix}1&2\end{bmatrix},
@@ -2179,7 +2179,7 @@ g_2=\frac{e^2}{e^3+e^2}
 
 两者相加等于 1。这也等价于把变体 A 的两个选中概率除以 $`0.8348`$ 重新归一化。
 
-**【课程边界】**课件第 31 页专门区分“先在全体上产生 gate 再 top-$`k`$”与“top-$`k`$ 后才对选中项 softmax”的模型变体。阅读模型代码时必须查清顺序，不能看到 `topk` 就猜权重。
+**【课程边界】** 课件第 31 页专门区分“先在全体上产生 gate 再 top-$`k`$”与“top-$`k`$ 后才对选中项 softmax”的模型变体。阅读模型代码时必须查清顺序，不能看到 `topk` 就猜权重。
 
 ### 9.4 变体 C：sigmoid 分数、top-$`k`$、再归一化
 
@@ -2211,7 +2211,7 @@ sigmoid 是逐 expert 独立分数；softmax 从一开始就在 expert 之间竞
 
 ### 9.5 两个 expert 输出怎样合并
 
-**【补充例子】**假设对同一个 $`x`$：
+**【补充例子】** 假设对同一个 $`x`$：
 
 ```math
 E_2(x)=[2,0],
@@ -2257,7 +2257,7 @@ y_{\text{routed}}
 
 ### 9.6 Shared expert：永远开启的公共路径
 
-**【课程内容｜PDF 第 32–34 页｜视频 [54:27](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3267s)】****shared expert（共享专家）**绕过 router，对每个 token 都执行；routed experts 只在被选中时执行。
+**【课程内容｜PDF 第 32–34 页｜视频 [54:27](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3267s)】** **shared expert（共享专家）** 绕过 router，对每个 token 都执行；routed experts 只在被选中时执行。
 
 假设共享 expert 输出：
 
@@ -2284,9 +2284,9 @@ y_{\text{block}}=[1,2]+[0.3067,3.4244]=[1.3067,5.4244].
 
 ### 9.7 Fine-grained expert：把大专家切成更小块
 
-**fine-grained experts（细粒度专家）**是把一个传统大 expert 的中间宽度切成多个小 expert，让 router 可组合更细的功能块。
+**fine-grained experts（细粒度专家）** 是把一个传统大 expert 的中间宽度切成多个小 expert，让 router 可组合更细的功能块。
 
-**【补充例子】**仍取 $`d=4`$。一个中间宽 $`m=8`$ 的传统 expert 有：
+**【补充例子】** 仍取 $`d=4`$。一个中间宽 $`m=8`$ 的传统 expert 有：
 
 ```math
 2dm=2\times4\times8=64\ \text{parameters}.
@@ -2324,7 +2324,7 @@ m_{\text{small}}=8\times\frac14=2.
 (1+2)\times16=48.
 ```
 
-**【课程边界】**视频 [55:07](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3307s) 解释 DeepSeekMoE 把专家切细，并让一部分 shared experts 始终开启。课程展示的消融并不完全一致：DeepSeek 的实验支持 shared experts，而 [56:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3401s) 讲到 OlMoE 的受控实验没有发现同样明显的 shared-expert 收益；两边都较支持 fine-grained experts。不要把单个表格写成普遍定律。
+**【课程边界】** 视频 [55:07](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3307s) 解释 DeepSeekMoE 把专家切细，并让一部分 shared experts 始终开启。课程展示的消融并不完全一致：DeepSeek 的实验支持 shared experts，而 [56:41](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3401s) 讲到 OlMoE 的受控实验没有发现同样明显的 shared-expert 收益；两边都较支持 fine-grained experts。不要把单个表格写成普遍定律。
 
 ---
 
@@ -2332,7 +2332,7 @@ m_{\text{small}}=8\times\frac14=2.
 
 ### 10.1 五种 routing 先看同一张分数表
 
-**【课程内容｜PDF 第 27–30 页｜视频 [48:15](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2895s)】**routing function（路由函数）决定 token 与 expert 怎样配对。先用 4 个 token、2 个 expert 的 affinity score（亲和分数）建立共同例子：
+**【课程内容｜PDF 第 27–30 页｜视频 [48:15](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2895s)】** routing function（路由函数）决定 token 与 expert 怎样配对。先用 4 个 token、2 个 expert 的 affinity score（亲和分数）建立共同例子：
 
 | token | 对 $`E_1`$ 的分数 | 对 $`E_2`$ 的分数 |
 |---|---:|---:|
@@ -2345,7 +2345,7 @@ m_{\text{small}}=8\times\frac14=2.
 
 ### 10.2 Token-choice：每个 token 选自己的 top-$`k`$
 
-**token-choice routing（token 选择专家）**让每行独立取最大值。top-$`1`$：
+**token-choice routing（token 选择专家）** 让每行独立取最大值。top-$`1`$：
 
 | token | 比较 | 选择 |
 |---|---|---|
@@ -2363,11 +2363,11 @@ E2 ← D         （1 个 token）
 
 优点是每个 token 都得到自己最喜欢的 expert，算法和 batched top-k 简单。缺点是 expert 负载没有硬保证，本例就是 3:1。
 
-**【课程内容】**视频 [48:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2935s) 说明绝大多数课程时点的大型 MoE 使用 token-choice top-$`k`$；课程展示的 OlMoE 对比中，它通常比 expert-choice 更容易取得较好结果。这是经验结论，不是数学上支配所有方案。
+**【课程内容】** 视频 [48:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2935s) 说明绝大多数课程时点的大型 MoE 使用 token-choice top-$`k`$；课程展示的 OlMoE 对比中，它通常比 expert-choice 更容易取得较好结果。这是经验结论，不是数学上支配所有方案。
 
 ### 10.3 Expert-choice：每个 expert 选自己的 token
 
-**expert-choice routing（专家选择 token）**让每一列挑最喜欢的 token。若每个 expert 容量为 2：
+**expert-choice routing（专家选择 token）** 让每一列挑最喜欢的 token。若每个 expert 容量为 2：
 
 ```text
 E1 的前两名：A(9), B(8)
@@ -2385,9 +2385,9 @@ E2 的前两名：D(9), A(8)
 
 ### 10.4 Hash routing：不学习，按固定规则分配
 
-**hash routing（哈希路由）**用 token ID、字符串或其他固定特征算 expert ID，不训练路由矩阵。
+**hash routing（哈希路由）** 用 token ID、字符串或其他固定特征算 expert ID，不训练路由矩阵。
 
-**【补充例子】**给 A/B/C/D 编号 0/1/2/3，并用：
+**【补充例子】** 给 A/B/C/D 编号 0/1/2/3，并用：
 
 ```math
 \mathrm{expert\_id}=\mathrm{token\_id}\bmod2.
@@ -2404,11 +2404,11 @@ E2 的前两名：D(9), A(8)
 
 它得到完美 2:2，但完全没看前面的任务分数。优点是确定、便宜、容易复现；缺点是不能学会“这个上下文下哪个 expert 更有用”，哈希碰撞也可能把不相干 token 固定塞在一起。
 
-**【视频补充】**老师在 [50:36](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3036s) 说 hash routing 是论文中常见 baseline，能得到一些收益，但课程时点很少作为大型部署主方案。
+**【视频补充】** 老师在 [50:36](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3036s) 说 hash routing 是论文中常见 baseline，能得到一些收益，但课程时点很少作为大型部署主方案。
 
 ### 10.5 Global assignment：一次解全 batch 的匹配
 
-**global assignment（全局分配）**不是逐行或逐列贪心，而是在容量约束下最大化全部分数之和。
+**global assignment（全局分配）** 不是逐行或逐列贪心，而是在容量约束下最大化全部分数之和。
 
 仍要求每个 expert 恰收 2 个 token。一组全局可行解：
 
@@ -2438,13 +2438,13 @@ E2 ← C(6), D(9)
 
 这说明最优解可能不唯一。优点是能把质量分数和硬容量一起考虑；缺点是要收集全 batch 分数并求 matching/linear assignment（匹配/线性分配），延迟和实现复杂度高。
 
-**【视频补充】**视频 [52:16](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3136s) 解释这类方法会先计算 token-expert 全配对分数，再解全局最优匹配；课程判断是小规模论文中出现过，但相对 top-$`k`$ 很昂贵，未成为大规模共识。
+**【视频补充】** 视频 [52:16](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3136s) 解释这类方法会先计算 token-expert 全配对分数，再解全局最优匹配；课程判断是小规模论文中出现过，但相对 top-$`k`$ 很昂贵，未成为大规模共识。
 
 ### 10.6 RL routing：把选择当成策略动作
 
 **RL（reinforcement learning，强化学习）routing**把 router 当 policy（策略），expert 选择当 action（动作），任务 loss 改善当 reward（奖励）。
 
-这里先预告两个词：**loss（损失）**是衡量结果有多坏的数字，通常越小越好；**gradient（梯度）**描述参数发生极小变化时 loss 会怎样局部变化。下一节会从四则运算逐步定义它们。
+这里先预告两个词：**loss（损失）** 是衡量结果有多坏的数字，通常越小越好；**gradient（梯度）** 描述参数发生极小变化时 loss 会怎样局部变化。下一节会从四则运算逐步定义它们。
 
 一个最小采样表：
 
@@ -2457,11 +2457,11 @@ E2 ← C(6), D(9)
 
 对 A，我们没有同时运行 $`E_2`$，所以不知道“若选 $`E_2`$ 会怎样”。这就是 bandit（多臂老虎机）式 partial feedback（部分反馈）。REINFORCE 等算法可以估计离散动作梯度，但估计方差高，还要采样和 baseline。
 
-**【课程内容】**视频 [51:05](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3065s) 把路由描述成 bandit/RL 问题；[60:04](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3604s) 说明 RL 确实能工作，但梯度方差和复杂度让它没有成为常见方案。
+**【课程内容】** 视频 [51:05](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3065s) 把路由描述成 bandit/RL 问题；[60:04](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3604s) 说明 RL 确实能工作，但梯度方差和复杂度让它没有成为常见方案。
 
 ### 10.7 Loss、变化率与梯度下降：先用四则运算理解
 
-**loss（损失）**是一个表示“当前答案有多坏”的数字：通常越小越好。训练的目标不是把每个中间数字随便改小，而是调整模型参数，让最终 loss 下降。
+**loss（损失）** 是一个表示“当前答案有多坏”的数字：通常越小越好。训练的目标不是把每个中间数字随便改小，而是调整模型参数，让最终 loss 下降。
 
 先不使用微积分符号。假设某个可调数字 $`u`$ 从 $`2.00`$ 增加到 $`2.01`$：
 
@@ -2540,11 +2540,11 @@ Router 未选 logits 的梯度还取决于门控顺序：
 
 在排名边界处，mask 会跳变；常规实现不对这个跳变本身求导。训练仍能进行，是因为参数空间绝大多数点都不恰好在并列边界，而且每一步选中分支内仍有大量连续梯度。
 
-**【视频补充】**视频 [58:57](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3537s) 把训练时必须保持稀疏与 gating 不可微并列为核心困难；[69:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4151s) 总结实际做法是直接沿选中 experts 反向传播，再用 balancing 机制阻止选择塌缩。
+**【视频补充】** 视频 [58:57](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3537s) 把训练时必须保持稀疏与 gating 不可微并列为核心困难；[69:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4151s) 总结实际做法是直接沿选中 experts 反向传播，再用 balancing 机制阻止选择塌缩。
 
 ### 10.10 Jitter：在接近并列时探索
 
-**stochastic jitter（随机抖动）**是在 router score 上加入小噪声。若 $`E_1,E_2`$ 的分数是 `[2.000,1.999]`，一次噪声可能变成 `[1.997,2.003]`，让 $`E_2`$ 获得一次训练信号。
+**stochastic jitter（随机抖动）** 是在 router score 上加入小噪声。若 $`E_1,E_2`$ 的分数是 `[2.000,1.999]`，一次噪声可能变成 `[1.997,2.003]`，让 $`E_2`$ 获得一次训练信号。
 
 优点：
 
@@ -2557,7 +2557,7 @@ Router 未选 logits 的梯度还取决于门控顺序：
 - 噪声不保证带来更优 expert；
 - 后续消融发现并非所有设置都需要 jitter。
 
-**【课程内容】**视频 [60:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3647s) 介绍 Gaussian perturbation（高斯扰动）；[62:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3745s) 介绍 Switch 的均匀乘性 jitter，并说明后续 Google 工作移除了它，某些消融中不用反而更稳定。它是历史方案，不是必选配方。
+**【课程内容】** 视频 [60:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3647s) 介绍 Gaussian perturbation（高斯扰动）；[62:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3745s) 介绍 Switch 的均匀乘性 jitter，并说明后续 Google 工作移除了它，某些消融中不用反而更稳定。它是历史方案，不是必选配方。
 
 ---
 
@@ -2565,7 +2565,7 @@ Router 未选 logits 的梯度还取决于门控顺序：
 
 ### 11.1 Expert collapse 从哪里来
 
-**expert collapse（专家塌缩）**是大多数 token 都涌向极少数 expert；**expert starvation（专家饿死）**是其他 expert 长期收不到 token 和训练信号。
+**expert collapse（专家塌缩）** 是大多数 token 都涌向极少数 expert；**expert starvation（专家饿死）** 是其他 expert 长期收不到 token 和训练信号。
 
 正反馈链：
 
@@ -2581,11 +2581,11 @@ router 更常选它
 更多 token 涌入它，设备也开始过载
 ```
 
-**【课程内容｜视频 [63:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3808s)】**老师把这个 rich-get-richer（富者愈富）循环称为启发式训练必须解决的核心问题。
+**【课程内容｜视频 [63:28](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3808s)】** 老师把这个 rich-get-richer（富者愈富）循环称为启发式训练必须解决的核心问题。
 
 ### 11.2 Switch load-balancing loss 的完整定义
 
-**【课程内容｜PDF 第 40 页｜视频 [64:13](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3853s)】**Switch Transformer 的课件口径是 top-1 路由。一个 batch $`\mathcal{B}`$ 中有 $`T`$ 个 token、$`N`$ 个 expert：
+**【课程内容｜PDF 第 40 页｜视频 [64:13](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3853s)】** Switch Transformer 的课件口径是 top-1 路由。一个 batch $`\mathcal{B}`$ 中有 $`T`$ 个 token、$`N`$ 个 expert：
 
 ```math
 L_{\text{balance}}
@@ -2623,7 +2623,7 @@ $`f_i`$ 回答“最后真发了多少 token”，$`P_i`$ 回答“router 平均
 
 ### 11.3 $`T=8,N=4`$ 的完整概率表
 
-**【补充例子】**取 8 个 token 的 router 概率：
+**【补充例子】** 取 8 个 token 的 router 概率：
 
 | token | $`p_1`$ | $`p_2`$ | $`p_3`$ | $`p_4`$ | argmax |
 |---|---:|---:|---:|---:|---|
@@ -2879,11 +2879,11 @@ $`E_1`$ 越热门，正的 penalty gradient 越大。若用第 10.7 节定义的
 
 也就是“旧参数减去学习率乘梯度”，从而更强地下调通向热门 expert 的方向。概率实际由 softmax 耦合，不能把 $`p_i`$ 当完全独立旋钮；严格参数梯度还要乘 $`\partial p_i/\partial\theta`$，但上面的有限差分已经给出 balance 项希望推动的方向。
 
-**【视频补充】**老师在 [64:44](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3884s) 区分硬比例 $`f_i`$ 与软质量 $`P_i`$；[65:14](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3914s) 建议从导数理解公式，而不是把它当作第一性原理必然推出的唯一 loss。
+**【视频补充】** 老师在 [64:44](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3884s) 区分硬比例 $`f_i`$ 与软质量 $`P_i`$；[65:14](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3914s) 建议从导数理解公式，而不是把它当作第一性原理必然推出的唯一 loss。
 
 ### 11.6 Per-device balance 不等于重复做同一件事
 
-**per-expert balance（逐专家平衡）**关心每个 expert；**per-device balance（逐设备平衡）**先把同一设备上的 experts 聚合，再关心设备总负载。
+**per-expert balance（逐专家平衡）** 关心每个 expert；**per-device balance（逐设备平衡）** 先把同一设备上的 experts 聚合，再关心设备总负载。
 
 假设：
 
@@ -2910,11 +2910,11 @@ f_{\text{GPU1}}=0.125+0.125=0.25.
 
 所以第一台设备处理 75% token，第二台只处理 25%。设备 balance loss 可直接惩罚这个 3:1，而不要求同一设备内部的两个 expert 必须完全一样忙。
 
-**【课程内容｜PDF 第 41 页｜视频 [66:31](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3991s)】**DeepSeek v1/v2 的课程示例在 per-expert loss 外还加 per-device 聚合目标，因为系统吞吐由设备慢尾决定。视频后续问答 [71:12](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4272s) 解释：若把逐 expert 平衡强推到完全均匀，理论上设备也会均匀；但太强可能伤训练，因此可另加较弱而系统上更重要的 device 约束。
+**【课程内容｜PDF 第 41 页｜视频 [66:31](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=3991s)】** DeepSeek v1/v2 的课程示例在 per-expert loss 外还加 per-device 聚合目标，因为系统吞吐由设备慢尾决定。视频后续问答 [71:12](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4272s) 解释：若把逐 expert 平衡强推到完全均匀，理论上设备也会均匀；但太强可能伤训练，因此可另加较弱而系统上更重要的 device 约束。
 
 ### 11.7 DeepSeek V3 bias balancing 与“aux-loss-free”边界
 
-**【课程内容｜PDF 第 42 页｜视频 [67:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4031s)】**DeepSeek V3 风格给每个 expert 一个 selection bias（选择偏置）$`b_i`$。简化理解：
+**【课程内容｜PDF 第 42 页｜视频 [67:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4031s)】** DeepSeek V3 风格给每个 expert 一个 selection bias（选择偏置）$`b_i`$。简化理解：
 
 ```math
 \text{selection score}_i=s_i(x)+b_i.
@@ -2924,7 +2924,7 @@ f_{\text{GPU1}}=0.125+0.125=0.25.
 - expert 欠载：提高 $`b_i`$，让它更容易进入 top-$`k`$；
 - 这个 bias 用控制回路直接调负载，不必完全依赖一个会改变模型任务梯度的 per-expert aux loss。
 
-**【补充理解】**例如原分数 `[0.8,0.7]` 会选 $`E_1`$。若负载控制给 bias `[-0.2,+0.2]`：
+**【补充理解】** 例如原分数 `[0.8,0.7]` 会选 $`E_1`$。若负载控制给 bias `[-0.2,+0.2]`：
 
 ```math
 [0.8,0.7]+[-0.2,0.2]=[0.6,0.9],
@@ -2934,13 +2934,13 @@ f_{\text{GPU1}}=0.125+0.125=0.25.
 
 “auxiliary-loss-free balancing”不能缩写成“整个模型没有任何辅助平衡损失”。课程明确指出 V3 仍使用 complementary sequence-wise auxiliary loss（补充的逐序列辅助损失）防止极端不均衡。
 
-**sequence-wise（逐序列）**表示在每条序列内部统计路由，而不是只看跨许多样本的大 batch 总平均。若序列 A 的 token 全去 $`E_1`$、序列 B 全去 $`E_2`$，合在 batch 看可能 50:50，但每条序列内部都已塌缩；seq-wise aux 能看见这个问题。
+**sequence-wise（逐序列）** 表示在每条序列内部统计路由，而不是只看跨许多样本的大 batch 总平均。若序列 A 的 token 全去 $`E_1`$、序列 B 全去 $`E_2`$，合在 batch 看可能 50:50，但每条序列内部都已塌缩；seq-wise aux 能看见这个问题。
 
-**【视频补充】**老师在 [67:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4043s) 说 online bias 去掉了“一些”辅助损失，紧接着在 [67:31](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4051s) 强调仍需某些辅助项防极端失衡。本文因此不会把 V3 写成完全 aux-free。
+**【视频补充】** 老师在 [67:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4043s) 说 online bias 去掉了“一些”辅助损失，紧接着在 [67:31](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4051s) 强调仍需某些辅助项防极端失衡。本文因此不会把 V3 写成完全 aux-free。
 
 ### 11.8 为什么不能干脆删掉 balancing
 
-**【课程内容｜PDF 第 43 页｜视频 [67:52](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4072s)】**课程展示 OlMoE 的消融：移除 load-balancing loss 后，loss 曲线和 expert 利用率明显变差。视频 [68:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4118s) 描述几乎所有 token 涌到两个 expert，其余专家多数训练时间没有工作。
+**【课程内容｜PDF 第 43 页｜视频 [67:52](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4072s)】** 课程展示 OlMoE 的消融：移除 load-balancing loss 后，loss 曲线和 expert 利用率明显变差。视频 [68:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4118s) 描述几乎所有 token 涌到两个 expert，其余专家多数训练时间没有工作。
 
 这同时伤害两件事：
 
@@ -2982,7 +2982,7 @@ A=T\times k.
 - $`c`$：容量冗余倍率；
 - $`\lceil\cdot\rceil`$：向上取整，保证槽位不小于括号内实数。
 
-**实现边界：**不同系统可能向下取整、向最近整数取整，或向上对齐到 8/16/硬件 block 的倍数。有些论文还以 $`T/N`$ 而不是 $`Tk/N`$ 定义单路容量，因为它们给第一、第二路由设置独立 buffer，或把 $`k`$ 吸收到 capacity factor 中。看到论文中的 capacity factor 时，必须同时查 assignment 口径与 rounding rule（取整规则），不能只抄一个 $`c`$。后文所有数字使用“总 assignment 为 $`Tk`$、统一 buffer、最后 `ceil`”的约定。
+**实现边界：** 不同系统可能向下取整、向最近整数取整，或向上对齐到 8/16/硬件 block 的倍数。有些论文还以 $`T/N`$ 而不是 $`Tk/N`$ 定义单路容量，因为它们给第一、第二路由设置独立 buffer，或把 $`k`$ 吸收到 capacity factor 中。看到论文中的 capacity factor 时，必须同时查 assignment 口径与 rounding rule（取整规则），不能只抄一个 $`c`$。后文所有数字使用“总 assignment 为 $`Tk`$、统一 buffer、最后 `ceil`”的约定。
 
 ### 12.2 两个容量例子
 
@@ -3028,18 +3028,18 @@ N C=4\times7=28.
 
 ### 12.3 Overflow 后系统能做什么
 
-**overflow（溢出）**表示某 expert 收到的 assignment 超过 $`C`$。常见处理策略：
+**overflow（溢出）** 表示某 expert 收到的 assignment 超过 $`C`$。常见处理策略：
 
 1. **drop（丢弃）**：超过容量的 expert 分支返回零；若 block 有 residual，token 仍走残差主路；
 2. **reroute（改道）**：尝试 token 的第二或后续候选 expert；计算和实现更复杂；
 3. **增大 capacity factor**：少丢 token，但占更多 buffer，负载慢尾仍可能存在；
 4. **dropless（不丢 token）**：使用可变长度分组、动态内存或 block-sparse kernel 处理实际负载；现代系统更常采用，但仍要面对慢尾和峰值内存。
 
-**dispatch（派发）**是把 token activation 按 expert ID 分组并送过去；**combine（合并）**是把 expert 输出送回原 token 顺序，并按 gate weight 加权相加。drop 通常发生在 dispatch 容量决策时。
+**dispatch（派发）** 是把 token activation 按 expert ID 分组并送过去；**combine（合并）** 是把 expert 输出送回原 token 顺序，并按 gate weight 加权相加。drop 通常发生在 dispatch 容量决策时。
 
 ### 12.4 同一个 token，为什么换一批同伴就可能被 drop
 
-**【补充例子】**继续用 $`T=8,N=2,k=1,c=1`$，所以 $`E_1`$ 容量 $`C=4`$。假设容量冲突时保留 router score 最高的 4 个 assignment。
+**【补充例子】** 继续用 $`T=8,N=2,k=1,c=1`$，所以 $`E_1`$ 容量 $`C=4`$。假设容量冲突时保留 router score 最高的 4 个 assignment。
 
 目标 token X 的 hidden state、router score 和选择始终不变：
 
@@ -3104,9 +3104,9 @@ h_X'=[1,1]+[0,0]=[1,1].
 
 ### 12.5 课程中的 token-dropping 口头例子
 
-**【课程内容｜PDF 第 47 页｜视频 [75:17](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4517s)】**老师描述热门 expert 的队列不断增长，早期系统到容量上限后会丢 token。[75:42](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4542s) 开始具体说明超过队列后只能 drop；[76:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4563s) 指出其他用户的 query 也可能把你的 token 挤出队列。
+**【课程内容｜PDF 第 47 页｜视频 [75:17](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4517s)】** 老师描述热门 expert 的队列不断增长，早期系统到容量上限后会丢 token。[75:42](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4542s) 开始具体说明超过队列后只能 drop；[76:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4563s) 指出其他用户的 query 也可能把你的 token 挤出队列。
 
-**【视频补充边界】**视频 [76:21](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4581s) 随即强调现代 dropless 架构与常见 MoE 框架已经消除了很多这种静默丢弃问题。因此：
+**【视频补充边界】** 视频 [76:21](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4581s) 随即强调现代 dropless 架构与常见 MoE 框架已经消除了很多这种静默丢弃问题。因此：
 
 - token dropping 是某些 capacity-limited 实现的行为；
 - 它不是 MoE 数学定义的必然组成；
@@ -3128,7 +3128,7 @@ h_X'=[1,1]+[0,0]=[1,1].
 
 ### 13.1 Expert parallel 是怎样切模型的
 
-**【课程内容｜PDF 第 44 页｜视频 [71:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4298s)】****expert parallelism（专家并行）**把不同 expert 权重放到不同设备：
+**【课程内容｜PDF 第 44 页｜视频 [71:38](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4298s)】** **expert parallelism（专家并行）** 把不同 expert 权重放到不同设备：
 
 ```text
 GPU 0: E0 的权重
@@ -3149,7 +3149,7 @@ GPU 3: E3 的权重
 
 ### 13.2 All-to-all 是什么
 
-**all-to-all（全互换通信）**是一种 collective communication（集体通信）：每台设备可给每台其他设备发送不同数据块，同时也从它们接收不同数据块。
+**all-to-all（全互换通信）** 是一种 collective communication（集体通信）：每台设备可给每台其他设备发送不同数据块，同时也从它们接收不同数据块。
 
 MoE 一层的简化顺序：
 
@@ -3162,11 +3162,11 @@ MoE 一层的简化顺序：
 6. unpermute + combine：恢复原顺序并按 gate 合并
 ```
 
-**permutation（置换/重排）**只改变行顺序，不改变每行数值；**unpermute** 用反向索引恢复原 token 顺序。
+**permutation（置换/重排）** 只改变行顺序，不改变每行数值；**unpermute** 用反向索引恢复原 token 顺序。
 
 ### 13.3 4 个 token 的逐字节通信账
 
-**【补充例子】**只有 2 台 GPU：
+**【补充例子】** 只有 2 台 GPU：
 
 ```text
 GPU 0 持有 E0，也拥有输入 token t1,t2
@@ -3222,7 +3222,7 @@ Expert 输出 shape 仍 `[8]`，返回原设备再走一次相同流量：
 
 ### 13.4 为什么跨节点更难
 
-**node（节点）**是一台含若干加速器的服务器。节点内 GPU 往往有较快专用互联，跨节点要走网络，bandwidth（带宽，每秒可传多少 bytes）通常更小、latency（延迟，一次通信等待多久）通常更大。
+**node（节点）** 是一台含若干加速器的服务器。节点内 GPU 往往有较快专用互联，跨节点要走网络，bandwidth（带宽，每秒可传多少 bytes）通常更小、latency（延迟，一次通信等待多久）通常更大。
 
 若某 expert 在远端节点，activation 必须跨网络往返。总时间粗略受：
 
@@ -3236,11 +3236,11 @@ Expert 输出 shape 仍 `[8]`，返回原设备再走一次相同流量：
 
 Load imbalance 又会放大问题：上一节若 GPU 0 收 5 份、其余各 1 份，all-to-all 结束后大家还得等 GPU 0 做完。这个最慢参与者叫 **straggler（慢尾设备/任务）**。
 
-**【视频补充】**课堂问答 [42:26](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2546s) 已提前说明 expert parallel 是否划算高度依赖网络 topology；[44:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2640s) 说明设备切得越多，通信最终会限制并行扩展。
+**【视频补充】** 课堂问答 [42:26](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2546s) 已提前说明 expert parallel 是否划算高度依赖网络 topology；[44:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=2640s) 说明设备切得越多，通信最终会限制并行扩展。
 
 ### 13.5 为什么 sparse 不自动等于快
 
-**sparse（稀疏）**只表示许多 token-expert 配对没有计算。硬件速度还取决于剩下的工作能否排成足够大的规则矩阵乘。
+**sparse（稀疏）** 只表示许多 token-expert 配对没有计算。硬件速度还取决于剩下的工作能否排成足够大的规则矩阵乘。
 
 若 4 个 expert 分别收到 `[5,1,1,1]` 个 token，朴素实现会启动 4 次大小不同的小 GEMM（general matrix multiplication，通用矩阵乘）：
 
@@ -3255,9 +3255,9 @@ E4: [1,d] × [d,m]
 
 ### 13.6 MegaBlocks 在什么层级解决问题
 
-**【课程内容｜PDF 第 45 页｜视频 [72:56](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4376s)】****MegaBlocks** 是面向 MoE 的系统/算法库思路：把 token 按 expert 分组，把许多不同 expert 的乘法表示成 block-sparse matrix multiplication（块稀疏矩阵乘），尽量由少数大 kernel 高效完成。
+**【课程内容｜PDF 第 45 页｜视频 [72:56](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4376s)】** **MegaBlocks** 是面向 MoE 的系统/算法库思路：把 token 按 expert 分组，把许多不同 expert 的乘法表示成 block-sparse matrix multiplication（块稀疏矩阵乘），尽量由少数大 kernel 高效完成。
 
-**block-sparse（块稀疏）**不是一个个零元素随意散落，而是把矩阵分成规则小块，只计算有 token-expert 连接的块。课程第 45 页的三幅图从：
+**block-sparse（块稀疏）** 不是一个个零元素随意散落，而是把矩阵分成规则小块，只计算有 token-expert 连接的块。课程第 45 页的三幅图从：
 
 1. 多个独立小矩阵乘；
 2. 一个块对角大矩阵乘；
@@ -3267,13 +3267,13 @@ E4: [1,d] × [d,m]
 
 MegaBlocks 解决的是“怎样更好执行已选的稀疏路由”，不是替 router 选择，也不是数学上消除 all-to-all。若 block 很空、尺寸不适合硬件、索引开销大或通信主导，稀疏实现仍可能不如高利用率 dense GEMM。
 
-**【视频补充】**老师在 [73:14](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4394s) 从块对角与结构化稀疏解释合并计算，[73:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4427s) 把它概括为硬件—架构协同设计。
+**【视频补充】** 老师在 [73:14](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4394s) 从块对角与结构化稀疏解释合并计算，[73:47](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4427s) 把它概括为硬件—架构协同设计。
 
 ### 13.7 Activation down-projection 的字节收益
 
-**【课程内容｜PDF 第 46 页｜视频 [74:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4446s)】**课件用 Nemotron 3 的 LatentMoE 示例说明：在 all-to-all 前把 routed activation 从宽度 $`d`$ 下投影到较小宽度 $`r`$，通信后再恢复；shared expert 可保留较大本地宽度。
+**【课程内容｜PDF 第 46 页｜视频 [74:06](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4446s)】** 课件用 Nemotron 3 的 LatentMoE 示例说明：在 all-to-all 前把 routed activation 从宽度 $`d`$ 下投影到较小宽度 $`r`$，通信后再恢复；shared expert 可保留较大本地宽度。
 
-**down-projection（下投影）**是用学习矩阵把长向量映射成较短 latent vector（潜在向量），例如 `[d]→[r]`，其中 $`r<d`$。
+**down-projection（下投影）** 是用学习矩阵把长向量映射成较短 latent vector（潜在向量），例如 `[d]→[r]`，其中 $`r<d`$。
 
 先用第 13.3 节小例子，$`d=8\rightarrow r=2`$，BF16：
 
@@ -3340,7 +3340,7 @@ MegaBlocks 解决的是“怎样更好执行已选的稀疏路由”，不是替
 
 是否更快要比较“省下的网络时间”与“新增投影计算/信息损失”。当跨节点通信是瓶颈时，省 bytes 可能远比多做两个本地矩阵乘重要；当 expert 都在同一高速互联内，收益可能较小。
 
-**【视频补充】**老师在 [74:34](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4474s) 描述先对 residual stream 下投影，再发起 collective communication；[74:46](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4486s) 强调它在不把整个模型 hidden size 都缩小的情况下显著减少通信。
+**【视频补充】** 老师在 [74:34](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4474s) 描述先对 residual stream 下投影，再发起 collective communication；[74:46](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4486s) 强调它在不把整个模型 hidden size 都缩小的情况下显著减少通信。
 
 ### 13.9 本轮系统闭环
 
@@ -3366,7 +3366,7 @@ unpermute + gate-weighted combine
 
 ### 14.1 Router 为什么是数值敏感点
 
-**【课程内容｜PDF 第 48 页｜视频 [76:35](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4595s)】**router 同时包含：
+**【课程内容｜PDF 第 48 页｜视频 [76:35](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4595s)】** router 同时包含：
 
 1. 线性投影得到 logits；
 2. softmax 或 sigmoid；
@@ -3375,7 +3375,7 @@ unpermute + gate-weighted combine
 
 指数会放大差异，top-$`k`$ 又会把很小的排名变化变成离散 expert 切换，所以 router 常比普通线性层更怕舍入误差。
 
-**FP32（32-bit floating point，32 位浮点）**有 1 个符号位、8 个 exponent bits（指数位）和 23 个 fraction bits（小数/尾数存储位）。BF16 同样有 8 个指数位，但只有 7 个 fraction bits，所以数值范围接近 FP32，精细分辨率低得多；FP16 的指数范围也更小。
+**FP32（32-bit floating point，32 位浮点）** 有 1 个符号位、8 个 exponent bits（指数位）和 23 个 fraction bits（小数/尾数存储位）。BF16 同样有 8 个指数位，但只有 7 个 fraction bits，所以数值范围接近 FP32，精细分辨率低得多；FP16 的指数范围也更小。
 
 在数值 1 附近，BF16 相邻可表示数的间距约为：
 
@@ -3397,11 +3397,11 @@ unpermute + gate-weighted combine
 
 它仍不能保证训练永不发散，也不能代替 stable softmax（先减最大 logit）、合理初始化和 balancing。
 
-**【视频补充】**视频 [77:10](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4630s) 指出 MoE 新增的 router softmax 是额外数值风险；[77:35](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4655s) 给出只把 expert router 保持 FP32 的常见策略。
+**【视频补充】** 视频 [77:10](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4630s) 指出 MoE 新增的 router softmax 是额外数值风险；[77:35](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4655s) 给出只把 expert router 保持 FP32 的常见策略。
 
 ### 14.2 Router z-loss 的公式
 
-**【课程内容｜PDF 第 48–49 页】**设一个 batch 有 $`B`$ 个参与路由的 token、$`N`$ 个 expert，token $`i`$ 对 expert $`j`$ 的 router logit 是 $`z_j^{(i)}`$：
+**【课程内容｜PDF 第 48–49 页】** 设一个 batch 有 $`B`$ 个参与路由的 token、$`N`$ 个 expert，token $`i`$ 对 expert $`j`$ 的 router logit 是 $`z_j^{(i)}`$：
 
 ```math
 L_z
@@ -3425,7 +3425,7 @@ L_z
 
 ### 14.3 相同 softmax、不同 z-loss 的极小例
 
-**【补充例子】**只有两个 expert，先取：
+**【补充例子】** 只有两个 expert，先取：
 
 ```math
 z^{(1)}=[0,0].
@@ -3504,18 +3504,18 @@ L_z\approx1.1269^2\approx1.26997.
 
 它优化的是 log partition 尺度；第 11 节的 $`L_{\text{balance}}`$ 才显式使用 $`f_i`$ 统计 expert 负载。两者可同时存在，功能不能互换。
 
-**【视频补充】**视频 [77:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4669s) 把 z-loss 与早期 MoE router 稳定性联系起来；[78:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4680s) 提到课程展示的 OlMoE 消融中，移除 router z-loss 会出现更多 loss spikes。该曲线是特定训练设置证据，不表示任何 MoE 的最佳 $`\lambda_z`$ 都相同。
+**【视频补充】** 视频 [77:49](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4669s) 把 z-loss 与早期 MoE router 稳定性联系起来；[78:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4680s) 提到课程展示的 OlMoE 消融中，移除 router z-loss 会出现更多 loss spikes。该曲线是特定训练设置证据，不表示任何 MoE 的最佳 $`\lambda_z`$ 都相同。
 
 ### 14.5 为什么 sparse MoE 在小数据 fine-tuning 中更易过拟合
 
-**fine-tuning（微调）**是在预训练 checkpoint 上用较小目标数据继续训练。**overfitting（过拟合）**表示训练集表现继续改善，验证/新数据表现却恶化。
+**fine-tuning（微调）** 是在预训练 checkpoint 上用较小目标数据继续训练。**overfitting（过拟合）** 表示训练集表现继续改善，验证/新数据表现却恶化。
 
 MoE 的风险来自两层稀疏：
 
 - 总 expert 参数很多，小数据却不足以约束每套参数；
 - 每个 expert 只看到路由给自己的子集，单 expert 的有效样本比总 fine-tuning 集还少。
 
-**【补充例子】**只有 1000 个 fine-tuning token、8 个 expert、top-1。即使完美均匀，每个 expert 平均只看：
+**【补充例子】** 只有 1000 个 fine-tuning token、8 个 expert、top-1。即使完美均匀，每个 expert 平均只看：
 
 ```math
 1000/8=125\ \text{tokens}.
@@ -3525,12 +3525,12 @@ MoE 的风险来自两层稀疏：
 
 ### 14.6 课程给出的 fine-tuning 策略边界
 
-**【课程内容｜PDF 第 50 页｜视频 [78:21](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4701s)】**课程展示 sparse MoE 在小下游数据上出现较大 train-validation gap，并给出两类案例：
+**【课程内容｜PDF 第 50 页｜视频 [78:21](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4701s)】** 课程展示 sparse MoE 在小下游数据上出现较大 train-validation gap，并给出两类案例：
 
 1. Zoph 等工作的策略：冻结/少动 MoE experts，微调 non-MoE MLP 或 attention 等 dense 部分；视频 [78:57](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4737s) 提到 attention-only 等做法。
 2. DeepSeek 课程案例：使用约 1.4M SFT（supervised fine-tuning，有监督微调）样本，让数据量足以更新更多 MoE 参数；视频 [79:20](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4760s) 用“多用数据”解释这一路线。
 
-这些是课程时点策略，不是互斥定律。实际还可按验证集选择学习率、冻结范围、**regularization（正则化：给训练加入约束或噪声，降低模型死记小数据的倾向）**和 **early stopping（提前停止：验证集表现不再改善时停止训练，避免继续过拟合）**；具体做法必须依据模型与数据规模验证。
+这些是课程时点策略，不是互斥定律。实际还可按验证集选择学习率、冻结范围、**regularization（正则化：给训练加入约束或噪声，降低模型死记小数据的倾向）** 和 **early stopping（提前停止：验证集表现不再改善时停止训练，避免继续过拟合）**；具体做法必须依据模型与数据规模验证。
 
 ---
 
@@ -3538,7 +3538,7 @@ MoE 的风险来自两层稀疏：
 
 ### 15.1 什么被复用，什么必须新建
 
-**【课程内容｜PDF 第 51 页｜视频 [79:40](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4780s)】****upcycling（升级再利用）**从已经训练好的 dense model checkpoint 初始化 MoE，而不是从随机权重训练整个新模型。
+**【课程内容｜PDF 第 51 页｜视频 [79:40](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4780s)】** **upcycling（升级再利用）** 从已经训练好的 dense model checkpoint 初始化 MoE，而不是从随机权重训练整个新模型。
 
 典型步骤：
 
@@ -3552,7 +3552,7 @@ MoE 的风险来自两层稀疏：
 
 ### 15.2 两 expert 的极简例
 
-**【补充例子】**dense 模型中只有一个标量 FFN：
+**【补充例子】** dense 模型中只有一个标量 FFN：
 
 ```math
 E(x)=wx,
@@ -3613,11 +3613,11 @@ E_2(3)=5.97.
 - dense checkpoint 的缺陷也会被复制；
 - 若最终本来就计划大规模 MoE 训练，从一开始训练 MoE 可能更直接。
 
-**【视频补充】**老师在 [80:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4800s) 定义从 dense model 复制 MLP 并随机初始化 router；[80:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4823s) 说明随机路由与继续训练让 experts 分化。
+**【视频补充】** 老师在 [80:00](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4800s) 定义从 dense model 复制 MLP 并随机初始化 router；[80:23](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4823s) 说明随机路由与继续训练让 experts 分化。
 
 ### 15.4 MiniCPM 与 Qwen 只是课程时点案例
 
-**【课程内容｜PDF 第 52 页｜视频 [81:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4863s)】**MiniCPM 课程材料在总参数上有一个小冲突：PDF 第 52 页表格写 **13.6B**，而视频在约 81:15 口述为 **13.4B**。两者相差 0.2B；本笔记如实保留，不擅自说成完全一致。其余课程快照为：
+**【课程内容｜PDF 第 52 页｜视频 [81:03](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4863s)】** MiniCPM 课程材料在总参数上有一个小冲突：PDF 第 52 页表格写 **13.6B**，而视频在约 81:15 口述为 **13.4B**。两者相差 0.2B；本笔记如实保留，不擅自说成完全一致。其余课程快照为：
 
 - 从约 2.4B dense 模型 upcycle 到上述约 13.4B（视频）/13.6B（PDF）总参数；
 - top-$`k=2`$、8 experts；
@@ -3626,7 +3626,7 @@ E_2(3)=5.97.
 
 这些数字描述该实验，不代表 upcycling 普遍只需很少继续训练；520B tokens 本身已经很大。
 
-**【课程内容｜PDF 第 53 页】**Qwen MoE 课程快照：
+**【课程内容｜PDF 第 53 页】** Qwen MoE 课程快照：
 
 - 从 Qwen 1.8B 初始化；
 - top-$`k=4`$；
@@ -3641,7 +3641,7 @@ E_2(3)=5.97.
 
 ### 16.1 先把课件数字原样放在一起
 
-**【课程内容｜PDF 第 35、54–56 页】**下表只整理课件口径，不把型号快照写成架构定律：
+**【课程内容｜PDF 第 35、54–56 页】** 下表只整理课件口径，不把型号快照写成架构定律：
 
 | 版本 | 总参数 / 每 token active | routed experts | routed active | shared | fine-grained 口径 | 课件强调的新机制 |
 |---|---|---:|---:|---:|---|---|
@@ -3671,7 +3671,7 @@ V1 的另一处口径也要保留：第 35 页 active 列写 6，而第 54 页 `
 
 ### 16.4 V1：建立共享 + 细粒度原型
 
-**【课程内容｜视频 [82:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4953s)】**V1 已包含：
+**【课程内容｜视频 [82:33](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4953s)】** V1 已包含：
 
 - shared experts 负责公共加工；
 - fine-grained routed experts 提供更灵活组合；
@@ -3682,13 +3682,13 @@ V1 的另一处口径也要保留：第 35 页 active 列写 6，而第 54 页 `
 
 ### 16.5 V2：路由也必须尊重网络拓扑
 
-**top-M device routing（前 M 台设备路由）**先根据候选 expert 分数挑少数目标设备，再把 top-$`k`$ expert 限制在这些设备内。人话：不让一个 token 为 6 个 experts 横跨 6 台远端机器。
+**top-M device routing（前 M 台设备路由）** 先根据候选 expert 分数挑少数目标设备，再把 top-$`k`$ expert 限制在这些设备内。人话：不让一个 token 为 6 个 experts 横跨 6 台远端机器。
 
-**【补充例子】**4 台设备各放若干 expert，token 的 top-6 原本分散在设备 `{0,1,2,3}`。若 top-$`M=2`$ 先选设备 `{0,2}`，最终 routed experts 只能来自这两台，可能牺牲一点纯 score 最优，却减少通信扇出。
+**【补充例子】** 4 台设备各放若干 expert，token 的 top-6 原本分散在设备 `{0,1,2,3}`。若 top-$`M=2`$ 先选设备 `{0,2}`，最终 routed experts 只能来自这两台，可能牺牲一点纯 score 最优，却减少通信扇出。
 
-**communication balance（通信平衡）**不仅看每台设备收到多少 activation，也关注发出/返回流量。若一台机器总是净接收大量 token，它的链路和 expert 都可能成为慢尾。
+**communication balance（通信平衡）** 不仅看每台设备收到多少 activation，也关注发出/返回流量。若一台机器总是净接收大量 token，它的链路和 expert 都可能成为慢尾。
 
-**【课程内容｜视频 [82:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4975s)】**老师把 V2 的 top-M device routing 与 communication balancing 解释为“把系统目标写进训练设计”，并在 [83:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4991s) 强调成功训练不只有建模，还要尊重系统约束。
+**【课程内容｜视频 [82:55](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4975s)】** 老师把 V2 的 top-M device routing 与 communication balancing 解释为“把系统目标写进训练设计”，并在 [83:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=4991s) 强调成功训练不只有建模，还要尊重系统约束。
 
 ### 16.6 V3：改变 gate 与 balance，但不是完全无 aux
 
@@ -3700,7 +3700,7 @@ V3 课程快照继续 shared + fine-grained 设计，并加入：
 - per-expert online bias 调负载；
 - complementary seq-wise aux 防极端失衡。
 
-**【课程内容｜视频 [83:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5005s)】**老师描述 V3 的 balancing 变化，并在 [83:40](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5020s) 提到 sigmoid 加归一化的 gate 变化。这里仍沿用第 11.7 节的边界：“aux-loss-free”指主专家平衡策略，不代表训练目标里绝无辅助项。
+**【课程内容｜视频 [83:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5005s)】** 老师描述 V3 的 balancing 变化，并在 [83:40](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5020s) 提到 sigmoid 加归一化的 gate 变化。这里仍沿用第 11.7 节的边界：“aux-loss-free”指主专家平衡策略，不代表训练目标里绝无辅助项。
 
 ### 16.7 不要从这三行表推出错误定律
 
@@ -3715,7 +3715,7 @@ V3 课程快照继续 shared + fine-grained 设计，并加入：
 
 ### 17.1 普通 KV cache 的 shape 与字节
 
-**【课程内容｜PDF 第 57–58 页｜视频 [83:59](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5039s)】****MLA（Multi-head Latent Attention，多头潜在注意力）**先把 hidden state 压成低维 latent，再从 latent 生成 K/V。
+**【课程内容｜PDF 第 57–58 页｜视频 [83:59](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5039s)】** **MLA（Multi-head Latent Attention，多头潜在注意力）** 先把 hidden state 压成低维 latent，再从 latent 生成 K/V。
 
 先做一个单 head 教学例，忽略 batch：
 
@@ -3869,7 +3869,7 @@ $`n=4`$：
 
 这是简化教学口径，只比较单 head 的 content K/V 与 latent。真实 MLA 还会缓存小的 decoupled rotary key 分量，处理多头共享/投影，并可能有量化、对齐和额外 **metadata（元数据：不是向量内容本身、而是记录位置、分页或布局等管理信息的小数据）**，所以实际字节不能只套 4 倍。
 
-**【视频补充】**视频 [84:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5051s) 说明先生成低维 $`c`$，再由它生成 Q/K/V；[84:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5065s) 说明 KV cache 可只存更小的 $`c`$。
+**【视频补充】** 视频 [84:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5051s) 说明先生成低维 $`c`$，再由它生成 Q/K/V；[84:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5065s) 说明 KV cache 可只存更小的 $`c`$。
 
 ### 17.4 没有 RoPE 时，为什么能把 $`W^{UK}`$ 吸到 query 侧
 
@@ -3930,7 +3930,7 @@ q_s'c_t^\top=[1,1]\begin{bmatrix}3\\1\end{bmatrix}=3+1=4.
 
 ### 17.5 RoPE 为什么阻碍这次吸收
 
-**RoPE（Rotary Position Embedding，旋转位置编码）**的人话是：token 的位置决定一个旋转角度，位置不同，Q/K 向量就旋转不同角度；点积因而能感知两个位置的相对距离。令 $`R_s,R_t`$ 分别是 query 位置 $`s`$、key 位置 $`t`$ 的 rotation matrix（旋转矩阵）。继续使用前文 row-vector（行向量写在矩阵左边）约定：
+**RoPE（Rotary Position Embedding，旋转位置编码）** 的人话是：token 的位置决定一个旋转角度，位置不同，Q/K 向量就旋转不同角度；点积因而能感知两个位置的相对距离。令 $`R_s,R_t`$ 分别是 query 位置 $`s`$、key 位置 $`t`$ 的 rotation matrix（旋转矩阵）。继续使用前文 row-vector（行向量写在矩阵左边）约定：
 
 ```math
 q_s^{R}=q_sR_s,
@@ -3967,7 +3967,7 @@ q_sR_sR_1^\top(W^{UK})^\top
 
 #### 一个完整二维例子：位置 0 与位置 1 需要不同的 absorbed query
 
-**【补充例子】**下面是前一节 $`k=cW^{UK}`$、$`q'=q(W^{UK})^\top`$ 的二维缩小版，仍使用行向量口径。取：
+**【补充例子】** 下面是前一节 $`k=cW^{UK}`$、$`q'=q(W^{UK})^\top`$ 的二维缩小版，仍使用行向量口径。取：
 
 ```math
 c=[3,1],
@@ -4111,9 +4111,9 @@ k_t=[k_t^C;k_t^R],
 - 小的 rotary 部分 $`k_t^R`$ 显式带位置并缓存；
 - 总 cache 是“低维 $`c_t^{KV}`$ + 小 rotary key”，仍比完整 K/V 小。
 
-**【课程内容｜视频 [84:42](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5082s)】**老师指出 RoPE 与 latent caching 冲突，并在 [84:56](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5096s) 给出保留 non-latent positional dimensions 的解决方向。
+**【课程内容｜视频 [84:42](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5082s)】** 老师指出 RoPE 与 latent caching 冲突，并在 [84:56](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5096s) 给出保留 non-latent positional dimensions 的解决方向。
 
-**边界说明：**本节用单 head、小矩阵和 row-vector 推导。完整 DeepSeek MLA 还有 query compression、多头 projection、decoupled RoPE、权重吸收和实现融合；本节保证代数直觉正确，不冒充生产实现逐行复刻。
+**边界说明：** 本节用单 head、小矩阵和 row-vector 推导。完整 DeepSeek MLA 还有 query compression、多头 projection、decoupled RoPE、权重吸收和实现融合；本节保证代数直觉正确，不冒充生产实现逐行复刻。
 
 ---
 
@@ -4121,7 +4121,7 @@ k_t=[k_t^C;k_t^R],
 
 ### 18.1 Main next-token 与额外未来目标
 
-**【课程内容｜PDF 第 59 页｜视频 [85:04](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5104s)】****MTP（Multi-Token Prediction，多 token 预测）**在普通 next-token loss 外，增加轻量模块预测更远的未来 token。
+**【课程内容｜PDF 第 59 页｜视频 [85:04](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5104s)】** **MTP（Multi-Token Prediction，多 token 预测）** 在普通 next-token loss 外，增加轻量模块预测更远的未来 token。
 
 序列：
 
@@ -4176,7 +4176,7 @@ MTP 在训练时给 hidden state 一个额外信号：“不仅要足以预测 B
 - draft 接受率、验证 kernel 和额外模块成本共同决定加速；
 - 辅助头可在部署中丢弃，只保留训练收益，也可作为 draft 组件；必须查具体系统。
 
-**【视频补充】**视频 [85:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5111s) 定义一次预测多个未来 token；[85:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5125s) 提到内建 speculative decoder 的系统动机。
+**【视频补充】** 视频 [85:11](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5111s) 定义一次预测多个未来 token；[85:25](https://www.youtube.com/watch?v=cKSwj_qZ8Jg&t=5125s) 提到内建 speculative decoder 的系统动机。
 
 ### 18.4 “只做 one-token-ahead”怎样理解
 
@@ -4388,23 +4388,23 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
    第 $`i,j`$ 个元素是 $`q_i^\top k_j`$，表示 query 位置 $`i`$ 与 key 位置 $`j`$ 的点积分数。
 
-2. **答案：**第一乘法 `[n,d_k]×[d_k,n]` 产生 $`n^2`$ 个输出，每个点积含 $`d_k`$ 个乘法项，所以为 $`n^2d_k`$。第二乘法 `[n,n]×[n,d_v]` 产生 $`nd_v`$ 个输出，每个沿 $`n`$ 求和，所以为 $`n^2d_v`$。相加：
+2. **答案：** 第一乘法 `[n,d_k]×[d_k,n]` 产生 $`n^2`$ 个输出，每个点积含 $`d_k`$ 个乘法项，所以为 $`n^2d_k`$。第二乘法 `[n,n]×[n,d_v]` 产生 $`nd_v`$ 个输出，每个沿 $`n`$ 求和，所以为 $`n^2d_v`$。相加：
 
    $`n^2d_k+n^2d_v=n^2(d_k+d_v).`$
 
-3. **答案：**第 $`i`$ 个 query 能看 $`i`$ 个 key：
+3. **答案：** 第 $`i`$ 个 query 能看 $`i`$ 个 key：
 
    $`1+2+3+4+5+6+7+8=36.`$
 
-4. **答案：**前两行分别 1、2 条，从第 3 行到第 8 行各 3 条，共 6 行：
+4. **答案：** 前两行分别 1、2 条，从第 3 行到第 8 行各 3 条，共 6 行：
 
    $`1+2+6\times3=21.`$
 
-5. **答案：**原 local 表中 $`q_1,q_2,q_3`$ 已能看 key 1；$`q_4`$ 到 $`q_8`$ 共 5 个 query 新增到 key 1 的边：
+5. **答案：** 原 local 表中 $`q_1,q_2,q_3`$ 已能看 key 1；$`q_4`$ 到 $`q_8`$ 共 5 个 query 新增到 key 1 的边：
 
    $`21+5=26.`$
 
-6. **答案：**裸矩阵乘满足结合律，且中间不能插入不可交换的非线性。$`\rho`$ 为恒等时：
+6. **答案：** 裸矩阵乘满足结合律，且中间不能插入不可交换的非线性。$`\rho`$ 为恒等时：
 
    $`(QK^\top)V=Q(K^\top V).`$
 
@@ -4430,7 +4430,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
    $`k_t`$ 长 $`d_k`$、$`v_t`$ 长 $`d_v`$，所以外积和状态 shape 都是 `[d_k,d_v]`，与序列长度 $`t`$ 无关。
 
-10. **答案：**当前写入：
+10. **答案：** 当前写入：
 
     $`k_tv_t^\top =\begin{bmatrix}1\\0\end{bmatrix}[2,-1] =\begin{bmatrix}2&-1\\0&0\end{bmatrix}.`$
 
@@ -4440,17 +4440,17 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
 11. **答案：**$`\gamma=0`$ 时旧状态清空，只留当前写入；$`\gamma=1`$ 时旧状态完整保留，等于纯累加；$`\gamma=0.5`$ 时旧状态每经过一步乘一半，较早信息指数衰减。
 
-12. **答案：**令 $`\beta_t=0`$：
+12. **答案：** 令 $`\beta_t=0`$：
 
     $`S_t=\gamma_t(I-0\cdot kk^\top)S_{t-1}+0\cdot kv^\top =\gamma_tS_{t-1}.`$
 
     当前 token 不擦除也不写入，但若 $`\gamma_t<1`$，旧状态仍衰减；只有 $`\gamma_t=1`$ 时完全不变。
 
-13. **答案：**正交投影要求消除向量长度影响。非单位 $`k`$ 的 $`kk^\top`$ 带有 $`\|k\|^2`$ 缩放。精确投影矩阵为：
+13. **答案：** 正交投影要求消除向量长度影响。非单位 $`k`$ 的 $`kk^\top`$ 带有 $`\|k\|^2`$ 缩放。精确投影矩阵为：
 
     $`P_k=\frac{kk^\top}{k^\top k}.`$
 
-14. **答案：**hybrid：
+14. **答案：** hybrid：
 
     $`3\times21+36=99.`$
 
@@ -4462,11 +4462,11 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`45/144=0.3125=31.25\%.`$
 
-15. **答案：**若 indexer 仍给所有 query-key 候选打分，其主项为 $`O(n^2d_{idx})`$。DSA 的正式 attention 只做 $`O(nkd)`$，而 indexer 可低维、低精度，所以实测更便宜；但按 $`n`$ 的指数不能把第一项删除。
+15. **答案：** 若 indexer 仍给所有 query-key 候选打分，其主项为 $`O(n^2d_{idx})`$。DSA 的正式 attention 只做 $`O(nkd)`$，而 indexer 可低维、低精度，所以实测更便宜；但按 $`n`$ 的指数不能把第一项删除。
 
-16. **答案：**正式 attention 的候选集合中没有 key 3，所以本层无法直接读取 $`v_3`$。其他层/位置若已传播该信息可能间接补救，否则精确检索失败。这是 indexer recall error 的代价。
+16. **答案：** 正式 attention 的候选集合中没有 key 3，所以本层无法直接读取 $`v_3`$。其他层/位置若已传播该信息可能间接补救，否则精确检索失败。这是 indexer recall error 的代价。
 
-17. **答案：**参数：
+17. **答案：** 参数：
 
     $`dm+md=2dm.`$
 
@@ -4480,7 +4480,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`F\approx4\times4\times8=128\ \text{FLOPs/token}.`$
 
-19. **答案：**4 个 expert：
+19. **答案：** 4 个 expert：
 
     $`4\times64=256\ \text{parameters}.`$
 
@@ -4492,13 +4492,13 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`64+16=80.`$
 
-20. **答案：**一个 expert 主 FLOPs 为 128。top-1 是 128，top-2 是：
+20. **答案：** 一个 expert 主 FLOPs 为 128。top-1 是 128，top-2 是：
 
     $`2\times128=256.`$
 
     这里未加 router 与 combine 开销。
 
-21. **答案：**最大 logits 是 3 和 2，所以选 $`E_3,E_2`$。在 `[3,2]` 内 softmax：
+21. **答案：** 最大 logits 是 3 和 2，所以选 $`E_3,E_2`$。在 `[3,2]` 内 softmax：
 
     按第 2.5 节的计算器步骤，先分别按 `eˣ`：
 
@@ -4516,11 +4516,11 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`\begin{aligned} y&=0.2689[2,0]+0.7311[-1,4]\\ &=[0.5378,0]+[-0.7311,2.9244]\\ &=[-0.1933,2.9244]. \end{aligned}`$
 
-23. **答案：**top-$`k`$ 排名对 softmax 是单调的，所以可能选中相同 ID；但全体 softmax 的分母还含未选 experts，删掉后选中权重和小于 1。选中后 softmax 用新分母，让选中权重和等于 1，因此加权输出不同。
+23. **答案：** top-$`k`$ 排名对 softmax 是单调的，所以可能选中相同 ID；但全体 softmax 的分母还含未选 experts，删掉后选中权重和小于 1。选中后 softmax 用新分母，让选中权重和等于 1，因此加权输出不同。
 
-24. **答案：**shared expert 绕过 router，每个 token 都执行；routed expert 只有进入 top-$`k`$ 才执行。Shared 提供公共能力，但其参数/FLOPs 必须计入每 token active budget。
+24. **答案：** shared expert 绕过 router，每个 token 都执行；routed expert 只有进入 top-$`k`$ 才执行。Shared 提供公共能力，但其参数/FLOPs 必须计入每 token active budget。
 
-25. **答案：**小 expert 宽：
+25. **答案：** 小 expert 宽：
 
     $`8\times\frac14=2.`$
 
@@ -4528,21 +4528,21 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`2dm=2\times4\times2=16.`$
 
-26. **答案：**token-choice 让每个 token 选高分 experts，保证 token 获得偏好的路径，但 expert 负载可能失衡。expert-choice 让每个 expert 按容量选 token，负载天然受控，但 token 可能被多个 expert 重复选或完全漏掉。
+26. **答案：** token-choice 让每个 token 选高分 experts，保证 token 获得偏好的路径，但 expert 负载可能失衡。expert-choice 让每个 expert 按容量选 token，负载天然受控，但 token 可能被多个 expert 重复选或完全漏掉。
 
-27. **答案：**优点是无需学习、便宜、确定、易复现。局限是忽略上下文任务分数，无法学习更有用的路由，哈希碰撞还会固定绑定不相干 token。
+27. **答案：** 优点是无需学习、便宜、确定、易复现。局限是忽略上下文任务分数，无法学习更有用的路由，哈希碰撞还会固定绑定不相干 token。
 
-28. **答案：**它能在全 batch 容量约束下最大化总匹配分数，兼顾质量和平衡；代价是收集全配对分数并求匹配，通信、延迟和实现复杂度远高于局部 top-$`k`$。
+28. **答案：** 它能在全 batch 容量约束下最大化总匹配分数，兼顾质量和平衡；代价是收集全配对分数并求匹配，通信、延迟和实现复杂度远高于局部 top-$`k`$。
 
-29. **答案：**当 logits 排名交换或并列时，选中 expert ID 突然跳变，离散 mask 没有普通连续导数。固定 mask 的小区域内，选中 expert 输出与 gate 权重仍是连续函数，因此可正常反向传播。
+29. **答案：** 当 logits 排名交换或并列时，选中 expert ID 突然跳变，离散 mask 没有普通连续导数。固定 mask 的小区域内，选中 expert 输出与 gate 权重仍是连续函数，因此可正常反向传播。
 
-30. **答案：**未选 expert 没执行，所以其参数从该 token 的任务 loss 得 0 梯度。若先 top-$`k`$ 再只在选中集合 softmax，未选 router logits 也不在任务路径中，任务梯度为 0；balancing aux 等额外目标仍可能给 router 梯度。
+30. **答案：** 未选 expert 没执行，所以其参数从该 token 的任务 loss 得 0 梯度。若先 top-$`k`$ 再只在选中集合 softmax，未选 router logits 也不在任务路径中，任务梯度为 0；balancing aux 等额外目标仍可能给 router 梯度。
 
-31. **答案：**jitter 给接近并列的 experts 探索机会，避免某个分支永远无信号；但它增加随机性和不稳定来源，且后续实验并未总发现收益，所以是可验证的训练技巧而非必选数学条件。
+31. **答案：** jitter 给接近并列的 experts 探索机会，避免某个分支永远无信号；但它增加随机性和不稳定来源，且后续实验并未总发现收益，所以是可验证的训练技巧而非必选数学条件。
 
 32. **答案：**$`f_i`$ 是 hard argmax 后实际发给 expert $`i`$ 的 token 比例；$`P_i`$ 是 batch 中 router 对 expert $`i`$ 的平均软概率质量。
 
-33. **答案：**硬计数 `[4,2,1,1]` 除以 8：
+33. **答案：** 硬计数 `[4,2,1,1]` 除以 8：
 
     $`f=[0.5,0.25,0.125,0.125].`$
 
@@ -4558,7 +4558,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`L/\alpha=4\times0.2890625=1.15625.`$
 
-35. **答案：**先不用背偏导。固定 hard assignment，若一个 token 的 $`p_i(x)`$ 增加 $`\Delta p_i(x)=0.04`$，而 $`T=8`$：
+35. **答案：** 先不用背偏导。固定 hard assignment，若一个 token 的 $`p_i(x)`$ 增加 $`\Delta p_i(x)=0.04`$，而 $`T=8`$：
 
     $`\Delta P_i=\frac{0.04}{8}=0.005.`$
 
@@ -4576,11 +4576,11 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     上述数例也给出 $`0.1\times4\times0.5/8=0.025`$，两条路一致。$`f_i`$ 越大，正 penalty gradient 越大；若参数是 $`\theta`$，链式法则还要乘 $`\partial p_i/\partial\theta`$。Gradient descent 用 $`\theta_{new}=\theta_{old}-\eta\,\partial L/\partial\theta`$，即减去正梯度，因此更强地下调热门 expert 方向。Softmax 使各概率耦合，但总体方向仍成立。
 
-36. **答案：**系统吞吐由设备负载决定。多个 experts 可能共处一台设备；即使逐 expert 不完全均匀，只要设备总量平衡仍可高利用。反之某设备聚合多个热门 experts 会成为慢尾，所以需直接约束设备收发/计算。
+36. **答案：** 系统吞吐由设备负载决定。多个 experts 可能共处一台设备；即使逐 expert 不完全均匀，只要设备总量平衡仍可高利用。反之某设备聚合多个热门 experts 会成为慢尾，所以需直接约束设备收发/计算。
 
-37. **答案：**V3 用 online per-expert bias 取代主要 expert-level balancing aux，但课程明确仍保留 complementary seq-wise aux 防极端不均衡。“aux-loss-free”是局部机制名称，不是整个训练目标无 auxiliary loss。
+37. **答案：** V3 用 online per-expert bias 取代主要 expert-level balancing aux，但课程明确仍保留 complementary seq-wise aux 防极端不均衡。“aux-loss-free”是局部机制名称，不是整个训练目标无 auxiliary loss。
 
-38. **答案：**总 assignment：
+38. **答案：** 总 assignment：
 
     $`Tk=10\times2=20.`$
 
@@ -4592,11 +4592,11 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`NC=4\times7=28.`$
 
-39. **答案：**capacity 在 batch 内竞争。X 的 score 不变，但 Batch B 若多出分数更高、同去该 expert 的 token，X 的容量排名会下降到 $`C`$ 之外而被 drop。这是由同伴组成造成的 batch dependence。
+39. **答案：** capacity 在 batch 内竞争。X 的 score 不变，但 Batch B 若多出分数更高、同去该 expert 的 token，X 的容量排名会下降到 $`C`$ 之外而被 drop。这是由同伴组成造成的 batch dependence。
 
-40. **答案：**dropless kernel 避免因固定 capacity 静默删除 expert 分支，改善正确性与容量浪费；它仍不能消除热门 expert 的长队列、设备慢尾、峰值内存或 all-to-all 不均衡。
+40. **答案：** dropless kernel 避免因固定 capacity 静默删除 expert 分支，改善正确性与容量浪费；它仍不能消除热门 expert 的长队列、设备慢尾、峰值内存或 all-to-all 不均衡。
 
-41. **答案：**每 activation：
+41. **答案：** 每 activation：
 
     $`8\times2=16\ \text{bytes}.`$
 
@@ -4608,7 +4608,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`32+32=64\ \text{bytes}.`$
 
-42. **答案：**4 条远程 assignment：
+42. **答案：** 4 条远程 assignment：
 
     $`4\times16=64\ \text{bytes one-way}.`$
 
@@ -4616,7 +4616,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`64\times2=128\ \text{bytes}.`$
 
-43. **答案：**压缩前：
+43. **答案：** 压缩前：
 
     $`4096\times2=8192\ \text{bytes}=8\ \text{KiB}.`$
 
@@ -4626,7 +4626,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     缩减 $`8/1=8`$ 倍。
 
-44. **答案：**block-sparse 把许多 expert 工作装进少数较大的规则 kernel，减少小 GEMM 的启动并提高硬件占用。它仍有 permutation、索引、空块、通信和 shape 对齐开销；若矩阵太小或网络主导，仍可能不比 dense 快。
+44. **答案：** block-sparse 把许多 expert 工作装进少数较大的规则 kernel，减少小 GEMM 的启动并提高硬件占用。它仍有 permutation、索引、空块、通信和 shape 对齐开销；若矩阵太小或网络主导，仍可能不比 dense 快。
 
 45. **答案：**
 
@@ -4634,7 +4634,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     它惩罚 router log partition 的大绝对值，尤其抑制不改变 softmax 概率却让 logits 整体漂大的共同偏移。
 
-46. **答案：**两组 logits 的两个元素分别相等，所以各自 softmax 都是 `[0.5,0.5]`。按第 2.5 节，本文 `log` 是自然对数，且 $`\ln(ab)=\ln a+\ln b`$：
+46. **答案：** 两组 logits 的两个元素分别相等，所以各自 softmax 都是 `[0.5,0.5]`。按第 2.5 节，本文 `log` 是自然对数，且 $`\ln(ab)=\ln a+\ln b`$：
 
     $`\ln(e^0+e^0)=\ln(1+1)=\ln2\approx0.6931,`$
 
@@ -4644,21 +4644,21 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     $`L_z([10,10])=10.6931^2\approx114.3434.`$
 
-47. **答案：**z-loss 只看每个 token 的 log-sum-exp，不含 expert 的 batch 硬负载 $`f_i`$。所有 token 仍可偏向同一 expert。Load balance 显式使用 $`f_i,P_i`$ 或 online load statistics 调分配。
+47. **答案：** z-loss 只看每个 token 的 log-sum-exp，不含 expert 的 batch 硬负载 $`f_i`$。所有 token 仍可偏向同一 expert。Load balance 显式使用 $`f_i,P_i`$ 或 online load statistics 调分配。
 
-48. **答案：**FP32 有 23 个 fraction bits，能保留很接近的 logits 和更准确的 reduction；BF16 只有 7 个 fraction bits，top-$`k`$ 可能因舍入改变并列关系。在 1 附近的间距约：
+48. **答案：** FP32 有 23 个 fraction bits，能保留很接近的 logits 和更准确的 reduction；BF16 只有 7 个 fraction bits，top-$`k`$ 可能因舍入改变并列关系。在 1 附近的间距约：
 
     $`2^{-7}=0.0078125.`$
 
-49. **答案：**均匀时：
+49. **答案：** 均匀时：
 
     $`1000/8=125\ \text{tokens/expert}.`$
 
     每个 expert 可能有大量参数，125 个 token 仍远不足以约束它；实际路由还可能不均，让冷门 expert 数据更少，所以容易记住训练噪声。
 
-50. **答案：**通常复用 embedding、attention、norm、output head，并把 dense FFN 克隆成 experts；router 通常新建并随机/近均匀初始化。完全相同的 cloned experts 只复制了同一函数，没有 specialization；需扰动、不同路由数据和继续训练才能分化。
+50. **答案：** 通常复用 embedding、attention、norm、output head，并把 dense FFN 克隆成 experts；router 通常新建并随机/近均匀初始化。完全相同的 cloned experts 只复制了同一函数，没有 specialization；需扰动、不同路由数据和继续训练才能分化。
 
-51. **答案：**按课件标题：
+51. **答案：** 按课件标题：
 
     - V1：16B total / 2.8B active；
     - V2：236B total / 21B active；
@@ -4666,9 +4666,9 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     这些 active 是全模型每 token 路径，不只 routed expert 参数。
 
-52. **答案：**第 56 页视觉上明确印普通数字 `258`，不是 $`2^8`$；第 35 页表与模型口径写 256，因此最合理是把第 56 页 `258` 披露为课件误印，不能虚构“抽取丢上标”。同页标题是 V3、参数也是 V3 的 671B/37B，但正文印 `V2`，这是另一处页内标签笔误，也应明确披露而不是隐去。
+52. **答案：** 第 56 页视觉上明确印普通数字 `258`，不是 $`2^8`$；第 35 页表与模型口径写 256，因此最合理是把第 56 页 `258` 披露为课件误印，不能虚构“抽取丢上标”。同页标题是 V3、参数也是 V3 的 671B/37B，但正文印 `V2`，这是另一处页内标签笔误，也应明确披露而不是隐去。
 
-53. **答案：**普通 cache：
+53. **答案：** 普通 cache：
 
     $`n(d_k+d_v)\times2 =4(4+4)\times2 =64\ \text{bytes}.`$
 
@@ -4678,7 +4678,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     压缩 $`64/16=4`$ 倍。本题忽略小 rotary cache。
 
-54. **答案：**完整 key 为 `[3,1,3,-1]`：
+54. **答案：** 完整 key 为 `[3,1,3,-1]`：
 
     $`qk^\top=[1,2,0,1]\cdot[3,1,3,-1] =3+2+0-1=4.`$
 
@@ -4708,7 +4708,7 @@ balance、dropless kernel、expert parallel、FP32 router 等共同补救
 
     因为 $`q'_0\ne q'_1`$，单一固定 $`q'`$ 无法同时复用到所有历史位置；问题来自随 $`t`$ 改变的 $`R_t^\top`$。
 
-55. **答案：**额外 MTP module 在 A 预测 C，即主目标之外再远一步。按第 2.5 节，在计算器输入概率后按 `ln`，并取负号：
+55. **答案：** 额外 MTP module 在 A 预测 C，即主目标之外再远一步。按第 2.5 节，在计算器输入概率后按 `ln`，并取负号：
 
     $`-\log0.8\approx0.2231, \qquad -\log0.5\approx0.6931.`$
 

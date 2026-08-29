@@ -9,7 +9,9 @@ end and explicitly reporting that no understanding blockers remain.
 from __future__ import annotations
 
 import re
+import string
 import sys
+import unicodedata
 from pathlib import Path
 
 
@@ -36,7 +38,65 @@ GITHUB_UNSUPPORTED_MATH_DELIMITERS = {
 }
 GITHUB_FRAGILE_INLINE_MATH = re.compile(r"(?<![\\$`])\$(?![$`])")
 GITHUB_INDENTED_MATH_FENCE = re.compile(r"^[ \t]+```math[ \t]*$", re.MULTILINE)
+ASTERISK_RUN = re.compile(r"(?<!\\)\*{2,}")
 UNESCAPED_TABLE_PIPE = re.compile(r"(?<!\\)\|")
+
+
+def mask_markdown_code(text: str) -> str:
+    """Replace code with spaces while preserving offsets and line numbers."""
+
+    def replace_chars(match: re.Match[str], fill: str) -> str:
+        return re.sub(r"[^\r\n]", fill, match.group(0))
+
+    masked = re.sub(
+        r"```.*?```",
+        lambda match: replace_chars(match, " "),
+        text,
+        flags=re.DOTALL,
+    )
+    return re.sub(
+        r"(`+).*?\1",
+        lambda match: replace_chars(match, "x"),
+        masked,
+    )
+
+
+def is_github_punctuation(character: str) -> bool:
+    """Match the punctuation definition used by GitHub's CommonMark parser."""
+
+    return character in string.punctuation or unicodedata.category(character).startswith(
+        "P"
+    )
+
+
+def find_unspaced_strong(text: str) -> int | None:
+    """Return the offset of a strong delimiter that GitHub cannot disambiguate."""
+
+    masked = mask_markdown_code(text)
+    offset = 0
+    for raw_line, masked_line in zip(
+        text.splitlines(keepends=True), masked.splitlines(keepends=True)
+    ):
+        delimiters: list[int] = []
+        for match in ASTERISK_RUN.finditer(masked_line):
+            if len(match.group(0)) == 4 and masked_line.strip() != match.group(0):
+                return offset + match.start() + 2
+            delimiters.extend(
+                match.start() + 2 * index
+                for index in range(len(match.group(0)) // 2)
+            )
+        for closing in delimiters[1::2]:
+            following = closing + 2
+            if following >= len(raw_line) or raw_line[following].isspace():
+                continue
+            preceding_character = raw_line[closing - 1]
+            following_character = raw_line[following]
+            if is_github_punctuation(
+                preceding_character
+            ) and not is_github_punctuation(following_character):
+                return offset + following
+        offset += len(raw_line)
+    return None
 
 
 def check_note(path: Path) -> list[str]:
@@ -89,6 +149,14 @@ def check_note(path: Path) -> list[str]:
         errors.append(
             "使用 GitHub 可能按普通代码显示的缩进 math 围栏；"
             "列表内请改用单独一行的 $`...`$"
+        )
+
+    unspaced_strong = find_unspaced_strong(text)
+    if unspaced_strong is not None:
+        line = text.count("\n", 0, unspaced_strong) + 1
+        errors.append(
+            f"第 {line} 行的粗体结束标记后缺少分隔空格；"
+            "请在相邻文字或下一段粗体前添加空格，以便 GitHub 正确显示"
         )
 
     for line_number, line in enumerate(lines, 1):

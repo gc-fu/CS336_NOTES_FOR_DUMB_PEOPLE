@@ -1,7 +1,7 @@
 # CS336 Lecture 8：Parallelism II——ZeRO / FSDP、PP、TP、SP、EP、CP 与组合策略
 
-> **目标读者：**只会四则运算、刚知道“多张 GPU 可以一起训练”的初学者。  
-> **目标：**不看视频，也能手算 ZeRO/FSDP 显存与通信，追踪 PP/TP/SP/EP/CP 的 shape 与数据移动，并为一个模型组合并行 axes。  
+> **目标读者：** 只会四则运算、刚知道“多张 GPU 可以一起训练”的初学者。  
+> **目标：** 不看视频，也能手算 ZeRO/FSDP 显存与通信，追踪 PP/TP/SP/EP/CP 的 shape 与数据移动，并为一个模型组合并行 axes。  
 > **本讲官方 PDF：**[Stanford CS336 Lecture 8 PDF](https://github.com/stanford-cs336/lectures/blob/main/lecture_08.pdf)，73 页，课程标题为 *Parallelism Basics*。  
 > **官方视频：**[Stanford Online：Lecture 8](https://www.youtube.com/watch?v=6-cXp-aOmdg)。
 
@@ -11,7 +11,7 @@
 
 如果这是第一次学本讲：
 
-1. **先跳过 §0.2 的五分钟复习卡。**那是学完后压缩记忆用的，不是第一次建立概念用的。
+1. **先跳过 §0.2 的五分钟复习卡。** 那是学完后压缩记忆用的，不是第一次建立概念用的。
 2. 先读 §1–§2，弄清楚我们为什么需要多 GPU，以及 collective 到底搬了什么。
 3. 再读 §3–§4，把 naive data parallel 的训练和 16 bytes/param 一项一项算明白。
 4. 按 §5→§7 读 ZeRO-1、ZeRO-2、ZeRO-3；再按 §9→§19 读 PP、TP、SP、EP、CP。
@@ -39,7 +39,7 @@ ZeRO-3 / FSDP 连 parameter 也切
 **十个最重要结论：**
 
 1. **理想 compute scaling（计算扩展）：**$`M`$ 张同样快的 GPU 各做 $`1/M`$ 的工作，纯计算时间理想上降到 $`1/M`$；这只是上界，不包括通信和等待。
-2. **Naive data parallel（朴素数据并行）：**每张 GPU 拿不同样本，但持有完整 parameters、gradients、optimizer state；因此它能分计算，不能把这些静态模型状态除以 GPU 数。
+2. **Naive data parallel（朴素数据并行）：** 每张 GPU 拿不同样本，但持有完整 parameters、gradients、optimizer state；因此它能分计算，不能把这些静态模型状态除以 GPU 数。
 3. 在本讲常用的 16-byte 训练口径中，每参数静态账为：
 
    $`2+2+4+4+4=16\ \text{bytes/parameter}.`$
@@ -61,7 +61,7 @@ ZeRO-3 / FSDP 连 parameter 也切
 9. Dense 的正交 $`DP\times TP\times PP`$ 可相乘；MoE 的 TP/EP/ETP/EDP 可能复用或折叠 groups，不能数缩写盲乘。
 10. 配置的正确顺序是“先 fit，再量 throughput，最后做 failure recovery”；真实模型表只是课程时点快照，`??` 仍是未知。
 
-**第 28 页必须会背后的计算：**课件改用另一套 12 bytes/param 口径：bfloat16（常缩写 BF16）parameter 2、bfloat16 gradient 2、FP32（32-bit floating point）master 4、bfloat16 Adam $`m`$ 2、bfloat16 Adam $`v`$ 2。这里 $`m/v`$ 是优化器跨训练步骤保存的两份历史统计。8 张 80 GB A100 上，按十进制容量且不留任何余量：
+**第 28 页必须会背后的计算：** 课件改用另一套 12 bytes/param 口径：bfloat16（常缩写 BF16）parameter 2、bfloat16 gradient 2、FP32（32-bit floating point）master 4、bfloat16 Adam $`m`$ 2、bfloat16 Adam $`v`$ 2。这里 $`m/v`$ 是优化器跨训练步骤保存的两份历史统计。8 张 80 GB A100 上，按十进制容量且不留任何余量：
 
 ```text
 Baseline: 80 / 12       = 6.667B parameters
@@ -74,7 +74,7 @@ ZeRO-3:  80 / 1.5      = 53.333B
 
 ### 0.3 全讲因果链
 
-**【课程内容｜PDF 1–3、13–14 页】【视频补充】**老师在 [01:22](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=82s) 说明前半先复习 collective 与 networking，在 [11:07](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=667s) 转入并行算法主体。
+**【课程内容｜PDF 1–3、13–14 页】【视频补充】** 老师在 [01:22](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=82s) 说明前半先复习 collective 与 networking，在 [11:07](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=667s) 转入并行算法主体。
 
 完整课程的逻辑不是“记住一堆并行缩写”，而是连续回答四个问题：
 
@@ -159,10 +159,10 @@ ZeRO-3:  80 / 1.5      = 53.333B
 
 ### 1.1 两堵墙：compute 与 memory
 
-**【课程内容｜PDF 4–6 页】【视频补充｜[01:30](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=90s)】**训练大模型遇到两类不同的“不够”：
+**【课程内容｜PDF 4–6 页】【视频补充｜[01:30](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=90s)】** 训练大模型遇到两类不同的“不够”：
 
-1. **Compute（计算量/算力）不够。**单张 GPU 每秒只能完成有限次浮点运算。视频 [01:36](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=96s) 说，需要的计算超过单 chip 能提供的量，所以把许多机器连起来。
-2. **Memory（显存容量）不够。**模型和训练状态的 bytes 超过单张 GPU 能放下的量。视频 [01:55](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=115s) 把“模型装不下”列为第二个原因。
+1. **Compute（计算量/算力）不够。** 单张 GPU 每秒只能完成有限次浮点运算。视频 [01:36](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=96s) 说，需要的计算超过单 chip 能提供的量，所以把许多机器连起来。
+2. **Memory（显存容量）不够。** 模型和训练状态的 bytes 超过单张 GPU 能放下的量。视频 [01:55](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=115s) 把“模型装不下”列为第二个原因。
 
 这两堵墙不能混为一谈：
 
@@ -172,7 +172,7 @@ ZeRO-3:  80 / 1.5      = 53.333B
 
 ### 1.2 “线性计算扩展”到底是什么意思
 
-**【课程内容｜PDF 13 页】**设一张 GPU 每秒做 $`C`$ 次有效计算，$`M`$ 张相同 GPU 的理想总算力为：
+**【课程内容｜PDF 13 页】** 设一张 GPU 每秒做 $`C`$ 次有效计算，$`M`$ 张相同 GPU 的理想总算力为：
 
 ```math
 C_{\text{ideal,total}}=M\times C.
@@ -184,7 +184,7 @@ C_{\text{ideal,total}}=M\times C.
 - $`M`$：GPU 数量，没有单位。
 - $`C_{\text{ideal,total}}`$：理想总吞吐，单位仍是 FLOP/s。
 
-**四则运算例：**一张 GPU 每秒做 100 个训练工作单位，4 张的理想总量为：
+**四则运算例：** 一张 GPU 每秒做 100 个训练工作单位，4 张的理想总量为：
 
 ```math
 4\times100=400\ \text{units/s}.
@@ -196,11 +196,11 @@ C_{\text{ideal,total}}=M\times C.
 - 4 张理想耗时 $`800/400=2`$ 秒；
 - 理想 speedup（加速倍数）为 $`8/2=4`$。
 
-**Kernel（计算核）**是一次在GPU上执行某类底层计算的程序，例如一次矩阵乘或归约。**“理想”不等于承诺。**实际还要扣掉通信、同步、负载不均、kernel 效率下降、故障和尾部等待。$`M`$ 张 GPU 得到的实际加速通常小于 $`M`$。
+**Kernel（计算核）** 是一次在GPU上执行某类底层计算的程序，例如一次矩阵乘或归约。**“理想”不等于承诺。** 实际还要扣掉通信、同步、负载不均、kernel 效率下降、故障和尾部等待。$`M`$ 张 GPU 得到的实际加速通常小于 $`M`$。
 
 ### 1.3 “线性显存扩展”到底是什么意思
 
-**【课程内容｜PDF 13 页】**如果所有必须长期保存的状态都能平均 shard（切片）到 $`M`$ 张 GPU，理想上每张只存 $`1/M`$：
+**【课程内容｜PDF 13 页】** 如果所有必须长期保存的状态都能平均 shard（切片）到 $`M`$ 张 GPU，理想上每张只存 $`1/M`$：
 
 ```math
 \text{memory per rank}=\frac{S}{M}.
@@ -256,7 +256,7 @@ Naive data parallel 主要解决前者。ZeRO 的三阶段逐步修补后者。
 
 ### 2.1 Collective 是“一群 ranks 共同调用的通信动作”
 
-**【课程内容｜PDF 7 页】【视频补充｜[02:44](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=164s)】**本讲不逐包分析网络，而在 collective communication primitive（集合通信原语）层面记账。
+**【课程内容｜PDF 7 页】【视频补充｜[02:44](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=164s)】** 本讲不逐包分析网络，而在 collective communication primitive（集合通信原语）层面记账。
 
 - **Rank**：一个分布式进程在某个通信组里的编号。
 - **Collective**：组内多个 ranks 必须以匹配方式参与的通信操作。
@@ -285,7 +285,7 @@ Naive data parallel 主要解决前者。ZeRO 的三阶段逐步修补后者。
 
 ### 2.3 手算 all-reduce = reduce-scatter + all-gather 的逻辑结果
 
-**【课程内容｜PDF 8 页】【视频补充｜[03:14](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=194s)】**设四个 rank 各有长度 4 的向量：
+**【课程内容｜PDF 8 页】【视频补充｜[03:14](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=194s)】** 设四个 rank 各有长度 4 的向量：
 
 | rank | 输入向量 |
 |---:|---|
@@ -357,7 +357,7 @@ Reduce can be implemented as two steps: reduce-scatter and all-gather
 
 ### 2.6 Topology 是“谁能沿什么路径和谁通信”
 
-**Topology（拓扑）**描述 devices 与 switches 的连接关系。连接图会影响：
+**Topology（拓扑）** 描述 devices 与 switches 的连接关系。连接图会影响：
 
 - 一条消息要经过多少 hops（跳）；
 - 多组通信能否并发；
@@ -388,7 +388,7 @@ Google 的 TPU v4 官方文档进一步说明其 3D mesh 可以在特定 slice s
 
 ### 2.8 GPU switched/fat-tree 与 all-to-all 的含义
 
-**【课程内容｜PDF 9–10 页】【视频补充｜[05:48](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=348s)】**视频用一种对比心智模型：GPU 系统更偏 switched/fat-tree 风格；[05:54](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=354s) 解释底层 GPU 先高速互连，pods 再通过 leaf/spine switches 连接。
+**【课程内容｜PDF 9–10 页】【视频补充｜[05:48](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=348s)】** 视频用一种对比心智模型：GPU 系统更偏 switched/fat-tree 风格；[05:54](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=354s) 解释底层 GPU 先高速互连，pods 再通过 leaf/spine switches 连接。
 
 - **Switch（交换机）**：在多个端口之间转发数据的设备。
 - **Fat tree（胖树）**：越往上可能配置越多聚合带宽，避免树根过细。
@@ -400,7 +400,7 @@ Google 的 TPU v4 官方文档进一步说明其 3D mesh 可以在特定 slice s
 
 ### 2.9 TPU8i/t 与架构演化：只按课程时点理解
 
-**【课程内容｜PDF 11 页】【视频补充】**老师在 [07:37](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=457s) 提到当天发布的 TPU8i/t；[07:46](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=466s) 把 TPU8i 的图解释为更接近 tree；[08:14](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=494s) 又说训练用 TPU8t 的跨 rack 网络更像 switched fabric，[08:25](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=505s) 点名 Virgo 网络。
+**【课程内容｜PDF 11 页】【视频补充】** 老师在 [07:37](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=457s) 提到当天发布的 TPU8i/t；[07:46](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=466s) 把 TPU8i 的图解释为更接近 tree；[08:14](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=494s) 又说训练用 TPU8t 的跨 rack 网络更像 switched fabric，[08:25](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=505s) 点名 Virgo 网络。
 
 这些是课程发布当天的解读，PDF 自己还写了 “maybe for MoEs?”。正确记法是：
 
@@ -410,7 +410,7 @@ Google 的 TPU v4 官方文档进一步说明其 3D mesh 可以在特定 slice s
 
 **【课程内容｜PDF 12 页】**
 
-**Domain（域）**在这里指能通过某一类互连、以某种性能边界直接参与通信的一组 accelerators。**Domain size** 就是组内 accelerator 数。
+**Domain（域）** 在这里指能通过某一类互连、以某种性能边界直接参与通信的一组 accelerators。**Domain size** 就是组内 accelerator 数。
 
 更大高速域有好处：更多 ranks 可用高带宽通信。代价也会增加：
 
@@ -625,7 +625,7 @@ GPU 越多，**集群里副本越多**，但单卡静态模型状态没有从 16
 
 ### 4.1 Parameter、gradient、master weight、moment 分别是什么
 
-**【课程内容｜PDF 17–18 页】【视频补充｜[13:33](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=813s)】**训练不能只保存“模型参数”。第一次出现的五类状态如下：
+**【课程内容｜PDF 17–18 页】【视频补充｜[13:33](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=813s)】** 训练不能只保存“模型参数”。第一次出现的五类状态如下：
 
 1. **Parameter（参数）**：模型当前用于 forward 的权重。
 2. **Gradient（梯度）**：backward 算出的更新方向；通常每个 parameter 对应一个 gradient 元素。
@@ -633,7 +633,7 @@ GPU 越多，**集群里副本越多**，但单卡静态模型状态没有从 16
 4. **First moment $`m`$（一阶矩）**：Adam 保存的、类似历史 gradients 指数移动平均的状态。
 5. **Second moment $`v`$（二阶矩）**：Adam 保存的、类似历史 gradient squares 指数移动平均的状态。
 
-**Optimizer（优化器）**是根据 gradient 更新 parameter 的算法。**Optimizer state（优化器状态）**是它跨 step 记住的辅助数据。本讲 16-byte 口径把 FP32 master weight、Adam $`m`$、Adam $`v`$ 都计入 optimizer state。
+**Optimizer（优化器）** 是根据 gradient 更新 parameter 的算法。**Optimizer state（优化器状态）** 是它跨 step 记住的辅助数据。本讲 16-byte 口径把 FP32 master weight、Adam $`m`$、Adam $`v`$ 都计入 optimizer state。
 
 视频 [13:55](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=835s) 开始给经验内存口径；[14:48](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=888s) 把 accumulator、first moment、second moment 统称 optimizer state。
 
@@ -663,7 +663,7 @@ GPU 越多，**集群里副本越多**，但单卡静态模型状态没有从 16
 
 ### 4.3 16 bytes 的完整加法
 
-**【课程内容｜PDF 17 页】**本节采用课件的高精度 Adam 状态口径：
+**【课程内容｜PDF 17 页】** 本节采用课件的高精度 Adam 状态口径：
 
 | 每个参数对应的状态 | dtype | bytes/parameter |
 |---|---|---:|
@@ -750,14 +750,14 @@ K=4+4+4=12.
 
 ### 4.5 这 16 bytes 没算什么
 
-**【补充理解】**这只是一个静态、理想的模型状态账，没有包括：
+**【补充理解】** 这只是一个静态、理想的模型状态账，没有包括：
 
 - **Activation（激活）**：forward 为 backward 保留的中间 tensor；
 - 临时 **GEMM（General Matrix Multiply，通用稠密矩阵乘）**/attention **workspace（计算期间临时使用的显存工作区）**；
 - collective 的 send/receive buffer；
 - allocator（显存分配器）预留和 fragmentation（碎片）；
 - **CUDA**（NVIDIA GPU编程与运行时平台）context、kernel library 与通信库自身占用；
-- **NCCL（NVIDIA Collective Communications Library）**的通信context；它负责GPU collective，但具体算法仍由版本和拓扑选择；
+- **NCCL（NVIDIA Collective Communications Library）** 的通信context；它负责GPU collective，但具体算法仍由版本和拓扑选择；
 - gradient accumulation、loss、embedding 临时输出等额外 tensor。
 
 因此：
@@ -772,7 +772,7 @@ K=4+4+4=12.
 
 ### 4.6 p18 的完整 $`K=12,\Psi=7.5B,N_d=64`$ 显存表
 
-**【课程内容｜PDF p18；高分辨率逐格核验】**课件这里用：
+**【课程内容｜PDF p18；高分辨率逐格核验】** 课件这里用：
 
 - $`K=12`$：每参数 optimizer-state bytes；
 - $`\Psi=7.5B=7.5\times10^9`$：模型参数数；
@@ -839,7 +839,7 @@ K=4+4+4=12.
 
 ### 4.7 ZeRO 到底缩写什么、做什么
 
-**ZeRO（Zero Redundancy Optimizer，零冗余优化器）**的核心不是把数据删掉，而是：
+**ZeRO（Zero Redundancy Optimizer，零冗余优化器）** 的核心不是把数据删掉，而是：
 
 > 同一份训练状态不必在每个 data-parallel rank 都长期保留完整副本；把它切成 shards，让不同 rank 各自负责一部分，需要完整值时再通信。
 
@@ -891,7 +891,7 @@ K=4+4+4=12.
 
 ### 5.3 Step 1–2：计算 gradient，再 reduce-scatter 给 owner
 
-**【课程内容｜PDF 20 页】【视频补充】**视频 [17:23](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1043s) 开始四步流程；[17:33](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1053s) 进入 gradient reduce-scatter；[17:46](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1066s) 说明每个 worker 只需拿与自己负责参数对应的 gradient。
+**【课程内容｜PDF 20 页】【视频补充】** 视频 [17:23](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1043s) 开始四步流程；[17:33](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1053s) 进入 gradient reduce-scatter；[17:46](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1066s) 说明每个 worker 只需拿与自己负责参数对应的 gradient。
 
 先逐元素 SUM：
 
@@ -1141,7 +1141,7 @@ M_{\text{Z2}}
 - activations；
 - allocator 预留和通信 overlap 引入的同时驻留。
 
-**Peak memory（峰值显存）**是整个时间线上最高的一瞬间，不是训练 step 结束后还留着多少。因此 ZeRO-2 “不长期 materialize 完整全模型 gradient”不等于任何瞬间都只有精确 $`2P/N`$ gradient bytes。
+**Peak memory（峰值显存）** 是整个时间线上最高的一瞬间，不是训练 step 结束后还留着多少。因此 ZeRO-2 “不长期 materialize 完整全模型 gradient”不等于任何瞬间都只有精确 $`2P/N`$ gradient bytes。
 
 ### 6.6 ZeRO-2 通信为什么仍约 $`2P`$
 
@@ -1163,7 +1163,7 @@ P+P=2P.
 
 **【课程内容｜PDF 24–28 页】【视频补充】**
 
-**FSDP（Fully Sharded Data Parallel，全分片数据并行）**让每个 data-parallel rank 长期只保留 parameter、gradient、optimizer state 的 shard；轮到某个模块计算时，再临时 all-gather 该模块的完整参数。
+**FSDP（Fully Sharded Data Parallel，全分片数据并行）** 让每个 data-parallel rank 长期只保留 parameter、gradient、optimizer state 的 shard；轮到某个模块计算时，再临时 all-gather 该模块的完整参数。
 
 视频 [20:25](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1225s) 把最后一级称为最复杂的推进；[20:36](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1236s) 开始 shard parameters；[20:49](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1249s) 说按计算图需要来发送/请求参数；[21:04](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1264s) 将其称为 ZeRO stage 3，也称 FSDP。
 
@@ -1233,7 +1233,7 @@ Backward 顺序与 forward 相反：先 Layer 1，再 Layer 0。
 
 ### 7.5 为什么是 forward AG + backward AG + RS ≈ $`3P`$
 
-**【课程内容｜PDF 25、27 页】【视频补充｜[22:18](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1338s)】**对全模型把各层相加：
+**【课程内容｜PDF 25、27 页】【视频补充｜[22:18](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1338s)】** 对全模型把各层相加：
 
 1. Forward 前 all-gather parameters：约 $`P`$；
 2. Backward 前再次 all-gather parameters：约 $`P`$；
@@ -1263,7 +1263,7 @@ DDP/ZeRO-1/2 则是：
 \frac{3(N-1)P/N}{2(N-1)P/N}=\frac32=1.5.
 ```
 
-所以第 27 页写 ZeRO-3 约 1.5× communication cost。这个比值假设：相同 dtype payload、相同 bandwidth 模型、忽略每次 collective latency 和额外 **metadata（描述 tensor/通信的辅助信息）**及 buffer。
+所以第 27 页写 ZeRO-3 约 1.5× communication cost。这个比值假设：相同 dtype payload、相同 bandwidth 模型、忽略每次 collective latency 和额外 **metadata（描述 tensor/通信的辅助信息）** 及 buffer。
 
 ### 7.6 Prefetch、free 与 overlap：怎样把通信藏在计算后面
 
@@ -1336,7 +1336,7 @@ M_{\text{Z3}}
 
 ### 7.9 第 28 页为何从 16 bytes 改成 12 bytes
 
-**【课程内容｜PDF 28 页】【视频补充｜[27:55](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1675s)】**这一页为了展示更省状态的训练口径，改用：
+**【课程内容｜PDF 28 页】【视频补充｜[27:55](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1675s)】** 这一页为了展示更省状态的训练口径，改用：
 
 | 状态 | dtype | bytes/parameter |
 |---|---|---:|
@@ -1550,7 +1550,7 @@ B_{\text{local}}=\frac{B}{M}.
 
 因此课件 p29 与视频 [29:08](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1748s) 的第一层意思是：固定 $`B=8`$ 时，朴素 DP 最多让 8 个 rank 各拿 1 个样本。
 
-但“把 batch 调大”也不是无限免费的。**Critical batch size（临界批大小）**是一个经验边界：batch 增大到某个范围后，新增样本提供的梯度信息越来越重复，继续加 batch 未必等比例减少达到目标效果所需的 optimizer updates。视频 [29:19](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1759s) 强调，机器更多时会遇到 diminishing returns，也就是收益递减。
+但“把 batch 调大”也不是无限免费的。**Critical batch size（临界批大小）** 是一个经验边界：batch 增大到某个范围后，新增样本提供的梯度信息越来越重复，继续加 batch 未必等比例减少达到目标效果所需的 optimizer updates。视频 [29:19](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1759s) 强调，机器更多时会遇到 diminishing returns，也就是收益递减。
 
 这不是说“任何模型的临界批大小都相同”。它取决于模型、数据、优化器、学习率 schedule 和训练阶段。
 
@@ -1570,7 +1570,7 @@ B_{\text{local}}=\frac{B}{M}.
 2. ZeRO-3 可以切 parameters，但没有自动切小每层 activation。
 3. 如果序列很长或 batch 很大，activation 仍可能成为 **OOM（out of memory，显存不足而失败）** 来源。
 
-> **材料内部口述校正：**视频约 [30:16](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1816s) 附近有一句听起来像 “stage 2 cuts parameter memory”。这与 p18、p30 的表和本讲前面的公式冲突；按 ZeRO 的正式定义，ZeRO-2 不 shard parameters，ZeRO-3 才 shard parameters。应把那句视为口头滑误，不能据此改写算法。
+> **材料内部口述校正：** 视频约 [30:16](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=1816s) 附近有一句听起来像 “stage 2 cuts parameter memory”。这与 p18、p30 的表和本讲前面的公式冲突；按 ZeRO 的正式定义，ZeRO-2 不 shard parameters，ZeRO-3 才 shard parameters。应把那句视为口头滑误，不能据此改写算法。
 
 ### 8.4 Model parallel 与 ZeRO-3 搬运的对象不同
 
@@ -1876,7 +1876,7 @@ p36 的横轴是 batch size，纵轴画出随机器规模变化的可扩展趋�
 
 **【课程内容｜PDF p37–38｜视频 [36:35](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=2195s)】**
 
-**Schedule（调度）**就是为每个 stage 排出 forward/backward 的执行顺序。相同的层切分，换 schedule 后会改变：
+**Schedule（调度）** 就是为每个 stage 排出 forward/backward 的执行顺序。相同的层切分，换 schedule 后会改变：
 
 - bubble；
 - 同时存活的 activations；
@@ -2585,7 +2585,7 @@ factor 8 就来自：
 
 如果在 §13.2 的 ring send 量上再把 receive 也加进 endpoint traffic，则会从 factor 8 变成 factor 16。若 collective 采用 tree 或其他算法，steps 与实际 link traffic 也会不同。
 
-所以 §13.2 只是用常见 ring training 口径复现 p43 的 8；课件页本身没有把物理算法和端点计数逐项写出。它不是“所有 NCCL 实现用 **profiler（记录运行时间、通信和资源行为的分析工具）**必然测到的精确字节数”。比较两个公式时要保证：
+所以 §13.2 只是用常见 ring training 口径复现 p43 的 8；课件页本身没有把物理算法和端点计数逐项写出。它不是“所有 NCCL 实现用 **profiler（记录运行时间、通信和资源行为的分析工具）** 必然测到的精确字节数”。比较两个公式时要保证：
 
 - 都数 logical payload，或都数 physical link traffic；
 - 都是 per rank，或都是 aggregate；
@@ -2705,7 +2705,7 @@ backward 若发同 shape 的 $`dX`$：
 
 前面算过的 parameters、gradients、optimizer states，大多是训练期间长期存在的 **static model state（静态模型状态）**。它们像一直放在仓库里的箱子。
 
-**Dynamic activation memory（动态激活内存）**会随 forward/backward 进度改变：
+**Dynamic activation memory（动态激活内存）** 会随 forward/backward 进度改变：
 
 1. forward 逐层产生 activations；
 2. backward 尚未到某层前，某些 activation 仍需保留；
@@ -2737,7 +2737,7 @@ M_{\text{base}}
 - $`a`$：number of attention heads，注意力头数；
 - $`t`$：tensor-parallel size；本式尚未使用，下一式才出现。
 
-**最重要的 bytes 口径：**原论文 Table 2 明确说这些公式给的是 bytes。$`34`$ 和 $`5`$ 已经把论文所假设的训练 activation、精度与保存项折算进系数；这里不能再把整个结果乘一次“BF16 2 bytes”，否则会重复计算。
+**最重要的 bytes 口径：** 原论文 Table 2 明确说这些公式给的是 bytes。$`34`$ 和 $`5`$ 已经把论文所假设的训练 activation、精度与保存项折算进系数；这里不能再把整个结果乘一次“BF16 2 bytes”，否则会重复计算。
 
 这些系数不是 Transformer 永恒常数。论文针对其 GPT-like Transformer、普通多头注意力、当时的实现与 activation 保存方案推导。GQA（grouped-query attention，共享较少 K/V heads）、SwiGLU（带门控的 FFN）、不同 dropout、不同 kernel 或 dtype 都可能改系数。
 
@@ -3056,7 +3056,7 @@ M_{\text{TP+SP+selective}}
 
 ### 15.4 FlashAttention 去掉什么、没有去掉什么
 
-**HBM（High Bandwidth Memory，高带宽显存）**是GPU旁用于存放大tensor的主显存，容量大于片上存储，但数据搬运较慢。**Online softmax（在线softmax）**指不一次保存全部scores，而是分块维护running maximum、指数和与加权分子；§19.4会从三个数手算。**FlashAttention** 是一种精确 attention kernel：把 Q/K/V 分块搬入片上存储，用 online softmax 逐块更新，不把完整 $`[s,s]`$ attention score/probability 矩阵写入 HBM；backward 时重算所需块或利用小型统计量。
+**HBM（High Bandwidth Memory，高带宽显存）** 是GPU旁用于存放大tensor的主显存，容量大于片上存储，但数据搬运较慢。**Online softmax（在线softmax）** 指不一次保存全部scores，而是分块维护running maximum、指数和与加权分子；§19.4会从三个数手算。**FlashAttention** 是一种精确 attention kernel：把 Q/K/V 分块搬入片上存储，用 online softmax 逐块更新，不把完整 $`[s,s]`$ attention score/probability 矩阵写入 HBM；backward 时重算所需块或利用小型统计量。
 
 因此在 p46/p49 的教学账中，可以消掉长期保存的 $`5as/h`$ quadratic term。但它没有做到：
 
@@ -3124,7 +3124,7 @@ $`k`$ 越大，持久边界更少；但 backward 重建一个 segment 时，临�
 
 **【课程内容｜PDF p48–49｜视频 [49:20](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=2960s)】【论文来源：[Korthikanti et al. 2022](https://arxiv.org/abs/2205.05198)】**
 
-**Sequence parallel（SP，序列并行）**在本讲特指：与 tensor parallel 配合，把 LayerNorm、dropout、residual/input 等 pointwise 区域的 activations 沿 sequence 轴分片。
+**Sequence parallel（SP，序列并行）** 在本讲特指：与 tensor parallel 配合，把 LayerNorm、dropout、residual/input 等 pointwise 区域的 activations 沿 sequence 轴分片。
 
 **Pointwise over sequence（对序列逐 token）**：token 0 的这个操作不需要读取 token 1 的值。
 
@@ -3640,7 +3640,7 @@ groups：
 | 0 | $`Q_0,Q_1`$ | $`(K_0,V_0),(K_1,V_1)`$ |
 | 1 | $`Q_2,Q_3`$ | $`(K_2,V_2),(K_3,V_3)`$ |
 
-**Causal mask（因果遮罩）**要求 position $`i`$ 只能看 $`j\le i`$ 的 keys：
+**Causal mask（因果遮罩）** 要求 position $`i`$ 只能看 $`j\le i`$ 的 keys：
 
 | query | 最终允许 keys |
 |---:|---|
@@ -3727,7 +3727,7 @@ e^0=e^0=e^0=1,
 
 #### Online softmax 怎样保留全局分母
 
-**Online softmax（在线softmax）**不是平均local outputs；它为每个query逐块维护：
+**Online softmax（在线softmax）** 不是平均local outputs；它为每个query逐块维护：
 
 - running maximum；
 - running exponential sum；
@@ -3909,7 +3909,7 @@ s/c=4/2=2\ \text{tokens per rank}.
 
 **【课程内容｜PDF p56，6倍原分辨率复核｜视频64:04–66:19】【一手推导：[How to Scale Your Model](https://jax-ml.github.io/scaling-book/training/)】**
 
-这页只给一个Transformer MLP layer做模型，并注明忽略gating einsum；这里的 **MP** 指model/tensor parallel，不是pipeline parallel。**Einsum（Einstein summation，爱因斯坦求和写法）**用字母下标描述tensor乘加；“gating einsum”是门控/路由相关的额外tensor乘加，p56明确没有把它计入本表。
+这页只给一个Transformer MLP layer做模型，并注明忽略gating einsum；这里的 **MP** 指model/tensor parallel，不是pipeline parallel。**Einsum（Einstein summation，爱因斯坦求和写法）** 用字母下标描述tensor乘加；“gating einsum”是门控/路由相关的额外tensor乘加，p56明确没有把它计入本表。
 
 #### 六个符号先逐个固定
 
@@ -3950,7 +3950,7 @@ W_{in}:[D,F],\qquad W_{out}:[F,D].
 1. $`[B,D]\times[D,F]\to[B,F]`$；每个输出格要做$`D`$次multiply-add，总共有$`BDF`$个multiply-add。
 2. $`[B,F]\times[F,D]\to[B,D]`$；同样有$`BDF`$个multiply-add。
 
-一个 **multiply-add（乘加）**是“先乘一次，再加一次”，课件按$`1+1=2`$ FLOPs记。因此一个矩阵乘是：
+一个 **multiply-add（乘加）** 是“先乘一次，再加一次”，课件按$`1+1=2`$ FLOPs记。因此一个矩阵乘是：
 
 ```math
 BDF\times2=2BDF\ \text{FLOPs}.
@@ -3991,9 +3991,9 @@ p56按bfloat16每元素2 bytes记，所以两矩阵本体共：
 2DF\times2=4DF\ \text{bytes}.
 ```
 
-- **FSDP forward的$`4DF`$：**依次AG $`W_{in}`$与$`W_{out}`$。两个完整bfloat16矩阵的逻辑payload合计就是$`4DF`$ bytes。
-- **FSDP backward的$`8DF`$：**以一个矩阵为例，为算输入梯度要AG它的weight，payload为$`2DF`$ bytes；算完本地weight gradient后要RS，gradient也是$`2DF`$ bytes。因此一个矩阵是$`2DF+2DF=4DF`$，两个矩阵是$`2\times4DF=8DF`$。
-- **普通DP backward的$`8DF`$：**没有forward weight AG；但两个完整gradient各做一次all-reduce。该页的一维有效带宽模型把一次all-reduce记为约“tensor bytes的2倍”，所以$`2`$个矩阵$`\times2DF`$ bytes/矩阵$`\times2=8DF`$。
+- **FSDP forward的$`4DF`$：** 依次AG $`W_{in}`$与$`W_{out}`$。两个完整bfloat16矩阵的逻辑payload合计就是$`4DF`$ bytes。
+- **FSDP backward的$`8DF`$：** 以一个矩阵为例，为算输入梯度要AG它的weight，payload为$`2DF`$ bytes；算完本地weight gradient后要RS，gradient也是$`2DF`$ bytes。因此一个矩阵是$`2DF+2DF=4DF`$，两个矩阵是$`2\times4DF=8DF`$。
+- **普通DP backward的$`8DF`$：** 没有forward weight AG；但两个完整gradient各做一次all-reduce。该页的一维有效带宽模型把一次all-reduce记为约“tensor bytes的2倍”，所以$`2`$个矩阵$`\times2DF`$ bytes/矩阵$`\times2=8DF`$。
 
 这里的AG是all-gather，RS是reduce-scatter。以上$`4DF/8DF`$是课件在**有效双向带宽**下的一阶逻辑payload账，不是任意网络上每条link实际经过的wire bytes。真实值还会带$`(p-1)/p`$、ring/tree算法、mesh axes、分块、重叠与协议开销；缓存forward权重而不在backward重取，也会用更多显存换通信。
 
@@ -4097,13 +4097,13 @@ B/N=\text{global batch tokens divided by total chips},
 
 也就是每chip分到的平均tokens。纵轴是$`R=T_{math}/T_{comms}`$，采用 **log scale（对数刻度）**：相同竖直距离代表乘相同倍数，例如$`0.1\to1\to10`$，而不是每格加同一个数。黑色水平虚线是$`R=1`$。
 
-- **MP only，橙线：**近似水平且低于1；因为compute与activation communication都随$`B`$一起增长，比值在该模型里近似不变。
-- **FSDP only，蓝线：**随$`B/N`$近似线性升高，约在850跨过1。视频65:20说明大batch时FSDP可compute-bound；65:40说明batch变小时会跌入communication-bound。
-- **FSDP+MP，绿线：**优化$`X/Y`$后随$`B/N`$约按平方根升高，约在400跨过1；视频65:51说加入MP把可用区推向更小batch。
+- **MP only，橙线：** 近似水平且低于1；因为compute与activation communication都随$`B`$一起增长，比值在该模型里近似不变。
+- **FSDP only，蓝线：** 随$`B/N`$近似线性升高，约在850跨过1。视频65:20说明大batch时FSDP可compute-bound；65:40说明batch变小时会跌入communication-bound。
+- **FSDP+MP，绿线：** 优化$`X/Y`$后随$`B/N`$约按平方根升高，约在400跨过1；视频65:51说加入MP把可用区推向更小batch。
 
 #### 为什么优化后的混合曲线随$`\sqrt{B}`$增长
 
-**“优化$`X/Y`$”只是在固定总设备数$`N`$下选择mesh形状：多少chips放在FSDP轴$`X`$、多少放在MP轴$`Y`$。它不改变batch $`B`$，也不改变模型的$`D`$或$`F`$。**始终有：
+**“优化$`X/Y`$”只是在固定总设备数$`N`$下选择mesh形状：多少chips放在FSDP轴$`X`$、多少放在MP轴$`Y`$。它不改变batch $`B`$，也不改变模型的$`D`$或$`F`$。** 始终有：
 
 ```math
 XY=N.
@@ -4290,7 +4290,7 @@ MoE 可出现 DP、PP、attention TP、EP、ETP、EDP、CP。可是：
 - SP 常绑定 attention TP；
 - parallel folding 会让 attention 与 MoE layer 使用不同 group layouts。
 
-**World size（全局进程数）**是一次分布式job中全部ranks的数量。看到 `TP=2, EP=32, PP=8` 时，不能在不知道 DP/ETP/group reuse 时就断言world size为 $`2\times32\times8`$；先查完整配置和group construction。
+**World size（全局进程数）** 是一次分布式job中全部ranks的数量。看到 `TP=2, EP=32, PP=8` 时，不能在不知道 DP/ETP/group reuse 时就断言world size为 $`2\times32\times8`$；先查完整配置和group construction。
 
 ### 21.6 3D/4D 的本质不是数名字
 
@@ -4374,7 +4374,7 @@ Megatron 的实践建议约 [67:26](https://www.youtube.com/watch?v=6-cXp-aOmdg&
 DP\times TP\times PP=32\times1\times1=32\ \text{GPUs}.
 ```
 
-**18.4B：**TP刚到8，PP仍为1：
+**18.4B：** TP刚到8，PP仍为1：
 
 ```math
 32\times8\times1=256\ \text{GPUs}.
@@ -4446,9 +4446,9 @@ DP\times TP\times PP=32\times1\times1=32\ \text{GPUs}.
 
 **【课程内容｜PDF p63｜视频 [72:46](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=4366s)】**
 
-- **课件/口述：**讲者立刻自我纠正：模型是 OLMo，训练数据集是 Dolma；约7B模型使用 FSDP，具体 accelerator 数忘记了。
+- **课件/口述：** 讲者立刻自我纠正：模型是 OLMo，训练数据集是 Dolma；约7B模型使用 FSDP，具体 accelerator 数忘记了。
 - **一手核对：**[OLMo 技术报告](https://arxiv.org/abs/2402.00838) 与 [Dolma 数据集论文](https://arxiv.org/abs/2402.00159) 支持“OLMo 是模型、Dolma 是语料”的边界。
-- **不能推出：**TP/PP/EP/CP degree；p63 的 “probably fits intra-node” 是课程推测，不是报告中的保证。课件写 `FDSP`，视觉上是字母顺序笔误，应读作 FSDP。
+- **不能推出：** TP/PP/EP/CP degree；p63 的 “probably fits intra-node” 是课程推测，不是报告中的保证。课件写 `FDSP`，视觉上是字母顺序笔误，应读作 FSDP。
 
 ### 23.3 DeepSeek LLM 与 DeepSeek-V3 不是一套配置
 
@@ -4596,9 +4596,9 @@ TP=4,\quad PP=4,\quad CP=1,\quad EP=8,\quad \text{GPUs}=256.
 
 **【课程内容｜PDF p59–61｜视频 [70:47](https://www.youtube.com/watch?v=6-cXp-aOmdg&t=4247s)】**
 
-**Linear compute scaling（线性计算扩展）**的理想是：GPU 数翻倍，单位时间完成的总计算近似翻倍。现实会被 communication、bubble、load imbalance 和 failures 拉低。
+**Linear compute scaling（线性计算扩展）** 的理想是：GPU 数翻倍，单位时间完成的总计算近似翻倍。现实会被 communication、bubble、load imbalance 和 failures 拉低。
 
-**MFU（Model FLOPs Utilization，模型浮点运算利用率）**常写成：
+**MFU（Model FLOPs Utilization，模型浮点运算利用率）** 常写成：
 
 ```math
 MFU=

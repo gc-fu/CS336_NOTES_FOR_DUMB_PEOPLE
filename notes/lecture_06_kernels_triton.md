@@ -5,7 +5,7 @@
 > 视频：[Lecture 6](https://www.youtube.com/watch?v=xnDHaNUvHBg)（约 86:36）  
 > 官方可执行讲义：[lecture_06.py](https://github.com/stanford-cs336/lectures/blob/main/lecture_06.py)
 
-> **资料核验说明：**本讲没有 PDF。任务上下文中的旧 raw 行数记录是 671 行，但 2026-08-28 抓取的官方 `main` 页面显示 744 行、554 LOC（Lines of Code，代码行；这里是不把部分空行/注释计入的口径），2026-04-15 首次发布提交 `15d7589` 的同一文件也为 744 个物理行。本笔记以当前官方 **744 行**版本为覆盖基准，不能为了凑旧数字删掉后 73 行。视频主字幕使用人工轨 `English (United States)`，语言代码 `en-US`、非自动生成，共 1552 个 segments（字幕片段）；末段从 86:34 开始，约在 86:36 结束。自动轨 `English (auto-generated)` 只用于确认轨道存在，没有作为主字幕。
+> **资料核验说明：** 本讲没有 PDF。任务上下文中的旧 raw 行数记录是 671 行，但 2026-08-28 抓取的官方 `main` 页面显示 744 行、554 LOC（Lines of Code，代码行；这里是不把部分空行/注释计入的口径），2026-04-15 首次发布提交 `15d7589` 的同一文件也为 744 个物理行。本笔记以当前官方 **744 行**版本为覆盖基准，不能为了凑旧数字删掉后 73 行。视频主字幕使用人工轨 `English (United States)`，语言代码 `en-US`、非自动生成，共 1552 个 segments（字幕片段）；末段从 86:34 开始，约在 86:36 结束。自动轨 `English (auto-generated)` 只用于确认轨道存在，没有作为主字幕。
 
 本讲使用四种来源标签：
 
@@ -57,19 +57,19 @@
 | 602–676 | fused matmul+ReLU Triton wrapper/kernel、分隔 | §14–15 |
 | 677–744 | 测试 helper、GeLU/softmax reference、mean、PTX 输出、入口 | §16.5 |
 
-其中 **PTX（Parallel Thread Execution，并行线程执行）**是 NVIDIA 定义的 GPU 虚拟指令集/中间汇编：Triton 源码会编译成 PTX，再由驱动变成具体 GPU 的机器指令。它不是 Python，也不是最终硬件二进制；正式代码推导在 §10。
+其中 **PTX（Parallel Thread Execution，并行线程执行）** 是 NVIDIA 定义的 GPU 虚拟指令集/中间汇编：Triton 源码会编译成 PTX，再由驱动变成具体 GPU 的机器指令。它不是 Python，也不是最终硬件二进制；正式代码推导在 §10。
 
 ---
 
 ## 0. 五分钟复习卡与第一次阅读方法
 
-> **第一次阅读不要从复习卡硬背。**请先读 §1，把每个存储层想成不同远近的仓库；再读 §2–5，最后读 §6。第二遍复习再回这里。
+> **第一次阅读不要从复习卡硬背。** 请先读 §1，把每个存储层想成不同远近的仓库；再读 §2–5，最后读 §6。第二遍复习再回这里。
 
 ### 0.1 一句话主线
 
-**Kernel（核函数）**是一次交给 GPU 并行执行的小程序。写对只需要理解 grid、block、thread；写快还必须让 warp 少分叉、让 SM 保持足够可运行工作、让 shared memory 少 bank conflict、让 HBM 访问合并，并用 benchmark/profile 实测而不是凭感觉。
+**Kernel（核函数）** 是一次交给 GPU 并行执行的小程序。写对只需要理解 grid、block、thread；写快还必须让 warp 少分叉、让 SM 保持足够可运行工作、让 shared memory 少 bank conflict、让 HBM 访问合并，并用 benchmark/profile 实测而不是凭感觉。
 
-**【课程代码｜行 13–36｜视频 [00:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=19s)】**老师把本讲定位为 Lecture 5 的继续：Lecture 5 讲 GPU 性能的高层模型，本讲会进入代码、benchmarking（基准计时）、profiling（性能剖析）和 Triton kernels。
+**【课程代码｜行 13–36｜视频 [00:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=19s)】** 老师把本讲定位为 Lecture 5 的继续：Lecture 5 讲 GPU 性能的高层模型，本讲会进入代码、benchmarking（基准计时）、profiling（性能剖析）和 Triton kernels。
 
 ### 0.2 全讲因果链
 
@@ -154,9 +154,9 @@ grid 分成 blocks/CTAs，block 分成 threads
 
 ### 1.1 Kernel 到底是什么
 
-**Kernel（核函数）**不是操作系统内核。GPU 语境下，它是 CPU 一次提交给 GPU、由许多 GPU threads 并行执行的函数。一次 **kernel launch（核函数启动）**就是 CPU 把“运行哪个 kernel、用多大的 grid/block、参数地址是什么”排进 GPU 工作队列。
+**Kernel（核函数）** 不是操作系统内核。GPU 语境下，它是 CPU 一次提交给 GPU、由许多 GPU threads 并行执行的函数。一次 **kernel launch（核函数启动）** 就是 CPU 把“运行哪个 kernel、用多大的 grid/block、参数地址是什么”排进 GPU 工作队列。
 
-**【补充例子】**有 8 个数字，要把每个数加 1：
+**【补充例子】** 有 8 个数字，要把每个数加 1：
 
 ```text
 输入： [10,20,30,40,50,60,70,80]
@@ -168,11 +168,11 @@ thread 7 处理第 7 项：80→81
 
 “每个 thread 把自己的数字加 1”是 kernel code；“启动 8 个逻辑 threads 去执行”是 launch 配置。
 
-**【课程代码｜行 13–19】**课程先讲 benchmark/profile，再写 Triton，不是因为 Triton 不重要，而是因为优化前应先测量瓶颈。视频 [22:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1329s) 直接给出循环：测量 → 修改 → 再测量。
+**【课程代码｜行 13–19】** 课程先讲 benchmark/profile，再写 Triton，不是因为 Triton 不重要，而是因为优化前应先测量瓶颈。视频 [22:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1329s) 直接给出循环：测量 → 修改 → 再测量。
 
 ### 1.2 GPU 的四层常用存储
 
-**【课程代码｜行 39–57｜视频 [00:30](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=30s)】**先看从近到远的仓库：
+**【课程代码｜行 39–57｜视频 [00:30](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=30s)】** 先看从近到远的仓库：
 
 | 存储 | 首次定义 | 谁能直接使用 | 典型特征 |
 |---|---|---|---|
@@ -182,13 +182,13 @@ thread 7 处理第 7 项：80→81
 | L2 cache | **Level-2 cache，二级缓存** | 整块 GPU 共享，由硬件管理 | 比 L1 大、比 HBM 近 |
 | HBM | **High Bandwidth Memory，高带宽内存** | 整块 GPU 的 global memory | 最大、最远、带宽最低的一层常用设备内存 |
 
-**SRAM（Static Random-Access Memory，静态随机存取存储器）**是常用于片上 register file、cache、shared-memory 等快速小容量存储结构的电路类型。本笔记后文说“留在 SRAM”，人话是“尽量留在 GPU 芯片附近的 register/shared/cache 层”，不是指另一个可无限分配的大 tensor 仓库。
+**SRAM（Static Random-Access Memory，静态随机存取存储器）** 是常用于片上 register file、cache、shared-memory 等快速小容量存储结构的电路类型。本笔记后文说“留在 SRAM”，人话是“尽量留在 GPU 芯片附近的 register/shared/cache 层”，不是指另一个可无限分配的大 tensor 仓库。
 
-**SM（Streaming Multiprocessor，流式多处理器）**是 GPU 芯片上的一个并行计算单元。一个 GPU 有许多 SM；每个 SM 有自己的 registers、L1/shared memory 和 warp scheduler（warp 调度器），而 L2/HBM 被更多 SM 共享。视频 [01:16](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=76s) 首次展开 SM；[01:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=112s) 区分 L1 与 shared memory；[02:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=137s) 展开 HBM。
+**SM（Streaming Multiprocessor，流式多处理器）** 是 GPU 芯片上的一个并行计算单元。一个 GPU 有许多 SM；每个 SM 有自己的 registers、L1/shared memory 和 warp scheduler（warp 调度器），而 L2/HBM 被更多 SM 共享。视频 [01:16](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=76s) 首次展开 SM；[01:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=112s) 区分 L1 与 shared memory；[02:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=137s) 展开 HBM。
 
 ### 1.3 课程硬件表是 2026 时点快照
 
-**【课程代码｜行 42–54｜课程时点快照】**讲义列出：
+**【课程代码｜行 42–54｜课程时点快照】** 讲义列出：
 
 | Accelerator | A100 | H100 | B200 |
 |---|---:|---:|---:|
@@ -217,7 +217,7 @@ thread 7 处理第 7 项：80→81
 
 ### 1.4 算术强度从单位开始
 
-**Arithmetic intensity（算术强度）**回答：“每从指定存储层搬 1 byte，做多少次浮点运算？”
+**Arithmetic intensity（算术强度）** 回答：“每从指定存储层搬 1 byte，做多少次浮点运算？”
 
 ```math
 I=\frac{F}{Q}.
@@ -231,7 +231,7 @@ I=\frac{F}{Q}.
 
 必须说清 $`Q`$ 是 HBM↔chip、shared↔register，还是别的层。只写“搬了多少”而不说层级，公式不完整。
 
-**【补充例子】**32 个 FP32 数，每个做一次乘法和一次加法，再写回。每元素：
+**【补充例子】** 32 个 FP32 数，每个做一次乘法和一次加法，再写回。每元素：
 
 - 读 4 bytes；
 - 写 4 bytes；
@@ -275,14 +275,14 @@ register：thread 的当前值
 算术单元执行 FLOPs
 ```
 
-**【课程代码｜行 66–73｜视频 [05:48](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=348s)】**thread block 的意义是让一组 threads 在同一 SM 上，通过 shared memory 协作。典型 kernel 流程是：从 HBM 读一块 → 在 SM 上复用/计算 → 写回 HBM。若每做一步小算术都回 HBM，GPU 可能大部分时间在搬数据。
+**【课程代码｜行 66–73｜视频 [05:48](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=348s)】** thread block 的意义是让一组 threads 在同一 SM 上，通过 shared memory 协作。典型 kernel 流程是：从 HBM 读一块 → 在 SM 上复用/计算 → 写回 HBM。若每做一步小算术都回 HBM，GPU 可能大部分时间在搬数据。
 
 ---
 ## 2. GPU 编程模型：grid → CTA/block → warp → thread → SM
 
 ### 2.1 先分清“程序里的盒子”和“硬件上的机器”
 
-**【课程代码｜行 58–80｜视频 [03:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=198s)】**CUDA 编程模型从大到小是：
+**【课程代码｜行 58–80｜视频 [03:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=198s)】** CUDA 编程模型从大到小是：
 
 1. **grid（网格）**：一次 kernel launch 创建的全部 thread blocks；
 2. **CTA（Cooperative Thread Array，协作线程数组）**：NVIDIA 正式文档中 thread block 的名称；课程源码第 61 行写成 `concurrent` 是文字笔误；
@@ -307,7 +307,7 @@ Grid
 
 ### 2.2 Kernel launch 的 grid 是怎样展开的
 
-**【补充例子】**先用远小于真实 GPU 的教学 grid。假设输入有 32 个元素：
+**【补充例子】** 先用远小于真实 GPU 的教学 grid。假设输入有 32 个元素：
 
 ```text
 grid_dim = 4 blocks
@@ -345,7 +345,7 @@ i=bB_t+r.
 
 ### 2.3 为什么不能只有一大堆互不相干的 threads
 
-**【课程代码｜行 66–73｜视频 [04:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=274s)】**若操作完全逐元素，例如每个数做 GeLU，一个 thread 处理一个元素很自然。但 softmax 需要知道整行的最大值与指数和；matrix multiplication（矩阵乘）需要多个输出复用 A/B 的数据。Threads 必须协作。
+**【课程代码｜行 66–73｜视频 [04:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=274s)】** 若操作完全逐元素，例如每个数做 GeLU，一个 thread 处理一个元素很自然。但 softmax 需要知道整行的最大值与指数和；matrix multiplication（矩阵乘）需要多个输出复用 A/B 的数据。Threads 必须协作。
 
 如果没有 block/shared memory，协作只能不断通过 HBM：
 
@@ -370,7 +370,7 @@ thread B 从 HBM 读部分结果 → 继续计算 → 再写 HBM
 
 ### 2.4 一次调度不等于永久绑定
 
-**【补充理解】**程序员通常定义“有多少 blocks、每个 block 做什么”，硬件 scheduler（调度器）决定 blocks 何时放到哪些 SM。若 grid 有 1,000 blocks 而 GPU 有 148 SM，逻辑上仍完全合法；blocks 会分波执行。
+**【补充理解】** 程序员通常定义“有多少 blocks、每个 block 做什么”，硬件 scheduler（调度器）决定 blocks 何时放到哪些 SM。若 grid 有 1,000 blocks 而 GPU 有 148 SM，逻辑上仍完全合法；blocks 会分波执行。
 
 要分清三句话：
 
@@ -378,11 +378,11 @@ thread B 从 HBM 读部分结果 → 继续计算 → 再写 HBM
 - 正确：一个 SM 在资源允许时可同时驻留多个 blocks；
 - 错误：grid 中第 $`b`$ 个 block 永远固定属于第 $`b`$ 个 SM。
 
-视频课堂问答 [20:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1219s) 讨论能否让 blocks 分享 SM。**Tensor Core（张量核心）**是 NVIDIA GPU 中专门加速小矩阵乘加的计算单元。答案的关键不是“一律不行”，而是资源：若一个 block 已吃满 Tensor Cores/registers/shared memory，再放一个也不会加速；若资源允许，硬件本来就可以让多个 blocks resident。
+视频课堂问答 [20:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1219s) 讨论能否让 blocks 分享 SM。**Tensor Core（张量核心）** 是 NVIDIA GPU 中专门加速小矩阵乘加的计算单元。答案的关键不是“一律不行”，而是资源：若一个 block 已吃满 Tensor Cores/registers/shared memory，再放一个也不会加速；若资源允许，硬件本来就可以让多个 blocks resident。
 
 ### 2.5 SIMT 与 PTX 放在编译链的哪里
 
-**SIMT（Single Instruction, Multiple Threads，单指令多线程）**是 NVIDIA warp 的编程模型：一个 warp 的 32 个 threads 共同推进同一条 kernel 指令，但每个 thread 有自己的 ID、register values 和 active mask（当前是否参与）。它不是说 32 个 threads 的所有数据必须相同。
+**SIMT（Single Instruction, Multiple Threads，单指令多线程）** 是 NVIDIA warp 的编程模型：一个 warp 的 32 个 threads 共同推进同一条 kernel 指令，但每个 thread 有自己的 ID、register values 和 active mask（当前是否参与）。它不是说 32 个 threads 的所有数据必须相同。
 
 ```text
 PyTorch/Triton Python source
@@ -394,7 +394,7 @@ machine instructions
 SM 以 SIMT/warp 方式执行
 ```
 
-**【课程代码｜行 75–80｜视频 [07:16](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=436s)】**编程模型足以描述正确性，但性能高度依赖硬件细节。换句话说：相同 grid/block/thread 逻辑可以算出相同答案，却因 warp、register、bank、地址对齐而速度完全不同。
+**【课程代码｜行 75–80｜视频 [07:16](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=436s)】** 编程模型足以描述正确性，但性能高度依赖硬件细节。换句话说：相同 grid/block/thread 逻辑可以算出相同答案，却因 warp、register、bank、地址对齐而速度完全不同。
 
 ---
 
@@ -402,7 +402,7 @@ SM 以 SIMT/warp 方式执行
 
 ### 3.1 Warp 是 32 个连续 threads 的执行组
 
-**【课程代码｜行 82–90｜视频 [08:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=527s)】****Warp（线程束）**是 NVIDIA GPU 把同一个 block 内 threads 分成的 32-thread 组。典型编号：
+**【课程代码｜行 82–90｜视频 [08:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=527s)】** **Warp（线程束）** 是 NVIDIA GPU 把同一个 block 内 threads 分成的 32-thread 组。典型编号：
 
 ```text
 threads 0–31   → warp 0
@@ -419,11 +419,11 @@ threads 96–127 → warp 3
 
 只在 threads/block 是 32 的倍数时为整数。64 threads 是 2 warps；128 threads 是 4 warps。课程在 [09:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=549s) 定义 warp，并在 [09:31](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=571s) 说明 lockstep。
 
-**Lockstep（锁步）**的人话是：一个 warp 在某次 instruction issue（发出指令）上共同执行同一条指令。不同 lanes（warp 内编号 0–31 的通道）可以用不同数据；暂时不应执行的 lanes 会被 mask 掉。
+**Lockstep（锁步）** 的人话是：一个 warp 在某次 instruction issue（发出指令）上共同执行同一条指令。不同 lanes（warp 内编号 0–31 的通道）可以用不同数据；暂时不应执行的 lanes 会被 mask 掉。
 
 ### 3.2 32-thread A/B 分支逐周期例
 
-**【课程代码｜行 86–89｜视频 [09:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=584s)】**假设一个 warp 的 lanes 0–7 满足条件 A，lanes 8–31 满足条件 B：
+**【课程代码｜行 86–89｜视频 [09:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=584s)】** 假设一个 warp 的 lanes 0–7 满足条件 A，lanes 8–31 满足条件 B：
 
 ```python
 if lane_id < 8:
@@ -461,7 +461,7 @@ else:
 
 ### 3.3 分支长度不同时怎样算
 
-**【补充例子】**仍有 8 lanes 走 A、24 lanes 走 B，但 A 有 3 条指令、B 有 5 条：
+**【补充例子】** 仍有 8 lanes 走 A、24 lanes 走 B，但 A 有 3 条指令、B 有 5 条：
 
 ```text
 slots 1–3：执行 A1,A2,A3；每个 slot 只有 8 lanes active
@@ -501,7 +501,7 @@ warp 1 lanes 0–31：全走 B
 
 ### 3.5 Warp switching 为什么能隐藏等待
 
-**【课程内容｜视频 [10:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=618s)】**一个 SM 会保留多个 resident warps 的状态。当 warp A 等 HBM 数据时，warp scheduler 可选择已经 ready（可执行）的 warp B：
+**【课程内容｜视频 [10:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=618s)】** 一个 SM 会保留多个 resident warps 的状态。当 warp A 等 HBM 数据时，warp scheduler 可选择已经 ready（可执行）的 warp B：
 
 ```text
 time 0：warp A 发出 HBM load → 等待
@@ -521,7 +521,7 @@ later：warp A 的数据到达 → 再调度 A
 
 ### 4.1 Warp occupancy 的定义
 
-**Occupancy（占用率）**这个词必须带限定。本节首先说 **warp occupancy**：
+**Occupancy（占用率）** 这个词必须带限定。本节首先说 **warp occupancy**：
 
 ```math
 \text{warp occupancy}
@@ -531,7 +531,7 @@ later：warp A 的数据到达 → 再调度 A
 
 `resident` 是“资源已经分配、可被调度”，不等于每个时刻都正在发指令。Occupancy 也不是 FLOP/s，不直接等于利用率或速度。
 
-**【课程代码｜行 92–113｜视频 [11:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=677s)】**每个 thread 使用更多 registers，单个 block 需要的 register pool 越大，一个 SM 同时容纳的 blocks/warps 可能越少。视频同时提醒低 occupancy 未必坏，因为 thread coarsening（线程粗化）可让每个 thread 做更多工作。
+**【课程代码｜行 92–113｜视频 [11:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=677s)】** 每个 thread 使用更多 registers，单个 block 需要的 register pool 越大，一个 SM 同时容纳的 blocks/warps 可能越少。视频同时提醒低 occupancy 未必坏，因为 thread coarsening（线程粗化）可让每个 thread 做更多工作。
 
 ### 4.2 先披露源码的 64/128 内部不一致
 
@@ -633,7 +633,7 @@ B_{resident}=3\ \text{blocks/SM}.
 
 ### 4.4 如果误用文字中的 64，为什么结果看似没变
 
-**【补充检查】**错误地取 64 threads/block：
+**【补充检查】** 错误地取 64 threads/block：
 
 ```math
 64\times160=10,240\ \text{registers/block},
@@ -681,11 +681,11 @@ occupancy 是否足以隐藏 latency？
 | block residency | 单个 SM 同时能容纳多少 blocks？ | 本例受 registers 限制为 3 |
 | wave utilization / wave quantization | 整个 grid 的最后一波是否填满所有 SM slots？ | 160 blocks 对 148 SMs 的尾波 |
 
-**Wave（波次）**是“当前可以一起安排的一批 blocks”。**Wave quantization（波量化/尾波效应）**是 block 数不能整齐铺满硬件并行 slots 时，最后一波很稀。
+**Wave（波次）** 是“当前可以一起安排的一批 blocks”。**Wave quantization（波量化/尾波效应）** 是 block 数不能整齐铺满硬件并行 slots 时，最后一波很稀。
 
 ### 4.7 160 blocks、148 SMs 的尾波完整计算
 
-**【课程代码｜行 132–137｜课程时点快照｜视频 [18:15](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1095s)】**讲义用 B200 的 148 SMs，教学上假设每个 SM 此刻接一个 block：
+**【课程代码｜行 132–137｜课程时点快照｜视频 [18:15](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1095s)】** 讲义用 B200 的 148 SMs，教学上假设每个 SM 此刻接一个 block：
 
 第一波：
 
@@ -740,7 +740,7 @@ HBM coalescing：发生在 warp 向 global/HBM 地址发起 load/store
 
 ### 5.2 32 banks × 4 bytes 到底是什么意思
 
-**【课程代码｜行 114–125｜视频 [14:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=864s)】**教学模型中 shared memory 有 32 个 banks，每个 bank 每个 clock 可服务一个 32-bit（4-byte）word。地址按连续 4-byte word 轮流映射到 banks：
+**【课程代码｜行 114–125｜视频 [14:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=864s)】** 教学模型中 shared memory 有 32 个 banks，每个 bank 每个 clock 可服务一个 32-bit（4-byte）word。地址按连续 4-byte word 轮流映射到 banks：
 
 ```math
 \mathrm{bank}(a)
@@ -787,7 +787,7 @@ bank:  0  1  2  3  4  ... 28 29 30 31
 
 ### 5.4 路由表二：stride 32 FP32，32-way conflict
 
-**Stride（步长）**是相邻 thread 地址相差多少个元素。Stride 32 表示 lane $`i`$ 访问 word $`32i`$，byte address 为 $`4\times32i=128i`$：
+**Stride（步长）** 是相邻 thread 地址相差多少个元素。Stride 32 表示 lane $`i`$ 访问 word $`32i`$，byte address 为 $`4\times32i=128i`$：
 
 ```math
 \mathrm{bank}(128i)
@@ -817,7 +817,7 @@ word:  0 0 0 0 ... 0
 bank:  0 0 0 0 ... 0
 ```
 
-虽然全落 bank 0，但地址完全相同。现代 CUDA shared memory 可 **broadcast（广播）**同一个读取结果给所有请求 lanes，因此不按 32 个不同请求序列化。
+虽然全落 bank 0，但地址完全相同。现代 CUDA shared memory 可 **broadcast（广播）** 同一个读取结果给所有请求 lanes，因此不按 32 个不同请求序列化。
 
 必须比较：
 
@@ -830,7 +830,7 @@ bank:  0 0 0 0 ... 0
 
 ### 5.6 Swizzling 只讲到必要边界
 
-**Swizzling（地址重排）**通过改变 logical row/column 到 physical shared-memory address 的映射，让本来同 bank 的列访问分散到不同 banks。课程第 124 行给 `row xor col` 作为直觉示例。
+**Swizzling（地址重排）** 通过改变 logical row/column 到 physical shared-memory address 的映射，让本来同 bank 的列访问分散到不同 banks。课程第 124 行给 `row xor col` 作为直觉示例。
 
 这里的 `xor` 是 bitwise exclusive OR（按位异或）：相同 bit 得 0，不同 bit 得 1。例如：
 
@@ -844,7 +844,7 @@ row xor col = 10₂
 
 ### 5.7 HBM coalescing 的 128-byte 教学模型
 
-**【课程代码｜行 126–131｜视频 [16:53](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1013s)】****Memory coalescing（内存合并访问）**是把一个 warp 的邻近 global-memory 请求合并成少量 transaction（事务）。课程用 128-byte cache line/transaction 做教学模型。
+**【课程代码｜行 126–131｜视频 [16:53](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1013s)】** **Memory coalescing（内存合并访问）** 是把一个 warp 的邻近 global-memory 请求合并成少量 transaction（事务）。课程用 128-byte cache line/transaction 做教学模型。
 
 在这个模型中，byte address $`a`$ 所在的 128-byte line 编号是：
 
@@ -906,7 +906,7 @@ lane 31 → bytes 128–131  （line 1）
 \frac{128}{256}=0.5=50\%.
 ```
 
-真实 GPU cache/**memory sector（内存扇区，即一个较大 cache line 或 memory transaction 内可单独搬运、记账的较小数据分片）**可能让细节不同；这个例子只教“连续还不够，对齐也影响 transaction 数”。
+真实 GPU cache/**memory sector（内存扇区，即一个较大 cache line 或 memory transaction 内可单独搬运、记账的较小数据分片）** 可能让细节不同；这个例子只教“连续还不够，对齐也影响 transaction 数”。
 
 ### 5.10 Stride 32：32 个 lines，只用每条 4 bytes
 
@@ -951,8 +951,8 @@ lane 31 → bytes 128–131  （line 1）
 
 **【课程代码｜行 144–165｜视频 [21:55](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1315s)】**
 
-- **Benchmark（基准测试）**是“在写清输入和边界后，重复测某个目标的时间或吞吐”的泛称。目标可以是 GPU device elapsed，也可以是用户可见的 application wall-clock；两者不是同一数字；
-- **Profile（性能剖析）**回答“运行中调用了哪些 CPU/GPU operations/kernels，各自花多久、调用几次、使用哪些硬件资源？”
+- **Benchmark（基准测试）** 是“在写清输入和边界后，重复测某个目标的时间或吞吐”的泛称。目标可以是 GPU device elapsed，也可以是用户可见的 application wall-clock；两者不是同一数字；
+- **Profile（性能剖析）** 回答“运行中调用了哪些 CPU/GPU operations/kernels，各自花多久、调用几次、使用哪些硬件资源？”
 
 课程 `benchmark()` 的具体目标是 **同一 GPU stream 中 start/end 两个 CUDA events 之间的 device elapsed time**。Python 调用和 CPU 等待时间通常不会被直接计入，但若 GPU 执行完 start event 后一度等着 CPU 提交后续 kernel，这段设备时间线上的空档仍可能落在两个 events 之间。因此它不是完整应用从函数入口到返回的 wall-clock。若要更接近用户可见端到端，应在正确同步的前提下，用 CPU wall timer 包住 launch 与等待；还要明确输入创建、编译和数据传输是否包含在范围内。
 
@@ -970,7 +970,7 @@ lane 31 → bytes 128–131  （line 1）
 
 ### 6.2 为什么 `CPU stop - CPU start` 会骗你
 
-**CUDA（Compute Unified Device Architecture，统一计算设备架构）**是 NVIDIA 的 GPU 编程平台/接口体系。CUDA kernel launch 对 CPU 通常是 asynchronous（异步）的：CPU 把命令排队后可以先返回，不必等 GPU 做完。
+**CUDA（Compute Unified Device Architecture，统一计算设备架构）** 是 NVIDIA 的 GPU 编程平台/接口体系。CUDA kernel launch 对 CPU 通常是 asynchronous（异步）的：CPU 把命令排队后可以先返回，不必等 GPU 做完。
 
 错误时间线：
 
@@ -990,11 +990,11 @@ CPU: enqueue work ─ synchronize() 等待 ─────► work 已完成
 GPU:       [执行先前排队工作] ──────────────►
 ```
 
-**`torch.cuda.synchronize()`**让调用它的 CPU thread 阻塞，直到此前 GPU 工作完成。课程代码第 185 行先在 warmup 后同步，第 198 行在每个 timed trial 的 end event 后同步。视频 [24:57](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1497s) 明确解释 GPU 异步执行与 synchronization barrier（同步屏障）。
+**`torch.cuda.synchronize()`** 让调用它的 CPU thread 阻塞，直到此前 GPU 工作完成。课程代码第 185 行先在 warmup 后同步，第 198 行在每个 timed trial 的 end event 后同步。视频 [24:57](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1497s) 明确解释 GPU 异步执行与 synchronization barrier（同步屏障）。
 
 ### 6.3 Warmup 为什么不能混进 steady-state
 
-**Warmup（预热）**是在正式计时前先运行若干次。第一次可能额外包含：
+**Warmup（预热）** 是在正式计时前先运行若干次。第一次可能额外包含：
 
 - lazy compilation（首次才编译）；
 - library/kernel 选择与 autotuning；
@@ -1007,7 +1007,7 @@ GPU:       [执行先前排队工作] ──────────────
 
 ### 6.4 CUDA events 怎样排进 GPU 时间线
 
-**CUDA event（CUDA 事件）**是排入 GPU stream（有顺序的工作队列）的标记，可记录 GPU 到达该点的时间戳。课程流程：
+**CUDA event（CUDA 事件）** 是排入 GPU stream（有顺序的工作队列）的标记，可记录 GPU 到达该点的时间戳。课程流程：
 
 ```text
 CPU 发令顺序：record(start) → launch kernel → record(end) → synchronize
@@ -1035,7 +1035,7 @@ wall_seconds = t1 - t0
 
 这个 wall timer 包含 host launch 与等待，更接近调用者感受到的同步端到端；它仍不自动包含计时区间外的 input allocation、JIT 或 CPU preprocessing。两种计时都合理，前提是先声明目标。
 
-**【课程代码｜行 179–203】**可运行骨架需要显式 import：
+**【课程代码｜行 179–203】** 可运行骨架需要显式 import：
 
 ```python
 import torch
@@ -1076,7 +1076,7 @@ def benchmark(run, num_warmups: int = 1, num_trials: int = 3) -> float:
 
 ### 6.5 为什么不只跑一次：均值、方差、中位数
 
-**【课程代码｜行 187–203｜视频 [25:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1524s)】**课程跑多次以观察 variance（方差），最终只取 mean（均值）。
+**【课程代码｜行 187–203｜视频 [25:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1524s)】** 课程跑多次以观察 variance（方差），最终只取 mean（均值）。
 
 均值：
 
@@ -1084,7 +1084,7 @@ def benchmark(run, num_warmups: int = 1, num_trials: int = 3) -> float:
 \bar t=\frac{t_1+t_2+\cdots+t_n}{n}.
 ```
 
-**【补充例子】**四次时间 `[1,1,1,5] ms`：
+**【补充例子】** 四次时间 `[1,1,1,5] ms`：
 
 ```math
 \bar t=\frac{1+1+1+5}{4}=\frac8{4}=2\ \text{ms}.
@@ -1122,7 +1122,7 @@ Median（中位数）是排序后的中间值。偶数个样本取中间两个�
 
 ### 6.6 小矩阵为什么看不出 $`n^3`$
 
-**【课程代码｜行 167–176｜视频 [25:45](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1545s)】**方阵 matmul 的算术量随维度约按 $`n^3`$ 增长，但视频曲线中较小维度的时间近似常数，约到 2,000 维才显出增长。
+**【课程代码｜行 167–176｜视频 [25:45](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1545s)】** 方阵 matmul 的算术量随维度约按 $`n^3`$ 增长，但视频曲线中较小维度的时间近似常数，约到 2,000 维才显出增长。
 
 原因不是数学从 $`n^3`$ 变成 $`n^0`$，而是小工作无法填满 GPU，launch、调度、固定延迟等占比大：
 
@@ -1134,7 +1134,7 @@ Median（中位数）是排序后的中间值。偶数个样本取中间两个�
 
 ### 6.7 Profile 看见的是底层实际 kernels
 
-**【课程代码｜行 206–259｜视频 [27:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1644s)】**PyTorch profiler 在 `ProfilerActivity.CUDA` 下记录 CUDA activities，并按 `cuda_time_total` 排序。课程还提到 **NVIDIA Nsight**：NVIDIA 的 profiler 工具系列，可进一步看 timeline、memory、occupancy、bank conflicts 等。
+**【课程代码｜行 206–259｜视频 [27:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1644s)】** PyTorch profiler 在 `ProfilerActivity.CUDA` 下记录 CUDA activities，并按 `cuda_time_total` 排序。课程还提到 **NVIDIA Nsight**：NVIDIA 的 profiler 工具系列，可进一步看 timeline、memory、occupancy、bank conflicts 等。
 
 课程示例：
 
@@ -1167,7 +1167,7 @@ cutlass3x_sm100_simt_sgemm_f32_f32_f32_f32_f32_64x64x16_...
 [ ] 修改后重新测；同时检查 numerical correctness
 ```
 
-**【课程内容｜视频 [30:01](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1801s)】**老师在进入 GeLU 例前再次总结“记得 benchmark/profile”。后半讲会用 profiler 发现 naive GeLU 启动多个 kernels、反复读写 HBM，再引出 fusion 与 Triton；这些内容从 §7 开始逐步展开。
+**【课程内容｜视频 [30:01](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1801s)】** 老师在进入 GeLU 例前再次总结“记得 benchmark/profile”。后半讲会用 profiler 发现 naive GeLU 启动多个 kernels、反复读写 HBM，再引出 fusion 与 Triton；这些内容从 §7 开始逐步展开。
 
 ### 6.9 本讲前半的一手补充来源
 
@@ -1184,7 +1184,7 @@ cutlass3x_sm100_simt_sgemm_f32_f32_f32_f32_f32_64x64x16_...
 
 ### 7.1 先看 GeLU 到底在算什么
 
-**【课程代码｜行 262–303｜视频 [30:14](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1814s)】**GeLU 是 **Gaussian Error Linear Unit**，中文常译“高斯误差线性单元”。它是逐元素 activation function（激活函数）：输入 tensor 中每个数独立经过同一个小公式，shape 不变。
+**【课程代码｜行 262–303｜视频 [30:14](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1814s)】** GeLU 是 **Gaussian Error Linear Unit**，中文常译“高斯误差线性单元”。它是逐元素 activation function（激活函数）：输入 tensor 中每个数独立经过同一个小公式，shape 不变。
 
 课程代码使用常见的 tanh 近似：
 
@@ -1250,7 +1250,7 @@ a=0.79788456\times0=0.
 
 ### 7.3 手算 $`x=1`$ 与 $`x=-1`$
 
-**【补充】**先算 $`x=1`$：
+**【补充】** 先算 $`x=1`$：
 
 ```math
 x^3=1.
@@ -1309,7 +1309,7 @@ y=0.5\times(-1)\times(1-0.68238398)
 
 ### 7.4 一行 PyTorch 为什么可能变成多个 kernels
 
-**【课程代码｜行 694–695｜视频 [30:49](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1849s)】**课程的 eager PyTorch 写法是：
+**【课程代码｜行 694–695｜视频 [30:49](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1849s)】** 课程的 eager PyTorch 写法是：
 
 ```python
 def naive_gelu(x: torch.Tensor) -> torch.Tensor:
@@ -1337,17 +1337,17 @@ x*u7       -> 临时量 u8
 
 这列出九个 **pointwise operations**（逐元素操作）。它不是“固定启动九个 CUDA kernels”的保证：
 
-- 某个 **backend（后端，即接收 PyTorch 计算图并选择/生成底层 CPU、CUDA 或 Triton 实现的编译执行层）**可能在单个 kernel 内合并相邻标量操作；
+- 某个 **backend（后端，即接收 PyTorch 计算图并选择/生成底层 CPU、CUDA 或 Triton 实现的编译执行层）** 可能在单个 kernel 内合并相邻标量操作；
 - 某些表达式可能被改写；
 - 临时量可能留在 cache，不一定每次真去 HBM；
 - 版本、dtype、shape 和 GPU 会改变实现；
 - 判断事实要看当前机器的 profiler，而不是数 Python 运算符。
 
-**【课程视频｜[32:33](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1953s)–[33:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2003s)】**课堂 profiler 的核心观察是：该机器上的 naive 版本出现多个底层 pointwise kernels，并有中间结果读写；不是要求读者背某个永久不变的 kernel 数。
+**【课程视频｜[32:33](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1953s)–[33:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2003s)】** 课堂 profiler 的核心观察是：该机器上的 naive 版本出现多个底层 pointwise kernels，并有中间结果读写；不是要求读者背某个永久不变的 kernel 数。
 
 ### 7.5 builtin、`torch.compile` 和 fusion
 
-**【课程代码｜行 270–303｜视频 [31:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1863s)】**三条路径：
+**【课程代码｜行 270–303｜视频 [31:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1863s)】** 三条路径：
 
 ```python
 # 1. naive：多个高层逐元素操作
@@ -1365,7 +1365,7 @@ y_compiled = compiled_gelu(x)
 - **`torch.compile`**：PyTorch 捕获计算图，再生成优化代码；课程机器上生成一个 Triton kernel。
 - **fusion（融合）**：让多个相邻操作在同一个 kernel 中完成，使中间值尽量留在 register/SRAM，而不必每步物化到 HBM。
 
-**【课程视频｜[33:54](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2034s)、[34:42](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2082s)】**课程 profiler 分别展示 builtin 与 compiled 的单-kernel 结果。正确结论是“在该例、该环境里成功融合”，不是“builtin 永远一 kernel”或“`torch.compile` 永远能融合任意程序”。
+**【课程视频｜[33:54](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2034s)、[34:42](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2082s)】** 课程 profiler 分别展示 builtin 与 compiled 的单-kernel 结果。正确结论是“在该例、该环境里成功融合”，不是“builtin 永远一 kernel”或“`torch.compile` 永远能融合任意程序”。
 
 Fusion 常见边界包括：
 
@@ -1377,7 +1377,7 @@ Fusion 常见边界包括：
 
 ### 7.6 $`N=16{,}384`$、FP32 的教学流量账
 
-**【补充】**下面依据课程 fusion 直觉做流量推导。设输入是一维 tensor：
+**【补充】** 下面依据课程 fusion 直觉做流量推导。设输入是一维 tensor：
 
 ```math
 N=16{,}384,
@@ -1445,7 +1445,7 @@ N\ \text{reads}+N\ \text{writes}=2N.
 
 ### 7.7 Launch overhead 为什么也值得省
 
-**【课程视频｜[35:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2103s)–[36:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2194s)】**每次 kernel launch 都有近似固定的准备成本：CPU/runtime 把工作入队、GPU 接收并调度、建立执行所需状态。它叫 **launch overhead（启动开销）**。
+**【课程视频｜[35:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2103s)–[36:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2194s)】** 每次 kernel launch 都有近似固定的准备成本：CPU/runtime 把工作入队、GPU 接收并调度、建立执行所需状态。它叫 **launch overhead（启动开销）**。
 
 教学例：若每个极小 kernel 真计算只需 $`1\ \mu s`$，启动固定花 $`5\ \mu s`$：
 
@@ -1474,7 +1474,7 @@ N\ \text{reads}+N\ \text{writes}=2N.
 
 ### 8.2 Host wrapper 与 device kernel
 
-**【课程代码｜行 326–364｜视频 [39:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2384s)】**一份 Triton 程序通常有两半：
+**【课程代码｜行 326–364｜视频 [39:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2384s)】** 一份 Triton 程序通常有两半：
 
 ```text
 CPU 上的 Python host wrapper
@@ -1500,7 +1500,7 @@ GPU 上的 Triton device kernel
 
 ### 8.3 JIT 是什么时候编译
 
-**【课程视频｜[38:32](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2312s)】**JIT 是 **Just-In-Time compilation（即时编译）**：通常在第一次遇到某种参数/shape/meta-parameter 组合时生成并编译 kernel，之后可缓存复用。
+**【课程视频｜[38:32](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2312s)】** JIT 是 **Just-In-Time compilation（即时编译）**：通常在第一次遇到某种参数/shape/meta-parameter 组合时生成并编译 kernel，之后可缓存复用。
 
 因此第一次调用可能包含 compilation overhead（编译开销），不能直接拿来当 steady-state kernel 时间：
 
@@ -1513,7 +1513,7 @@ GPU 上的 Triton device kernel
 
 ### 8.4 Grid 与 program instance
 
-**【课程代码｜行 343–347｜视频 [41:07](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2467s)】**Triton 的 **grid** 指定要启动多少个 program instances。若一维输入有 $`N`$ 个元素、每个 program 最多处理 $`B`$ 个：
+**【课程代码｜行 343–347｜视频 [41:07](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2467s)】** Triton 的 **grid** 指定要启动多少个 program instances。若一维输入有 $`N`$ 个元素、每个 program 最多处理 $`B`$ 个：
 
 ```math
 \text{num\_programs}=\left\lceil\frac NB\right\rceil.
@@ -1594,13 +1594,13 @@ PTX 描述虚拟GPU指令
 SASS 是某一GPU架构真正执行的机器指令
 ```
 
-**【课程内容｜视频 [48:02](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2882s)】**视频说 Triton 源码是对实际线程执行方式的高层抽象。这里的重点不是“抽象不真实”，而是“抽象保留结果语义，把低层分工交给编译器”。
+**【课程内容｜视频 [48:02](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2882s)】** 视频说 Triton 源码是对实际线程执行方式的高层抽象。这里的重点不是“抽象不真实”，而是“抽象保留结果语义，把低层分工交给编译器”。
 
 ## 9. Triton GeLU：wrapper 与 kernel 一行一行读
 
 ### 9.1 一份足以跟读的完整代码
 
-**【课程代码｜行 317–390｜视频 [39:50](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2390s)–[45:58](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2758s)】**下面保留课程结构，并把导入补齐。需要 NVIDIA CUDA GPU、与 CUDA 匹配的 PyTorch，以及 Triton 才能真正运行。
+**【课程代码｜行 317–390｜视频 [39:50](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2390s)–[45:58](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2758s)】** 下面保留课程结构，并把导入补齐。需要 NVIDIA CUDA GPU、与 CUDA 匹配的 PyTorch，以及 Triton 才能真正运行。
 
 ```python
 import torch
@@ -1727,7 +1727,7 @@ mask = offsets < num_elements
 
 ### 9.5 $`N=10,B=8`$：两个 programs 全部列出
 
-**【补充】**设输入：
+**【补充】** 设输入：
 
 ```text
 x = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9]
@@ -1805,7 +1805,7 @@ offset 8 -> byte address 1000 + 8×4 = 1032
 
 ### 9.7 Kernel 里的 GeLU 与 reference 对上
 
-**【课程代码｜行 323–329、379–390】**课程先用 PyTorch reference 检查 Triton 输出。最小核对：
+**【课程代码｜行 323–329、379–390】** 课程先用 PyTorch reference 检查 Triton 输出。最小核对：
 
 | $`x`$ | $`a=0.79788456(x+0.044715x^3)`$ | $`\tanh(a)`$ | $`0.5x(1+\tanh(a))`$ |
 |---:|---:|---:|---:|
@@ -1876,7 +1876,7 @@ a=0.79788456\times377.72
 
 ### 10.1 PTX 不是 GPU 最终机器码
 
-**【课程代码｜行 351–362｜视频 [48:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2903s)–[51:00](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3060s)】**课程调用辅助函数输出编译后的 PTX。
+**【课程代码｜行 351–362｜视频 [48:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2903s)–[51:00](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3060s)】** 课程调用辅助函数输出编译后的 PTX。
 
 - **PTX**：Parallel Thread Execution，NVIDIA 定义的虚拟 ISA，面向一个抽象 NVIDIA GPU。
 - **SASS**：特定 GPU architecture 的真正 machine instructions（机器指令）；driver assembler 会把 PTX 进一步翻译为 SASS。
@@ -1893,7 +1893,7 @@ SASS --hardware--> 执行
 
 ### 10.2 课程 PTX 中能可靠认出的几类名字
 
-**【课程视频｜[50:41](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3041s)–[54:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3292s)】**这里只解释课程展示中确实用来讲解的线索：
+**【课程视频｜[50:41](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3041s)–[54:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3292s)】** 这里只解释课程展示中确实用来讲解的线索：
 
 | PTX 线索 | 人话 |
 |---|---|
@@ -1903,13 +1903,13 @@ SASS --hardware--> 执行
 | `st.global...` | 向 global address space 写数据 |
 | `%r...`、`%f...` 等 | PTX virtual registers（虚拟寄存器）；前缀会体现类型类别 |
 
-**【课程视频｜[51:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3103s)、[52:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3137s)】**老师用 `ld.global` 和 `st.global` 对应 GeLU 的 load/store，用 register 名称指出中间量不必物化为全局 tensor。
+**【课程视频｜[51:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3103s)、[52:17](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3137s)】** 老师用 `ld.global` 和 `st.global` 对应 GeLU 的 load/store，用 register 名称指出中间量不必物化为全局 tensor。
 
 注意：看到 `.global` 说明 address space，不等于每条访问必然绕过 L1/L2、每次都打到 HBM。实际 memory transaction 要结合 cache policy 与 profiler。
 
 ### 10.3 Thread coarsening 是什么
 
-**【课程内容｜视频 [52:49](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3169s)】****thread coarsening（线程粗化）**指一个 physical/logical CUDA thread 连续处理多个数据元素，而不是每个 thread 只处理一个元素。
+**【课程内容｜视频 [52:49](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3169s)】** **thread coarsening（线程粗化）** 指一个 physical/logical CUDA thread 连续处理多个数据元素，而不是每个 thread 只处理一个元素。
 
 教学对比：
 
@@ -1931,7 +1931,7 @@ SASS --hardware--> 执行
 
 ### 10.4 “一 thread 处理 8 elements”只属于课程这次编译观察
 
-**【课程视频｜[52:55](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3175s)–[53:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3232s)】**课程通过当时生成的 PTX 观察到：一个 thread 处理八个元素。这说明编译器没有把 `tl.arange` 每一项一一映射成 thread。
+**【课程视频｜[52:55](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3175s)–[53:52](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3232s)】** 课程通过当时生成的 PTX 观察到：一个 thread 处理八个元素。这说明编译器没有把 `tl.arange` 每一项一一映射成 thread。
 
 不能推广成：
 
@@ -1946,7 +1946,7 @@ SASS --hardware--> 执行
 - dtype 与操作复杂度；
 - Triton/compiler 版本；
 - 目标 GPU 架构；
-- register pressure 与 **vectorization（向量化，即让一条或一组生成指令批量处理多个数据元素）**决策。
+- register pressure 与 **vectorization（向量化，即让一条或一组生成指令批量处理多个数据元素）** 决策。
 
 如果 `BLOCK_SIZE=1024`，也不能从“课程观察为 8”倒推永远是 128 threads；必须查看本次生成代码或 profiler。
 
@@ -1961,13 +1961,13 @@ SASS --hardware--> 执行
 5. 不从一段 PTX 猜整个 GPU 的 cache hit、warp scheduling 或实际 HBM bandwidth；
 6. 需要最终硬件指令时再看 SASS，需要时间/traffic 时用 profiler/hardware counters。
 
-**【课程视频｜[55:00](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3300s)–[55:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3318s)】**视频也提醒 PTX 没把 SM/warp 的实际调度全部写在源表面；通常 PTX 是编译器产物，不是人手写优化的首要层级。
+**【课程视频｜[55:00](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3300s)–[55:18](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3318s)】** 视频也提醒 PTX 没把 SM/warp 的实际调度全部写在源表面；通常 PTX 是编译器产物，不是人手写优化的首要层级。
 
 ## 11. Fused softmax：一行在片上完成 reduction
 
 ### 11.1 Softmax 是“每行变成和为 1 的非负权重”
 
-**【课程代码｜行 392–418｜视频 [58:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3486s)】**对一行输入 $`x=[x_0,x_1,\ldots,x_{N-1}]`$，softmax 第 $`j`$ 项定义为：
+**【课程代码｜行 392–418｜视频 [58:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3486s)】** 对一行输入 $`x=[x_0,x_1,\ldots,x_{N-1}]`$，softmax 第 $`j`$ 项定义为：
 
 ```math
 \mathrm{softmax}(x)_j
@@ -1986,7 +1986,7 @@ SASS --hardware--> 执行
 
 ### 11.2 为什么先减 row maximum
 
-**【课程视频｜[58:21](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3501s)–[59:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3550s)】**直接算很大的 $`e^x`$ 可能 overflow（溢出）。例如 FP32 中 $`e^{100}`$ 太大，不能用普通有限数表示。
+**【课程视频｜[58:21](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3501s)–[59:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3550s)】** 直接算很大的 $`e^x`$ 可能 overflow（溢出）。例如 FP32 中 $`e^{100}`$ 太大，不能用普通有限数表示。
 
 设这一行最大值：
 
@@ -2024,7 +2024,7 @@ e^{x_j-m}=e^{x_j}e^{-m}.
 
 ### 11.3 课程 $`2\times3`$ 输入逐行手算
 
-**【课程】**输入取自官方代码行 404–408。**【补充】**以下把课程只运行给出的结果完整展开：
+**【课程】** 输入取自官方代码行 404–408。**【补充】** 以下把课程只运行给出的结果完整展开：
 
 ```math
 X=
@@ -2172,7 +2172,7 @@ M+MN+MN+M+MN
 
 ### 11.7 代 $`M=2,N=3`$：为什么是 32 reads、22 writes
 
-**【补充】**下面严格沿用课程口径手算；$`MN=2\times3=6`$。
+**【补充】** 下面严格沿用课程口径手算；$`MN=2\times3=6`$。
 
 Reads 分项：
 
@@ -2224,7 +2224,7 @@ normalize     : MN = 6
 
 ### 11.8 Fused 理想流量与 $`4.5\times`$ 从哪里来
 
-**【课程内容 + 补充推导｜视频 [60:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3623s)】**若一个 fused kernel 把一行读进片上存储，max、减法、exp、sum、division 都在片上完成，最后只写 output：
+**【课程内容 + 补充推导｜视频 [60:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3623s)】** 若一个 fused kernel 把一行读进片上存储，max、减法、exp、sum、division 都在片上完成，最后只写 output：
 
 ```math
 MN\ \text{reads}+MN\ \text{writes}=2MN.
@@ -2409,7 +2409,7 @@ def triton_softmax_kernel(
 
 ### 11.11 $`N=3,B=4`$ 的 padding 表
 
-**【补充手算】**以 row 0 的 `[5,5,5]` 为例，`next_power_of_2(3)=4`：
+**【补充手算】** 以 row 0 的 `[5,5,5]` 为例，`next_power_of_2(3)=4`：
 
 | `col_offset` | `offset < 3` | load 后值 | 减 row max 5 | exp |
 |---:|---:|---:|---:|---:|
@@ -2449,7 +2449,7 @@ x_start_ptr = x_ptr + 1×3
 
 ### 11.12 每行一个 program 的收益与边界
 
-**【课程内容｜视频 [64:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3843s)–[65:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3923s)】**收益是：同一个 program 看见整行，可在片上做 max 和 sum，避免多次把整行中间结果写回 HBM。
+**【课程内容｜视频 [64:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3843s)–[65:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3923s)】** 收益是：同一个 program 看见整行，可在片上做 max 和 sum，避免多次把整行中间结果写回 HBM。
 
 但“每行一个 program”不是无限扩展的魔法。行很宽时：
 
@@ -2497,7 +2497,7 @@ Softmax：同一行元素必须共同求max与sum
 最后 tl.sum 把 accumulator 向量归约成一个标量
 ```
 
-**accumulator（累加器）**是“不断加上新值的临时和”。初始为 0，每读一块就更新一次。
+**accumulator（累加器）** 是“不断加上新值的临时和”。初始为 0，每读一块就更新一次。
 
 课程口头把向量位置叫 thread，便于建立硬件直觉；严格的 Triton 心智模型仍是：源码描述长度为 `BLOCK_SIZE` 的向量 accumulator，compiler 再决定 threads/warps/registers/shared memory 的实际映射。不能机械写成“一项 accumulator 永远对应一个 CUDA thread”。
 
@@ -2580,7 +2580,7 @@ def row_sum_kernel(
 
 ### 12.4 $`N=12,B=4`$：把 `[1..12]` 全部走一遍
 
-**【补充】**输入只有一行：
+**【补充】** 输入只有一行：
 
 ```math
 x=[1,2,3,4,5,6,7,8,9,10,11,12].
@@ -2666,7 +2666,7 @@ result=15+18+21+24.
 
 ### 12.5 $`N=10,B=4`$：最后两项为什么必须补 0
 
-**【补充】**现在一行是 `[1,2,...,10]`。前两个 tiles 后：
+**【补充】** 现在一行是 `[1,2,...,10]`。前两个 tiles 后：
 
 ```math
 acc=[6,8,10,12].
@@ -2706,7 +2706,7 @@ acc=[6+9,8+10,10+0,12+0]
 
 ### 12.6 Tiles 不是多个独立 blocks
 
-**【视频补充｜[71:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4266s)】**老师专门区分：GeLU 可把不同块交给互不相关的 programs；这里同一行的 tiles 必须共同得到一个 row sum，所以它们由同一个 program 循环处理。
+**【视频补充｜[71:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4266s)】** 老师专门区分：GeLU 可把不同块交给互不相关的 programs；这里同一行的 tiles 必须共同得到一个 row sum，所以它们由同一个 program 循环处理。
 
 ```text
 错误：tile 0、1、2 各是一个独立 program，最后自然就有总和
@@ -2715,13 +2715,13 @@ acc=[6+9,8+10,10+0,12+0]
       循环后再对acc做一次 program内 reduction。
 ```
 
-**【视频补充｜[70:30](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4230s)】**accumulator 最终放 registers 还是 shared memory，不由这段 Python/Triton 源码逐项指定；compiler 根据大小和目标硬件决定。若资源不够，也可能发生 spill。不要把“课程图画在 register”当永久保证。
+**【视频补充｜[70:30](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4230s)】** accumulator 最终放 registers 还是 shared memory，不由这段 Python/Triton 源码逐项指定；compiler 根据大小和目标硬件决定。若资源不够，也可能发生 spill。不要把“课程图画在 register”当永久保证。
 
 ## 13. Matrix multiplication：从每个输出单算到 tiling 复用
 
 ### 13.1 Shape 先对齐：$`A[M,K]B[K,N]=C[M,N]`$
 
-**【课程代码｜行 538–568｜视频 [71:57](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4317s)–[73:01](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4381s)】**矩阵乘：
+**【课程代码｜行 538–568｜视频 [71:57](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4317s)–[73:01](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4381s)】** 矩阵乘：
 
 ```math
 A\in\mathbb{R}^{M\times K},
@@ -2746,7 +2746,7 @@ C[m,n]=\sum_{k=0}^{K-1}A[m,k]B[k,n].
 
 ### 13.2 Naive reads 的两个口径必须说清
 
-**【课程内容｜视频 [73:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4424s)–[74:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4450s)】**课程写“$`MKN`$ reads”，是在 big-O 讨论中把“为一个 $`k`$ 取得一对 $`A/B`$ 操作数”当一次读事件，省略常数 2。
+**【课程内容｜视频 [73:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4424s)–[74:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4450s)】** 课程写“$`MKN`$ reads”，是在 big-O 讨论中把“为一个 $`k`$ 取得一对 $`A/B`$ 操作数”当一次读事件，省略常数 2。
 
 若严格按“读一个标量元素一次”记：每个 $`(m,n,k)`$ 要读：
 
@@ -2771,7 +2771,7 @@ MN\ \text{output elements}.
 
 ### 13.3 为什么 naive 重复读同一个元素
 
-**【课程内容｜视频 [74:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4483s)】**固定一个 $`A[m,k]`$：它参与同一输出行的所有 $`N`$ 列：
+**【课程内容｜视频 [74:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4483s)】** 固定一个 $`A[m,k]`$：它参与同一输出行的所有 $`N`$ 列：
 
 ```math
 C[m,0],C[m,1],\ldots,C[m,N-1].
@@ -2785,7 +2785,7 @@ C[m,0],C[m,1],\ldots,C[m,N-1].
 
 ### 13.4 $`4\times4,T=2`$：具体矩阵
 
-**【补充】**取：
+**【补充】** 取：
 
 ```math
 A=
@@ -2981,7 +2981,7 @@ C[3,3]
 
 ### 13.9 一般 $`B_M,B_N,B_K`$ 的 input reads 推导
 
-**【课程内容 + 补充精确化｜视频 [76:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4579s)–[78:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4702s)】**先假设 $`M,N,K`$ 都能分别整除 $`B_M,B_N,B_K`$，不考虑边界 padding。
+**【课程内容 + 补充精确化｜视频 [76:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4579s)–[78:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4702s)】** 先假设 $`M,N,K`$ 都能分别整除 $`B_M,B_N,B_K`$，不考虑边界 padding。
 
 输出 tiles 数：
 
@@ -3069,7 +3069,7 @@ N^2\ \text{elements}.
 
 ### 13.11 用户关心的完整例：$`N=1024,T=32`$
 
-**【补充】**方阵 $`A,B,C`$ 都是 $`1024\times1024`$，FP32 每元素 4 bytes。
+**【补充】** 方阵 $`A,B,C`$ 都是 $`1024\times1024`$，FP32 每元素 4 bytes。
 
 先定义本节第一次使用的二进制容量单位：
 
@@ -3213,7 +3213,7 @@ Tiled 教学总量：
 
 ### 13.12 连接 arithmetic intensity 与 Roofline
 
-**【补充理解】**矩阵乘 FLOPs 约：
+**【补充理解】** 矩阵乘 FLOPs 约：
 
 ```math
 F\approx2N^3.
@@ -3273,7 +3273,7 @@ def triton_matmul_relu(a: torch.Tensor, b: torch.Tensor):
 
 ### 14.2 Stride：二维下标怎样变成一维元素偏移
 
-**【课程代码｜行 591–597｜视频 [79:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4749s)】**对 tensor：
+**【课程代码｜行 591–597｜视频 [79:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4749s)】** 对 tensor：
 
 ```python
 x = torch.tensor([
@@ -3368,7 +3368,7 @@ indices_k=[0,1].
 
 ### 14.5 `None` 是新增长度为 1 的 axis
 
-**【补充解释】**若：
+**【补充解释】** 若：
 
 ```text
 indices_m.shape = [BM]
@@ -3489,7 +3489,7 @@ tl.store(
 
 ### 14.9 非整除完整例：$`M=3,N=5,K=3`$，blocks 都是 2
 
-**【补充】**设：
+**【补充】** 设：
 
 ```math
 B_M=B_N=B_K=2.
@@ -3655,7 +3655,7 @@ F&F
 
 ### 15.1 ReLU 是逐元素 `max(z,0)`
 
-**【课程代码｜行 602–604、669–674｜视频 [72:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4339s)】**ReLU 是 Rectified Linear Unit（修正线性单元）：
+**【课程代码｜行 602–604、669–674｜视频 [72:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4339s)】** ReLU 是 Rectified Linear Unit（修正线性单元）：
 
 ```math
 \mathrm{ReLU}(z)=\max(z,0).
@@ -3677,7 +3677,7 @@ def naive_matmul_relu(x, y):
 
 ### 15.2 含负数的 $`2\times2`$ 完整例
 
-**【补充】**取：
+**【补充】** 取：
 
 ```math
 A=
@@ -3738,7 +3738,7 @@ C=
 
 ### 15.3 Fused kernel 在哪里做 ReLU
 
-**【课程代码｜行 659–674｜视频 [78:39](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4719s)–[81:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4907s)】**所有 $`K`$ tiles 累加后，`acc` 已是最终 matmul output tile，但还在 program 的片上计算状态中：
+**【课程代码｜行 659–674｜视频 [78:39](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4719s)–[81:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4907s)】** 所有 $`K`$ tiles 累加后，`acc` 已是最终 matmul output tile，但还在 program 的片上计算状态中：
 
 ```python
 for k in range(0, K, BLOCK_K):
@@ -3762,7 +3762,7 @@ store once
 
 ### 15.4 Output-side 流量和 launch 账
 
-**【补充推导】**这里只比较 matmul input tiles 已经读完之后的 output-side logical transfers；$`A/B`$ 的读取两种路径相同，不重复计。
+**【补充推导】** 这里只比较 matmul input tiles 已经读完之后的 output-side logical transfers；$`A/B`$ 的读取两种路径相同，不重复计。
 
 Separate kernels：
 
@@ -3803,7 +3803,7 @@ launch 数                    1
 8\times4=32\ \text{bytes}.
 ```
 
-**Epilogue（尾处理）**是 matmul 完成主要乘加、写回 output 前执行的 bias、activation、类型转换等末尾操作。这是教学 logical traffic；真实 HBM bytes 受 cache、已有 library epilogue、compiler fusion 和 memory transaction 粒度影响。若高层编译器本来就把 activation 融入 matmul epilogue，naive 源码也不一定真的启动两个 kernels；必须 profile。
+**Epilogue（尾处理）** 是 matmul 完成主要乘加、写回 output 前执行的 bias、activation、类型转换等末尾操作。这是教学 logical traffic；真实 HBM bytes 受 cache、已有 library epilogue、compiler fusion 和 memory transaction 粒度影响。若高层编译器本来就把 activation 融入 matmul epilogue，naive 源码也不一定真的启动两个 kernels；必须 profile。
 
 ### 15.5 Fusion 不是越大越好
 
@@ -3816,7 +3816,7 @@ Fusion 可能增加：
 
 这些情况不能随便融合：
 
-- 中间 $`Z`$ 还被另一个 **consumer（下游使用者，即另一个需要读取 $`Z`$ 的操作）**使用；若不 store，就得重新计算；
+- 中间 $`Z`$ 还被另一个 **consumer（下游使用者，即另一个需要读取 $`Z`$ 的操作）** 使用；若不 store，就得重新计算；
 - 两步之间需要跨 programs 的 global synchronization；
 - 融合后 tile 太大、register spill，实际反而慢；
 - vendor/library matmul kernel 极强，自写 fused kernel 的 matmul 主体损失超过 epilogue 收益；
@@ -3841,7 +3841,7 @@ Fusion 可能增加：
 8. 记录硬件、软件版本与输入分布
 ```
 
-**correctness（正确性）**不只指“代码没有报错”，还包括：
+**correctness（正确性）** 不只指“代码没有报错”，还包括：
 
 - 输出 shape 正确；
 - 边界 mask 没漏数据或越界；
@@ -3906,7 +3906,7 @@ Matmul
 
 ### 16.5 课程代码最后 68 行覆盖
 
-**【课程代码｜行 677–744】**这些 helper 没有新的 kernel 算法，但决定演示如何构造输入、验证和输出 PTX，不能在覆盖表中略过：
+**【课程代码｜行 677–744】** 这些 helper 没有新的 kernel 算法，但决定演示如何构造输入、验证和输出 PTX，不能在覆盖表中略过：
 
 | 行段 | Helper | 人话解释 | 本笔记位置 |
 |---:|---|---|---|
@@ -3920,7 +3920,7 @@ Matmul
 | 735–740 | `output_ptx` | 从已编译 kernel 的 `asm["ptx"]` 写文本文件 | §10 |
 | 743–744 | `if __name__...` | 直接运行讲义脚本时调用 `main()` | 全讲入口 |
 
-**closure（闭包）**在这里是“记住已经创建的输入 tensor、之后被 benchmark 反复调用的零参数函数”。它避免每次 trial 都把随机输入分配时间混进 kernel 时间。
+**closure（闭包）** 在这里是“记住已经创建的输入 tensor、之后被 benchmark 反复调用的零参数函数”。它避免每次 trial 都把随机输入分配时间混进 kernel 时间。
 
 `torch.allclose(a,b)` 的逐元素判断是：
 
@@ -3937,11 +3937,11 @@ Matmul
 
 ### 16.6 课程时点与本环境边界
 
-**【课程总结｜视频 [84:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5062s)–[85:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5110s)】**老师回答“除 Triton 还有什么”时强调不同语言/DSL 有不同 inductive bias（更容易表达的程序结构）。PTX 更低层，但不建议初学者把手写 PTX 当第一步；其他 DSL/library 也不一定简单排成上下级。
+**【课程总结｜视频 [84:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5062s)–[85:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5110s)】** 老师回答“除 Triton 还有什么”时强调不同语言/DSL 有不同 inductive bias（更容易表达的程序结构）。PTX 更低层，但不建议初学者把手写 PTX 当第一步；其他 DSL/library 也不一定简单排成上下级。
 
 这份课程 kernel 是为教学展示最小结构，不是生产 matmul 的完整替代品。它没有展开 autotuning、double buffering、async copies、不同 dtype/Tensor Core 路径、split-K、持久化 kernel、复杂 layout 与全部数值边界。
 
-**【视频补充｜[86:12](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5172s)–[86:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5194s)】**最后一个问题问“整块读还是逐元素处理更好”；老师的回答是脱离计算性质无法抽象决定。这正是本讲方法：写出数据复用与资源假设，然后测。
+**【视频补充｜[86:12](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5172s)–[86:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=5194s)】** 最后一个问题问“整块读还是逐元素处理更好”；老师的回答是脱离计算性质无法抽象决定。这正是本讲方法：写出数据复用与资源假设，然后测。
 
 本笔记环境仍没有可调用的 NVIDIA CUDA/Triton runtime，因此：
 
@@ -4967,7 +4967,7 @@ compute利用不足且matmul shape不合适
 - `get_local_url(...)`：把课程生成的本地 PTX 文本路径转成讲义界面可点击的本地 URL；它不编译 PTX。
 - `cuda_if_available()`：为 PyTorch 教学输入选择 CUDA device（若可用），否则可回退 CPU。Triton wrappers 仍明确要求 CUDA，所以“PyTorch 能 CPU 跑”不代表 Triton kernel 能 CPU 跑。
 - **B200 TMEM（Tensor Memory，张量内存）**：课程行 56 说明这是供 tensor cores 使用、位于 registers 与 shared memory 层级之间、普通程序员不可直接按常规 tensor 操作的片上存储。课程后续最小 kernels 没展开它。
-- **Thread-block cluster（线程块簇）**：课程行 64 说明 H100/B200 可把多个 thread blocks 组成 cluster，并使用 **distributed shared memory（分布式共享内存）**跨 cluster 内 blocks 协作。本讲 kernels 仍采用普通“一个 block 驻留一个 SM、使用本 block shared memory”的入门模型。
+- **Thread-block cluster（线程块簇）**：课程行 64 说明 H100/B200 可把多个 thread blocks 组成 cluster，并使用 **distributed shared memory（分布式共享内存）** 跨 cluster 内 blocks 协作。本讲 kernels 仍采用普通“一个 block 驻留一个 SM、使用本 block shared memory”的入门模型。
 - `profile()` 行 254–258 不只返回 table，还用 append 模式把时间戳和结果追加到 `var/profiles.txt`；重复运行会保留多次记录，而不是覆盖旧文件。
 
 下面的“1–744 精确覆盖”准确含义是：**行号区间索引没有 gap/overlap，并且每段能路由到笔记解释**。它不宣称 744 个物理行都逐行复刻；例如 import、空行、展示调用由本框集中解释，硬件括号说明也在本框补齐。
