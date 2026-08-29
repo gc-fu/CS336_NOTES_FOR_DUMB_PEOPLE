@@ -27,6 +27,16 @@ REQUIRED_SECTIONS = {
 }
 
 PLACEHOLDERS = re.compile(r"\b(?:TODO|TBD|FIXME)\b|待补|待完善", re.IGNORECASE)
+GITHUB_FORBIDDEN_MATH_MACROS = {
+    "operatorname": r"\mathrm{...}",
+}
+GITHUB_UNSUPPORTED_MATH_DELIMITERS = {
+    r"\\\(": r"\(...\)（请改用 $`...`$）",
+    r"^[ \t]*\\\[[ \t]*$": r"\[...\]（请改用顶格的 ```math 围栏）",
+}
+GITHUB_FRAGILE_INLINE_MATH = re.compile(r"(?<![\\$`])\$(?![$`])")
+GITHUB_INDENTED_MATH_FENCE = re.compile(r"^[ \t]+```math[ \t]*$", re.MULTILINE)
+UNESCAPED_TABLE_PIPE = re.compile(r"(?<!\\)\|")
 
 
 def check_note(path: Path) -> list[str]:
@@ -56,6 +66,40 @@ def check_note(path: Path) -> list[str]:
     if match:
         line = text.count("\n", 0, match.start()) + 1
         errors.append(f"第 {line} 行存在占位内容：{match.group(0)!r}")
+
+    for macro, replacement in GITHUB_FORBIDDEN_MATH_MACROS.items():
+        match = re.search(rf"\\{re.escape(macro)}\b", prose)
+        if match:
+            errors.append(
+                f"使用 GitHub 禁止的公式宏 \\{macro}；请改用 {replacement}"
+            )
+
+    for pattern, delimiter in GITHUB_UNSUPPORTED_MATH_DELIMITERS.items():
+        if re.search(pattern, prose, flags=re.MULTILINE):
+            errors.append(f"使用 GitHub 不支持的公式分隔符 {delimiter}")
+
+    prose_without_inline_code = re.sub(r"(`+).*?\1", "", prose)
+    if GITHUB_FRAGILE_INLINE_MATH.search(prose_without_inline_code):
+        errors.append(
+            "使用易受 Markdown 冲突影响的行内公式 $...$；"
+            "请改用 GitHub 推荐的 $`...`$"
+        )
+
+    if GITHUB_INDENTED_MATH_FENCE.search(text):
+        errors.append(
+            "使用 GitHub 可能按普通代码显示的缩进 math 围栏；"
+            "列表内请改用单独一行的 $`...`$"
+        )
+
+    for line_number, line in enumerate(lines, 1):
+        if not line.lstrip().startswith("|"):
+            continue
+        for formula in re.findall(r"\$`(.*?)`\$", line):
+            if UNESCAPED_TABLE_PIPE.search(formula):
+                errors.append(
+                    f"第 {line_number} 行的表格公式含未转义竖线；"
+                    r"条件符请用 \mid，定界符请用 \lvert/\rvert"
+                )
 
     for label, pattern in REQUIRED_SECTIONS.items():
         if not re.search(pattern, prose, flags=re.MULTILINE | re.IGNORECASE):

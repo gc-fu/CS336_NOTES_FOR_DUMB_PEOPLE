@@ -59,7 +59,7 @@
 4. **去重有三根轴：** 比较什么 item、怎样算 match、命中后做什么 action（§11）。
 5. Jaccard 是交集大小除以并集大小。MinHash 的单次碰撞概率等于 Jaccard；多次碰撞比例只是估计（§13）。
 6. LSH 候选概率是 `1-(1-s^r)^b`。增大 `r` 更严格；增大 `b` 更宽松（§14）。
-7. 本文用 \(p_i\) 表示来源的 **token share（token 份额）**，满足 \(\sum_i p_i=1\)；训练位置数是 \(p_iT\)，epoch 数是 \(p_iT/N_i\)。若实现按整条 sequence 抽来源，另用 \(q_i\) 表示 sequence 抽样概率，二者只在等长期望或按 token 预算校正时相同（§16）。
+7. 本文用 $`p_i`$ 表示来源的 **token share（token 份额）**，满足 $`\sum_i p_i=1`$；训练位置数是 $`p_iT`$，epoch 数是 $`p_iT/N_i`$。若实现按整条 sequence 抽来源，另用 $`q_i`$ 表示 sequence 抽样概率，二者只在等长期望或按 token 预算校正时相同（§16）。
 8. UniMax 的 epoch cap 应写成 `p_i T <= C N_i`；源码漏了来源大小 `N_i`（§17）。
 9. 小模型上拟合的最佳 mixture 不保证迁移到大模型；要查 evaluation overfit 与重复次数（§18）。
 10. 合成数据不是“免费真相”。要审计环境、任务、teacher response、验证器、许可、隐私与污染（§19–§21）。
@@ -247,21 +247,21 @@ gold（人工参考答案）是人审过的期望输出。假设页面应保留 
 
 定义：
 
-$$
+```math
 \text{precision}=\frac{\text{正确抽出的正文}}{\text{所有抽出的内容}},
 \qquad
 \text{recall}=\frac{\text{正确抽出的正文}}{\text{所有应抽出的正文}}.
-$$
+```
 
 逐步代数：
 
-$$
+```math
 \text{precision}=6/8=0.75=75\%,
-$$
+```
 
-$$
+```math
 \text{recall}=6/10=0.60=60\%.
-$$
+```
 
 precision（精确率）低说明混入很多噪声；recall（召回率）低说明漏掉很多正文。两者不能互相替代。
 
@@ -349,11 +349,11 @@ known failures and deletion route:
 
 小例：目标语料常见 `机器 学习`，很少见 `机器 香蕉`。模型可能给：
 
-$$
+```math
 p_T(\text{学习}\mid\text{机器})=0.4,
 \qquad
 p_T(\text{香蕉}\mid\text{机器})=0.001.
-$$
+```
 
 前者更像目标，但这不证明前者事实正确。
 
@@ -386,15 +386,15 @@ def keep_document(score: float) -> bool:
 
 `np.random.pareto(9)` 按 NumPy 的定义抽的是 Pareto II/Lomax 随机变量 `X>=0`，shape 参数 `a=9`。其概率密度是：
 
-$$
+```math
 f(x)=\frac{a}{(1+x)^{a+1}},\qquad x\ge 0.
-$$
+```
 
 不用微积分也可直接使用 NumPy 文档给出的 survival function（超过阈值的概率）：
 
-$$
+```math
 P(X>u)=(1+u)^{-a}.
-$$
+```
 
 这里：
 
@@ -404,12 +404,12 @@ $$
 
 逐项代入：
 
-$$
+```math
 P(\text{keep}\mid s)
 =P(X>1-s)
 =[1+(1-s)]^{-9}
 =(2-s)^{-9}.
-$$
+```
 
 **所以保留概率不是 `s`。** 这是把高分样本强烈上权、但仍让低分样本有极小机会进入的非线性随机规则。
 
@@ -424,9 +424,9 @@ $$
 
 例如 10,000 篇分数都为 0.5，期望保留约：
 
-$$
+```math
 10{,}000\times0.02601\approx260\text{ 篇}.
-$$
+```
 
 “期望 260”不是每次恰好 260；随机抽样会波动。
 
@@ -468,7 +468,9 @@ $$
 
 `B` 在 `14.7B` 中是 billion，即十亿：
 
-$$14.7\text{B}=14.7\times10^9=14{,}700{,}000{,}000\text{ tokens}.$$
+```math
+14.7\text{B}=14.7\times10^9=14{,}700{,}000{,}000\text{ tokens}.
+```
 
 为什么两个 fastText 阈值不同？【补充解释】LaTeX 已提供“像数学”的额外证据，所以 classifier 可以用较低门槛；无 LaTeX 时要更确信。不能由此推出“有 LaTeX 的文档一定是数学”，因为网页模板、价格公式或坏 OCR 也会命中。
 
@@ -505,7 +507,7 @@ Python subset of The Stack (R)
 - **learning rate（学习率）**：控制每一步更新幅度的超参数。
 - **HumanEval pass@1**：给每道编程题生成一份候选，按 HumanEval 测试协议估计该一份候选通过单元测试的比例；越高越好。它不是“人类评价分”，也不等于所有真实编程任务成功率。
 
-课程给出的论文特定结果：1.3B 模型用原始 Python 子集训练 96K steps 后 HumanEval pass@1 为 12.19%；用过滤子集 36K steps 后为 17.68%（[16:17](https://www.youtube.com/watch?v=5sxHosTLPF8&t=977s)）。绝对差为 \(17.68-12.19=5.49\) 个百分点，不是“提高 5.49%”。比较成立的口径是同论文 HumanEval 协议；训练数据与 steps 同时不同，所以不能把全部差值只归因于“少训练 60K steps”或单一过滤因素，也不证明所有模型/benchmark 同样改善。
+课程给出的论文特定结果：1.3B 模型用原始 Python 子集训练 96K steps 后 HumanEval pass@1 为 12.19%；用过滤子集 36K steps 后为 17.68%（[16:17](https://www.youtube.com/watch?v=5sxHosTLPF8&t=977s)）。绝对差为 $`17.68-12.19=5.49`$ 个百分点，不是“提高 5.49%”。比较成立的口径是同论文 HumanEval 协议；训练数据与 steps 同时不同，所以不能把全部差值只归因于“少训练 60K steps”或单一过滤因素，也不证明所有模型/benchmark 同样改善。
 
 ### 9.5 毒性过滤：目标本身包含价值判断
 
@@ -534,11 +536,15 @@ Python subset of The Stack (R)
 
 短训练只用高分池：
 
-$$80/100=0.8\text{ epoch}.$$
+```math
+80/100=0.8\text{ epoch}.
+```
 
 长训练若仍只用高分池：
 
-$$800/100=8\text{ epochs}.$$
+```math
+800/100=8\text{ epochs}.
+```
 
 长训练加入更多低分但不重复的文档，可能比把同一高分池看 8 遍更好。这里“可能”很重要：要实验验证。
 
@@ -582,14 +588,16 @@ deduplication（去重）是发现重复项并采取动作。decontamination（�
 
 `n` 篇文档两两比较的对数是：
 
-$$\frac{n(n-1)}{2}.$$
+```math
+\frac{n(n-1)}{2}.
+```
 
 若 `n=1,000,000`：
 
-$$
+```math
 \frac{1{,}000{,}000\times999{,}999}{2}
 =499{,}999{,}500{,}000,
-$$
+```
 
 约五千亿对。需要 hash/索引先找少量 candidate（候选对），再精查，而不是全量平方比较（[27:53](https://www.youtube.com/watch?v=5sxHosTLPF8&t=1673s)）。
 
@@ -667,13 +675,15 @@ shingle 是连续 `k` 个 token/字符的小片段。例：字符 2-shingle：
 
 定义：
 
-$$
+```math
 J(A,B)=\frac{|A\cap B|}{|A\cup B|}.
-$$
+```
 
 课程例：
 
-$$A=\{1,2,3,4\},\qquad B=\{1,2,3,5\}.$$
+```math
+A=\{1,2,3,4\},\qquad B=\{1,2,3,5\}.
+```
 
 - 交集 `A∩B={1,2,3}`，大小 3；
 - 并集 `A∪B={1,2,3,4,5}`，大小 5；
@@ -697,9 +707,9 @@ MinHash 做法：对并集元素使用一次随机 permutation（随机排列）
 
 所以：
 
-$$
+```math
 P[h_{min}(A)=h_{min}(B)]=3/5=J(A,B).
-$$
+```
 
 这个等式依赖 minwise independence（每个并集元素同样可能排第一）的随机排列/理想 hash 假设。普通任意 hash 不自动满足（[34:43](https://www.youtube.com/watch?v=5sxHosTLPF8&t=2083s)）。
 
@@ -707,7 +717,9 @@ $$
 
 若做 8 个独立 MinHash，观察到 6 个相同：
 
-$$\hat J=6/8=0.75.$$
+```math
+\hat J=6/8=0.75.
+```
 
 帽子 `^` 表示估计值。真实 Jaccard 仍要从原集合算；`0.75` 不等于精确 Jaccard。
 
@@ -744,23 +756,27 @@ band3: h9 h10 h11 h12
 4. `b` 个 band 全不匹配：`(1-s^r)^b`；
 5. 至少一个 band 匹配：
 
-$$
+```math
 P_{candidate}=1-(1-s^r)^b.
-$$
+```
 
 ### 14.3 `s=0.8,b=5,r=10` 完整算
 
-$$s^r=0.8^{10}=0.1073741824.$$
+```math
+s^r=0.8^{10}=0.1073741824.
+```
 
-$$1-s^r=0.8926258176.$$
+```math
+1-s^r=0.8926258176.
+```
 
-$$
+```math
 (1-s^r)^b=0.8926258176^5\approx0.5666921796.
-$$
+```
 
-$$
+```math
 P_{candidate}=1-0.5666921796=0.4333078204\approx43.33\%.
-$$
+```
 
 视频口头说“约 0.4”（[41:27](https://www.youtube.com/watch?v=5sxHosTLPF8&t=2487s)），精确到四位是 0.4333。
 
@@ -784,16 +800,16 @@ $$
 
 课程真实设置例：`b=20,r=450,n=9000`。常用启发式阈值：
 
-$$
+```math
 s_*=(1/b)^{1/r}=(1/20)^{1/450}\approx0.9933649271.
-$$
+```
 
 因为 `s_*^r=1/b=0.05`，此点候选概率是：
 
-$$
+```math
 1-(1-1/20)^{20}=1-(19/20)^{20}
 \approx0.641514.
-$$
+```
 
 所以它约是 64.15% 候选概率点，不是精确 50% threshold。课程称 phase transition 大致发生附近，是 heuristic（启发式），不是硬门槛（[46:42](https://www.youtube.com/watch?v=5sxHosTLPF8&t=2802s)）。
 
@@ -839,22 +855,22 @@ MinHash/LSH 找候选对
 
 【课程】语言模型会混合 Wikipedia、网页、代码、书籍、数学等来源。课程的 Marin token viewer 图片只是一份当时计划/数据快照；横轴是各来源 token 数（十亿），颜色是 web、multilingual、math、code 等类别，不是推荐权重（[49:49](https://www.youtube.com/watch?v=5sxHosTLPF8&t=2989s)）。
 
-### 16.1 先分开 token share \(p_i\) 与 sequence 概率 \(q_i\)
+### 16.1 先分开 token share $`p_i`$ 与 sequence 概率 $`q_i`$
 
-有 \(m\) 个来源。本文为保证 epoch 公式量纲正确，固定：
+有 $`m`$ 个来源。本文为保证 epoch 公式量纲正确，固定：
 
-- \(p_i\)：来源 \(i\) 占全部**训练 token 位置**的份额；
-- \(q_i\)：按整条 sequence 抽来源时，抽到来源 \(i\) 的概率。
+- $`p_i`$：来源 $`i`$ 占全部**训练 token 位置**的份额；
+- $`q_i`$：按整条 sequence 抽来源时，抽到来源 $`i`$ 的概率。
 
 两组都各自非负且和为 1：
 
-$$
+```math
 p_i\ge0,\qquad \sum_{i=1}^{m}p_i=1.
-$$
+```
 
-\[
+```math
 q_i\ge0,\qquad \sum_{i=1}^{m}q_i=1.
-\]
+```
 
 token share 例：
 
@@ -864,50 +880,50 @@ Wikipedia 0.3 + Common Crawl 0.5 + GitHub 0.2 = 1.0
 
 这表示长期约 30%、50%、20% 的 **token 位置**来自各来源。
 
-为什么 \(p_i\) 不一定等于 \(q_i\)？设 code sequence 平均 100 token，web sequence 平均 400 token；若 \(q_{\text{code}}=q_{\text{web}}=0.5\)，每抽两条期望得到 100 个 code token、400 个 web token，所以
+为什么 $`p_i`$ 不一定等于 $`q_i`$？设 code sequence 平均 100 token，web sequence 平均 400 token；若 $`q_{\text{code}}=q_{\text{web}}=0.5`$，每抽两条期望得到 100 个 code token、400 个 web token，所以
 
-\[
+```math
 p_{\text{code}}=\frac{100}{100+400}=0.2,\qquad
 p_{\text{web}}=0.8.
-\]
+```
 
-要实现目标 token share \(p_i\)，可按 token budget 直接调度；若只能按 sequence 抽样，近似需要“与 \(p_i/\bar L_i\) 成正比”。符号 \(\propto\) 读作“正比”：它只给各来源的**相对权重**，尚未保证和为1。完整归一化式是
+要实现目标 token share $`p_i`$，可按 token budget 直接调度；若只能按 sequence 抽样，近似需要“与 $`p_i/\bar L_i`$ 成正比”。符号 $`\propto`$ 读作“正比”：它只给各来源的**相对权重**，尚未保证和为1。完整归一化式是
 
-\[
+```math
 q_i
 =\frac{p_i/\bar L_i}
 {\sum_j p_j/\bar L_j}.
-\]
+```
 
-其中 \(\bar L_i\) 是来源 \(i\) 的平均 sequence 长度，分母把所有未归一化权重加起来。
+其中 $`\bar L_i`$ 是来源 $`i`$ 的平均 sequence 长度，分母把所有未归一化权重加起来。
 
-完整手算：目标 \(p_{\text{code}}=p_{\text{web}}=0.5\)，平均长度分别100、400 token。
+完整手算：目标 $`p_{\text{code}}=p_{\text{web}}=0.5`$，平均长度分别100、400 token。
 
-\[
+```math
 \frac{p_{\text{code}}}{\bar L_{\text{code}}}
 =0.5/100=0.005,
 \qquad
 \frac{p_{\text{web}}}{\bar L_{\text{web}}}
 =0.5/400=0.00125.
-\]
+```
 
-相对比为 \(0.005:0.00125=4:1\)，和为 \(0.00625\)，所以
+相对比为 $`0.005:0.00125=4:1`$，和为 $`0.00625`$，所以
 
-\[
+```math
 q_{\text{code}}=0.005/0.00625=0.8,
 \qquad
 q_{\text{web}}=0.00125/0.00625=0.2.
-\]
+```
 
 每次 sequence 抽样贡献的期望 token 分量是
 
-\[
+```math
 0.8\times100=80\ \text{code tokens},
 \qquad
 0.2\times400=80\ \text{web tokens}.
-\]
+```
 
-两边都是80，所以 token share 为 \(80/(80+80)=0.5\)。等长 sequence 时 \(\bar L_i\) 相同，才有 \(q_i=p_i\)。
+两边都是80，所以 token share 为 $`80/(80+80)=0.5`$。等长 sequence 时 $`\bar L_i`$ 相同，才有 $`q_i=p_i`$。
 
 ### 16.2 四种 baseline
 
@@ -924,9 +940,9 @@ q_{\text{web}}=0.00125/0.00625=0.2.
 
 例 `alpha=1/2` 即开平方：
 
-$$
+```math
 \sqrt{100}=10,\quad\sqrt{300}\approx17.32,\quad\sqrt{600}\approx24.49.
-$$
+```
 
 总和 `51.81`，所以 A 权重 `10/51.81≈0.193`，B `≈0.334`，C `≈0.473`。
 
@@ -934,17 +950,17 @@ $$
 
 课程的 The Pile 表还说明“原始大小”和“有效混合大小”不是同一列。Wikipedia 原始大小为 6.38 GiB，权重/重复系数为 3，所以
 
-\[
+```math
 6.38\ \mathrm{GiB}\times3=19.14\ \mathrm{GiB}.
-\]
+```
 
 表中全部来源有效大小总计 1254.20 GiB，因此 Wikipedia 的有效混合占比约
 
-\[
+```math
 19.14/1254.20\approx0.01526=1.526\%.
-\]
+```
 
-这里 GiB 是二进制字节单位，\(1\ \mathrm{GiB}=2^{30}\) bytes；它不是 token 数。课程表的“weight/epochs”是该数据集配方口径，不可直接当本文所有 \(p_i\) 的定义。
+这里 GiB 是二进制字节单位，$`1\ \mathrm{GiB}=2^{30}`$ bytes；它不是 token 数。课程表的“weight/epochs”是该数据集配方口径，不可直接当本文所有 $`p_i`$ 的定义。
 
 ### 16.3 positions 与 epochs：最重要的两式
 
@@ -957,11 +973,11 @@ $$
 - `p_i T_train`：该来源被请求的训练位置数；
 - `e_i`：该来源平均被重复几轮。
 
-$$
+```math
 \text{positions}_i=p_iT_{train},
 \qquad
 e_i=\frac{p_iT_{train}}{N_i}.
-$$
+```
 
 **单位检查：** 分子和分母都是 token，所以相除后 epoch 没有单位。
 
@@ -974,32 +990,32 @@ $$
 
 低质量来源：
 
-$$
+```math
 p_{low}T_{train}=0.5\times10^{12}=5\times10^{11}=500\text{B tokens},
-$$
+```
 
-$$
+```math
 e_{low}=\frac{0.5\times10^{12}}{10\times10^{12}}
 =\frac{0.5}{10}=0.05\text{ epoch}.
-$$
+```
 
 高质量来源：
 
-$$
+```math
 p_{high}T_{train}=500\text{B tokens},
-$$
+```
 
-$$
+```math
 e_{high}=\frac{500\text{B}}{10\text{B}}=50\text{ epochs}.
-$$
+```
 
 【视频补充】讲者明确说，50 epochs 不是“需要 50 遍”，而是盲目设 50/50 mixture 后不知不觉造成的；最好是浪费计算，最坏是过拟合（[56:37](https://www.youtube.com/watch?v=5sxHosTLPF8&t=3397s)）。
 
 ### 16.5 mixture 在 batch 中怎样实现
 
-batch（批次）是一次并行训练的一组 sequence（序列）。常见实现是每条 sequence 先按 \(q_i\) 抽来源，再取一条；不是在一个句子内部逐 token 切换来源。
+batch（批次）是一次并行训练的一组 sequence（序列）。常见实现是每条 sequence 先按 $`q_i`$ 抽来源，再取一条；不是在一个句子内部逐 token 切换来源。
 
-例：batch size=8、\(q_{\text{code}}=0.25,q_{\text{web}}=0.75\)，期望 2 条 code、6 条 web，但单 batch 可为 1/7 或 3/5。若两来源都填充/打包成相同有效长度，token share 也约为 25%/75%；若 code 平均更短，实际 \(p_{\text{code}}\) 会低于 25%。可按 token 计数反馈调整 \(q_i\)，或用 token-budget scheduler 直接控制 \(p_i\)（[57:26](https://www.youtube.com/watch?v=5sxHosTLPF8&t=3446s)）。
+例：batch size=8、$`q_{\text{code}}=0.25,q_{\text{web}}=0.75`$，期望 2 条 code、6 条 web，但单 batch 可为 1/7 或 3/5。若两来源都填充/打包成相同有效长度，token share 也约为 25%/75%；若 code 平均更短，实际 $`p_{\text{code}}`$ 会低于 25%。可按 token 计数反馈调整 $`q_i`$，或用 token-budget scheduler 直接控制 $`p_i`$（[57:26](https://www.youtube.com/watch?v=5sxHosTLPF8&t=3446s)）。
 
 ## 17. UniMax：给重复次数装一个保险丝
 
@@ -1015,15 +1031,15 @@ p(s) * num_training_tokens <= C
 
 左边单位是 token，右边 `C` 若是 epoch 就没有单位，不能直接比较。缺了来源大小 `N_s`。正确 cap 是：
 
-$$
+```math
 \frac{p_iT_{train}}{N_i}\le C
-$$
+```
 
 等价于：
 
-$$
+```math
 p_iT_{train}\le C N_i.
-$$
+```
 
 左、右两边现在都是 token。
 
@@ -1038,13 +1054,19 @@ $$
 
 若 uniform：A 50、B 50。
 
-$$e_A=50/100=0.5,$$
+```math
+e_A=50/100=0.5,
+```
 
-$$e_B=50/20=2.5>2,$$
+```math
+e_B=50/20=2.5>2,
+```
 
 B 超 cap。B 最多能贡献：
 
-$$C N_B=2\times20=40\text{ token}.$$
+```math
+C N_B=2\times20=40\text{ token}.
+```
 
 把剩余 10 个位置给 A：
 
@@ -1075,7 +1097,7 @@ regression（回归）是从输入数字预测连续值，例如从 mixture 权�
 
 课程图 `regmix.png` 的例子有 Hacker News/GitHub/Philpapers 三个权重，目标 loss 越低越好。它展示方法流程，不证明图中 22.8%/67.0%/10.2% 是任何别的项目的最佳混合。
 
-**\(R^2\)（决定系数）**粗略问“回归比只猜平均值解释了多少验证 loss 变化”；接近 1 表示已采点上的拟合较好，不证明外推最低点正确。**bootstrap（自助法）**是对已有实验点有放回重抽、反复重拟合，观察最佳 mixture 漂移多大；它只能反映现有样本中的不稳定性，不能补上没采到的区域。
+**$`R^2`$（决定系数）**粗略问“回归比只猜平均值解释了多少验证 loss 变化”；接近 1 表示已采点上的拟合较好，不证明外推最低点正确。**bootstrap（自助法）**是对已有实验点有放回重抽、反复重拟合，观察最佳 mixture 漂移多大；它只能反映现有样本中的不稳定性，不能补上没采到的区域。
 
 ### 18.2 Dirichlet 只需先懂这个
 
@@ -1116,19 +1138,29 @@ Dirichlet distribution（狄利克雷分布）是一种“随机生成一组非�
 - 大 run：`1T=1000B token`；
 - 比例：
 
-$$\rho=10B/1000B=0.01.$$
+```math
+\rho=10B/1000B=0.01.
+```
 
-把每个来源大小乘缩放比例 \(\rho\)。这里不用 \(q_i\)，避免和 §16 的 sequence 抽样概率混淆：
+把每个来源大小乘缩放比例 $`\rho`$。这里不用 $`q_i`$，避免和 §16 的 sequence 抽样概率混淆：
 
-$$10T\times0.01=0.1T=100B,$$
+```math
+10T\times0.01=0.1T=100B,
+```
 
-$$10B\times0.01=0.1B=100M.$$
+```math
+10B\times0.01=0.1B=100M.
+```
 
 若小 run 仍用 50/50：各要 5B token。
 
-$$e_{low}=5B/100B=0.05,$$
+```math
+e_{low}=5B/100B=0.05,
+```
 
-$$e_{high}=5B/0.1B=50.$$
+```math
+e_{high}=5B/0.1B=50.
+```
 
 正好复现大 run 的 0.05/50 epoch 压力（[68:32](https://www.youtube.com/watch?v=5sxHosTLPF8&t=4112s)）。
 
@@ -1186,7 +1218,9 @@ environment（环境）
 
 若每个问题恰生成 16 个答案：
 
-$$1{,}200{,}000/16=75{,}000\text{ questions}.$$
+```math
+1{,}200{,}000/16=75{,}000\text{ questions}.
+```
 
 课程流程图也显示 science 6K + code 16K + math 53K = 75K；`75K*16=1.2M`。这解释“example 数”和“独特 prompt 数”为什么不同。
 
@@ -1240,34 +1274,34 @@ unit test（单元测试）是检查一小块程序行为的自动化测试。**
 
 课程随后介绍当日发布的数据快照：12M trajectories；基于 SWE-rebench-v2，约 32K executable tasks 和 120K non-executable tasks；课程转述 mini-coder-1.7B 在对应固定模型、prompt、temperature、预算、scaffold 和评测协议下 **pass@100=50.4%**（[82:18](https://www.youtube.com/watch?v=5sxHosTLPF8&t=4938s)）。
 
-pass@100 不是“单次回答正确率 50.4%”，而是考察 \(k=100\) 份候选中至少一份通过；真实评测可从每题已经生成的 \(n\ge100\) 份候选估计。
+pass@100 不是“单次回答正确率 50.4%”，而是考察 $`k=100`$ 份候选中至少一份通过；真实评测可从每题已经生成的 $`n\ge100`$ 份候选估计。
 
 先区分两个公式。
 
-1. **独立同成功率玩具模型**：每次独立、成功率都为 \(p\)，则
+1. **独立同成功率玩具模型**：每次独立、成功率都为 $`p`$，则
 
-\[
+```math
 P(\text{至少一中})=1-(1-p)^k.
-\]
+```
 
-例如 \(p=0.2\)，2 次为 \(1-0.8^2=0.36\)，3 次为 \(1-0.8^3=0.488\)。
+例如 $`p=0.2`$，2 次为 $`1-0.8^2=0.36`$，3 次为 $`1-0.8^3=0.488`$。
 
-2. **有限已有样本的常用无放回估计**：某题已经生成 \(n\) 份，其中 \(c\) 份通过；从这 \(n\) 份里不重复地均匀选 \(k\) 份，要求 \(n\ge k\)：
+2. **有限已有样本的常用无放回估计**：某题已经生成 $`n`$ 份，其中 $`c`$ 份通过；从这 $`n`$ 份里不重复地均匀选 $`k`$ 份，要求 $`n\ge k`$：
 
-\[
+```math
 \widehat{\mathrm{pass@}k}
 =1-\frac{\binom{n-c}{k}}{\binom nk}.
-\]
+```
 
-\(\binom ab\) 是“从 \(a\) 个不同对象里不重复选 \(b\) 个子集”的数量。若 \(n=5,c=2,k=2\)，总子集 \(\binom52=10\)，全失败子集从3个失败候选选2个，\(\binom32=3\)，所以
+$`\binom ab`$ 是“从 $`a`$ 个不同对象里不重复选 $`b`$ 个子集”的数量。若 $`n=5,c=2,k=2`$，总子集 $`\binom52=10`$，全失败子集从3个失败候选选2个，$`\binom32=3`$，所以
 
-\[
+```math
 \widehat{\mathrm{pass@}2}=1-3/10=0.7.
-\]
+```
 
-若 \(n-c<k\)，失败候选不够组成一个大小为 \(k\) 的全失败子集，约定 \(\binom{n-c}{k}=0\)，所以估计值为 \(1-0=1\)。benchmark 通常先对**每一道题**算 pass@k，再对题目取平均。
+若 $`n-c<k`$，失败候选不够组成一个大小为 $`k`$ 的全失败子集，约定 $`\binom{n-c}{k}=0`$，所以估计值为 $`1-0=1`$。benchmark 通常先对**每一道题**算 pass@k，再对题目取平均。
 
-这是对已生成候选做无放回子集估计，不是说语言模型生成时在无放回抽答案。对固定题目、固定生成分布做独立随机采样时，可把候选近似看作条件独立；但 beam search、共享 candidate pool、复用生成状态、自适应 retry 或后一次读取前一次结果时，候选可能相关。不同题目成功率也高度异质，不存在跨题统一的一个 \(p\)。因此汇总 pass@100 不能用单一独立 \(p\) 反推单次正确率。这些数据是 2026 快照，不是当前 leaderboard。
+这是对已生成候选做无放回子集估计，不是说语言模型生成时在无放回抽答案。对固定题目、固定生成分布做独立随机采样时，可把候选近似看作条件独立；但 beam search、共享 candidate pool、复用生成状态、自适应 retry 或后一次读取前一次结果时，候选可能相关。不同题目成功率也高度异质，不存在跨题统一的一个 $`p`$。因此汇总 pass@100 不能用单一独立 $`p`$ 反推单次正确率。这些数据是 2026 快照，不是当前 leaderboard。
 
 ### 21.5 代码数据需要互补的多轴验证
 
@@ -1533,7 +1567,7 @@ human review sample:
 54. 【推导】解释为什么 `epochs_i=p_iT_train/N_i` 没有单位。
 55. 【手算】完整复算 10T low、10B high、1T 训练、50/50 时两个 epoch 数。
 56. 【判断解释】第 55 题的 50 epochs 是否表示模型“需要”50遍？
-57. 【手算】第一问：batch size=12、sequence 抽样概率 \(q_{\mathrm{code}}=.25\)，长期每 batch 期望多少 code sequence？第二问：目标 token share 是 code/web 各0.5，平均长度100/400，用 §16.1 归一化式算 \(q_{\mathrm{code}},q_{\mathrm{web}}\)，并验证期望 token 各80。
+57. 【手算】第一问：batch size=12、sequence 抽样概率 $`q_{\mathrm{code}}=.25`$，长期每 batch 期望多少 code sequence？第二问：目标 token share 是 code/web 各0.5，平均长度100/400，用 §16.1 归一化式算 $`q_{\mathrm{code}},q_{\mathrm{web}}`$，并验证期望 token 各80。
 58. 【推导】从 `epochs_i<=C` 推出 `p_iT_train<=CN_i`。
 59. 【判断解释】为什么源码 `p_iT_train<=C` 有量纲问题？
 60. 【手算】A=100 token、B=20、训练100、cap2；uniform 时各 epoch？怎样改为 60/40 满足 cap？
@@ -1551,7 +1585,7 @@ human review sample:
 69. 【判断解释】为什么 benchmark 更强的模型未必是更好的 teacher？
 70. 【设计】为 teacher 数据写四项独立验证。
 71. 【分类】SWE-smith 为什么属于“真实环境 + 合成任务”？
-72. 【手算+判断解释】无 execution feedback 的轨迹有什么收益与代价？另有 \(n=5,c=2,k=2\)，用无放回公式算 pass@2，并说明它与独立 \(1-(1-p)^k\) 不是同一估计口径。
+72. 【手算+判断解释】无 execution feedback 的轨迹有什么收益与代价？另有 $`n=5,c=2,k=2`$，用无放回公式算 pass@2，并说明它与独立 $`1-(1-p)^k`$ 不是同一估计口径。
 73. 【判断解释】为什么“已有 unit tests 全过”仍不等于 patch 完全正确？
 74. 【设计】写出一条不包含攻击步骤的 future-information 防泄漏原则。
 75. 【分类】license、PII、benchmark contamination、dependency version 分别属于哪类审计风险？
@@ -1575,15 +1609,15 @@ human review sample:
 
 5. 按题干 extraction 标签，actual positive 是 gold 正文、predicted positive 是抽出块。于是 `TP=15`；输出18，所以 `FP=18-15=3`；gold20，所以 `FN=20-15=5`。没有给全部非正文块数，TN 无法从这些数推出，但 P/R 不需要 TN。
 
-   $$P=15/18=0.8333=83.33\%,$$
+   $`P=15/18=0.8333=83.33\%,`$
 
-   $$R=15/20=0.75=75\%.$$
+   $`R=15/20=0.75=75\%.`$
 
 6. 沿用相同 extraction 标签：`TP=13,FP=14-13=1,FN=20-13=7`。
 
-   $$P=13/14\approx92.86\%,$$
+   $`P=13/14\approx92.86\%,`$
 
-   $$R=13/20=65\%.$$
+   $`R=13/20=65\%.`$
 
    第二个 precision 更高；第 5 题的 recall 更高。
 
@@ -1595,15 +1629,15 @@ human review sample:
 
 10. 按 filtering-eval 标签，actual positive 是人工判好、predicted positive 是保留。`TP=36`；`FP=60-36=24`；`FN=40-36=4`；全部坏文档 60 篇，所以 `TN=60-24=36`。
 
-    $$P=36/(36+24)=36/60=60\%,$$
+    $`P=36/(36+24)=36/60=60\%,`$
 
-    $$R=36/(36+4)=36/40=90\%.$$
+    $`R=36/(36+4)=36/40=90\%.`$
 
 11. `TP=28,FP=32-28=4,FN=40-28=12`。
 
-    $$P=28/32=87.5\%,$$
+    $`P=28/32=87.5\%,`$
 
-    $$R=28/40=70\%.$$
+    $`R=28/40=70\%.`$
 
     阈值提高后留下的更纯，但漏掉更多好文档。
 
@@ -1617,19 +1651,19 @@ human review sample:
 
 16. 令 `u=1-s,a=9`：
 
-    $$P(keep|s)=P(X>1-s)=[1+(1-s)]^{-9}=(2-s)^{-9}.$$
+    $`P(keep|s)=P(X>1-s)=[1+(1-s)]^{-9}=(2-s)^{-9}.`$
 
 17. `s=0`：
 
-    $$P=2^{-9}=1/512=0.001953125.$$
+    $`P=2^{-9}=1/512=0.001953125.`$
 
-    $$10{,}240/512=20,$$
+    $`10{,}240/512=20,`$
 
     所以期望留 20 篇，不保证每次刚好 20。
 
 18. `P=1/38.443≈0.026012=2.6012%`；
 
-    $$10{,}000*0.026012≈260.12,$$
+    $`10{,}000*0.026012≈260.12,`$
 
     期望约 260 篇。
 
@@ -1697,7 +1731,7 @@ human review sample:
 
 48. 定义 `s*=(1/b)^(1/r)`。两边取 `r` 次幂：
 
-    $$(s_*)^r=[(1/b)^{1/r}]^r=1/b=1/20.$$
+    $`(s_*)^r=[(1/b)^{1/r}]^r=1/b=1/20.`$
 
 49. `1-(19/20)^20≈0.641514=64.1514%`，不是 0.5，因此该启发式点不是 50% 硬阈值。
 
@@ -1715,32 +1749,29 @@ human review sample:
 
 55. 低来源 positions：`.5*1T=.5T`；
 
-    $$e_{low}=.5T/10T=.05.$$
+    $`e_{low}=.5T/10T=.05.`$
 
     高来源 positions 同为 `.5T=500B`；
 
-    $$e_{high}=500B/10B=50.$$
+    $`e_{high}=500B/10B=50.`$
 
 56. 不是。它只表示 mixture 会平均暴露 50 次；讲者指出最好是浪费，最坏会过拟合。应调权重或用 cap。
 
-57. 第一问：\(12\times0.25=3\)，所以长期每 batch 期望3条 code sequence；单 batch 不必恰好3。
+57. 第一问：$`12\times0.25=3`$，所以长期每 batch 期望3条 code sequence；单 batch 不必恰好3。
 
-    第二问：未归一化权重是 \(0.5/100=0.005\) 与 \(0.5/400=0.00125\)，和为0.00625：
+    第二问：未归一化权重是 $`0.5/100=0.005`$ 与 $`0.5/400=0.00125`$，和为0.00625：
 
-    \[
-    q_{\mathrm{code}}=0.005/0.00625=0.8,\qquad
-    q_{\mathrm{web}}=0.00125/0.00625=0.2.
-    \]
+    $`q_{\mathrm{code}}=0.005/0.00625=0.8,\qquad q_{\mathrm{web}}=0.00125/0.00625=0.2.`$
 
-    期望 token 分量是 \(0.8\times100=80\) 与 \(0.2\times400=80\)，所以 token share 正好50%/50%。这也证明 \(p_i\) 与 \(q_i\) 在不等长时不能直接相等。
+    期望 token 分量是 $`0.8\times100=80`$ 与 $`0.2\times400=80`$，所以 token share 正好50%/50%。这也证明 $`p_i`$ 与 $`q_i`$ 在不等长时不能直接相等。
 
 58. 从：
 
-    $$e_i=\frac{p_iT_{train}}{N_i}\le C$$
+    $`e_i=\frac{p_iT_{train}}{N_i}\le C`$
 
     两边乘正数 `N_i`：
 
-    $$p_iT_{train}\le CN_i.$$
+    $`p_iT_{train}\le CN_i.`$
 
 59. `p_iT_train` 的单位是 token，`C` 的单位是 epoch（无量纲），不能比较。右边要乘 `N_i token`。
 
@@ -1754,7 +1785,7 @@ human review sample:
     - code positions `.2*1000B=200B`；epochs `200/100=2`；
     - web positions `.7*1T=.7T`；epochs `.7T/2T=.35`。
 
-63. 缩放比例 \(\rho=10B/1T=10B/1000B=.01\)。这里 \(\rho\) 不是 §16 的 sequence 概率 \(q_i\)。于是 `10T*.01=.1T=100B`；`10B*.01=.1B=100M`。
+63. 缩放比例 $`\rho=10B/1T=10B/1000B=.01`$。这里 $`\rho`$ 不是 §16 的 sequence 概率 $`q_i`$。于是 `10T*.01=.1T=100B`；`10B*.01=.1B=100M`。
 
 64. 小 run 10B 的一半是5B。低来源 `e=5B/100B=.05`；高来源 `e=5B/.1B=50`，与大 run 相同。
 
@@ -1768,7 +1799,7 @@ human review sample:
 
 68. `1.2M=1,200,000`；
 
-    $$1{,}200{,}000/16=75{,}000\text{ prompts}.$$
+    $`1{,}200{,}000/16=75{,}000\text{ prompts}.`$
 
 69. teacher 数据要求正确、步骤可学、风格匹配、成本可承受；benchmark 分高只量特定协议，不量这些全部属性。
 
@@ -1778,13 +1809,11 @@ human review sample:
 
 72. 收益：无需为每个 repo 安装依赖，便宜、可扩到更多 PR。代价：无法用运行结果验证语义，错误轨迹更难发现，学习信号较弱。
 
-    总2子集 \(\binom52=10\)；3份失败候选的全失败2子集 \(\binom32=3\)：
+    总2子集 $`\binom52=10`$；3份失败候选的全失败2子集 $`\binom32=3`$：
 
-    \[
-    \widehat{\mathrm{pass@}2}=1-3/10=0.7.
-    \]
+    $`\widehat{\mathrm{pass@}2}=1-3/10=0.7.`$
 
-    这是从已有5份候选不重复选2份的估计；\(1-(1-p)^2\) 则假设固定题目下每次按同一分布独立采样、成功率为 \(p\)，契约不同。若用 beam/shared pool 或自适应 retry，候选可能相关；跨题成功率也不同。benchmark 应逐题算 pass@k 再平均。若 \(n-c<k\)，全失败组合数按0，估计为1。
+    这是从已有5份候选不重复选2份的估计；$`1-(1-p)^2`$ 则假设固定题目下每次按同一分布独立采样、成功率为 $`p`$，契约不同。若用 beam/shared pool 或自适应 retry，候选可能相关；跨题成功率也不同。benchmark 应逐题算 pass@k 再平均。若 $`n-c<k`$，全失败组合数按0，估计为1。
 
 73. tests 只覆盖作者写到的案例；可能漏边界、性能、安全、未测试接口，或测试本身错误。通过是证据，不是完整正确性证明。
 
@@ -1798,7 +1827,7 @@ human review sample:
 
 78. 候选概率约 `.4333078204`；
 
-    $$10{,}000*.4333078204\approx4{,}333.08,$$
+    $`10{,}000*.4333078204\approx4{,}333.08,`$
 
     期望约4,333对进入精算。它们 exact `J=.8<.85`，所以按该 action 不应判重复删除。
 

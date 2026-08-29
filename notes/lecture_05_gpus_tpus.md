@@ -39,23 +39,23 @@ GPU：大量轻量线程 + 专用矩阵乘单元
 
 ### 0.3 必须记住的三个公式
 
-先给复习时用的最短符号表：FLOP 是一次浮点数学操作；byte（字节）是数据量单位，1 byte = 8 bits；FLOP/s 是每秒能做多少次浮点操作；`min(a,b)` 表示在 $a,b$ 中取较小者。Attention 公式里的 $Q/K/V$ 分别是 query（查询）、key（键）和 value（值），$K^\top$ 表示把 $K$ 的行列交换，$d_k$ 是每个 key 的数字个数，softmax 把一排分数变成总和为 1 的权重。这些概念会在第 8 节从零手算。
+先给复习时用的最短符号表：FLOP 是一次浮点数学操作；byte（字节）是数据量单位，1 byte = 8 bits；FLOP/s 是每秒能做多少次浮点操作；`min(a,b)` 表示在 $`a,b`$ 中取较小者。Attention 公式里的 $`Q/K/V`$ 分别是 query（查询）、key（键）和 value（值），$`K^\top`$ 表示把 $`K`$ 的行列交换，$`d_k`$ 是每个 key 的数字个数，softmax 把一排分数变成总和为 1 的权重。这些概念会在第 8 节从零手算。
 
 1. **算术强度（arithmetic intensity）**
 
-   $$I=\frac{\text{FLOPs}}{\text{从内存传输的字节数}}$$
+   $`I=\frac{\text{FLOPs}}{\text{从内存传输的字节数}}`$
 
 2. **Roofline 模型**
 
-   $$P_{\text{attainable}}=\min\left(P_{\text{peak}},\;B_{\text{memory}}\cdot I\right)$$
+   $`P_{\text{attainable}}=\min\left(P_{\text{peak}},\;B_{\text{memory}}\cdot I\right)`$
 
-   - $P_{\text{peak}}$：硬件峰值计算吞吐，单位通常是 FLOP/s。
-   - $B_{\text{memory}}$：内存带宽，单位 byte/s。
-   - $I$：每搬一个 byte 能做多少 FLOPs。
+   - $`P_{\text{peak}}`$：硬件峰值计算吞吐，单位通常是 FLOP/s。
+   - $`B_{\text{memory}}`$：内存带宽，单位 byte/s。
+   - $`I`$：每搬一个 byte 能做多少 FLOPs。
 
 3. **Attention**
 
-   $$\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+   $`\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V`$
 
    FlashAttention 不改变这个数学结果；它改变的是计算顺序和数据移动方式。
 
@@ -99,9 +99,9 @@ GPU：大量轻量线程 + 专用矩阵乘单元
 
 | 改进 | 简化计算 | 新时间 |
 |---|---:|---:|
-| 芯片速度变成 2 倍 | $100/2$ | 50 天 |
+| 芯片速度变成 2 倍 | $`100/2`$ | 50 天 |
 | 硬件有效利用率从 40% 提到 80% | 有效工作速度也约变成 2 倍 | 50 天 |
-| 用 4 张 GPU，且暂时假设没有额外损耗 | $100/4$ | 25 天 |
+| 用 4 张 GPU，且暂时假设没有额外损耗 | $`100/4`$ | 25 天 |
 
 现实中的 4 张卡通常达不到恰好 4 倍，因为它们需要互相传数据并等待对方。所谓“通信方案”，就是决定哪些数据由哪张卡计算、何时交换，以及怎样让通信与计算同时发生。整门系统课都可以理解为：尽量把“买到的理论计算量”变成“真正完成的模型计算量”。
 
@@ -162,25 +162,33 @@ GPU 正是这一并行扩展路线的代表。
 - **Tensor Core**：专门加速小块矩阵乘加（matrix multiply-accumulate）的硬件。
 - **Warp scheduler**：选择下一组要运行的线程。
 
-“标量”是一个数，例如 3；“向量”是一排数，例如 $[3,5,7]$。普通 FP unit 擅长若干独立的数值运算；Tensor Core 一次处理规则的小矩阵块。所谓**矩阵乘加**可以写成：
+“标量”是一个数，例如 3；“向量”是一排数，例如 $`[3,5,7]`$。普通 FP unit 擅长若干独立的数值运算；Tensor Core 一次处理规则的小矩阵块。所谓**矩阵乘加**可以写成：
 
-$$D=A\times B+C$$
+```math
+D=A\times B+C
+```
 
 例如：
 
-$$\begin{bmatrix}1&2\\3&4\end{bmatrix}
+```math
+\begin{bmatrix}1&2\\3&4\end{bmatrix}
 \begin{bmatrix}5&6\\7&8\end{bmatrix}
 +\begin{bmatrix}1&1\\1&1\end{bmatrix}
-=\begin{bmatrix}20&23\\44&51\end{bmatrix}$$
+=\begin{bmatrix}20&23\\44&51\end{bmatrix}
+```
 
-左上角是 $1\times5+2\times7+1=20$。真实 Tensor Core 处理的 tile 更大，但思想相同。
+左上角是 $`1\times5+2\times7+1=20`$。真实 Tensor Core 处理的 tile 更大，但思想相同。
 
 其余三格同样按“行乘列，再加 C”：
 
-$$D_{01}=1\times6+2\times8+1=23$$
+```math
+D_{01}=1\times6+2\times8+1=23
+```
 
-$$D_{10}=3\times5+4\times7+1=44,\qquad
-D_{11}=3\times6+4\times8+1=51$$
+```math
+D_{10}=3\times5+4\times7+1=44,\qquad
+D_{11}=3\times6+4\times8+1=51
+```
 
 一份工作从软件到硬件的大致路线是：
 
@@ -271,9 +279,11 @@ grid
 
 用“把两个长度为 8 的向量相加”走一遍。要算：
 
-$$[1,2,3,4,5,6,7,8]+[10,20,30,40,50,60,70,80]$$
+```math
+[1,2,3,4,5,6,7,8]+[10,20,30,40,50,60,70,80]
+```
 
-我们启动 8 个 threads，每个 thread 只负责一个位置：thread 0 算 $1+10$，thread 1 算 $2+20$，……，thread 7 算 $8+80$。假设每个 block 最多放 4 个 threads，那么：
+我们启动 8 个 threads，每个 thread 只负责一个位置：thread 0 算 $`1+10`$，thread 1 算 $`2+20`$，……，thread 7 算 $`8+80`$。假设每个 block 最多放 4 个 threads，那么：
 
 ```text
 一次 kernel launch = 一个 grid
@@ -284,9 +294,11 @@ block 1: threads 4,5,6,7
 
 每个 thread 怎样知道自己该算哪格？一维情形最常用：
 
-$$\text{global index}=\text{block id}\times\text{block size}+\text{thread index inside block}$$
+```math
+\text{global index}=\text{block id}\times\text{block size}+\text{thread index inside block}
+```
 
-所以 block 0 的局部编号 0–3 得到全局编号 0–3；block 1 得到 $1\times4+[0,1,2,3]=[4,5,6,7]$。
+所以 block 0 的局部编号 0–3 得到全局编号 0–3；block 1 得到 $`1\times4+[0,1,2,3]=[4,5,6,7]`$。
 
 > **不要把 block size 和 warp size 混在一起。**真实 NVIDIA warp 通常仍固定为 32 threads。若一个 block 只有 4 threads，它会占用一个只有 4 个 active lanes 的 warp，其余 28 lanes 空闲。上图只画 4 格是为了省略空位，不是硬件 warp 真缩成 4。后文的“8-lane 迷你 warp”也只是教学模型。
 
@@ -321,7 +333,7 @@ else:
 
 **TPU（Tensor Processing Unit）** 是 Google 为张量/机器学习计算设计的专用加速器。这里的 tensor 可以先理解成“多维数字表”；向量是一维表，矩阵是二维表。
 
-TPU 的代表性核心是 **systolic array（脉动阵列）**：数字像接力棒一样按固定节奏从一个小乘加单元流向相邻单元。每个单元接到 $A$ 的一项和 $B$ 的一项，做一次“乘后累加”，再把数据传下去。这样同一数据在阵列内部被反复使用，不必每次回大内存。
+TPU 的代表性核心是 **systolic array（脉动阵列）**：数字像接力棒一样按固定节奏从一个小乘加单元流向相邻单元。每个单元接到 $`A`$ 的一项和 $`B`$ 的一项，做一次“乘后累加”，再把数据传下去。这样同一数据在阵列内部被反复使用，不必每次回大内存。
 
 TPU 与 GPU 在高层结构上非常相似：
 
@@ -343,14 +355,14 @@ GPU：许多较小且灵活的工作组，用不同 kernel/tile 完成任务
 TPU：把规则的大矩阵乘送入少数很大的脉动阵列流水线
 ```
 
-用 $A=\begin{bmatrix}1&2\\3&4\end{bmatrix}$、$B=\begin{bmatrix}5&6\\7&8\end{bmatrix}$ 想象一个 $2\times2$ 小阵列。四个位置各自累积一个输出：
+用 $`A=\begin{bmatrix}1&2\\3&4\end{bmatrix}`$、$`B=\begin{bmatrix}5&6\\7&8\end{bmatrix}`$ 想象一个 $`2\times2`$ 小阵列。四个位置各自累积一个输出：
 
 | 阵列位置 | 依次收到的乘法 | 累积结果 |
 |---|---|---:|
-| 左上，负责 $C_{00}$ | $1\times5$，再 $2\times7$ | 19 |
-| 右上，负责 $C_{01}$ | $1\times6$，再 $2\times8$ | 22 |
-| 左下，负责 $C_{10}$ | $3\times5$，再 $4\times7$ | 43 |
-| 右下，负责 $C_{11}$ | $3\times6$，再 $4\times8$ | 50 |
+| 左上，负责 $`C_{00}`$ | $`1\times5`$，再 $`2\times7`$ | 19 |
+| 右上，负责 $`C_{01}`$ | $`1\times6`$，再 $`2\times8`$ | 22 |
+| 左下，负责 $`C_{10}`$ | $`3\times5`$，再 $`4\times7`$ | 43 |
+| 右下，负责 $`C_{11}`$ | $`3\times6`$，再 $`4\times8`$ | 50 |
 
 在真实脉动阵列里，A 的数通常横向传，B 的数纵向传，并故意错开到达时间；例如 1 可沿行继续供右边位置使用，5 可沿列继续供下面位置使用。管线填满后，许多位置每拍都在乘加。上表展示数据复用关系，不宣称是精确逐拍时序。
 
@@ -394,25 +406,31 @@ TPU：把规则的大矩阵乘送入少数很大的脉动阵列流水线
 
 ### 5.2 Roofline 的两段
 
-$$P=\min(P_{\text{peak}},B\cdot I)$$
+```math
+P=\min(P_{\text{peak}},B\cdot I)
+```
 
 先检查单位，这一步能防止把公式背反：
 
-$$\underbrace{B}_{\text{byte/s}}\times
+```math
+\underbrace{B}_{\text{byte/s}}\times
 \underbrace{I}_{\text{FLOP/byte}}
 =\frac{\text{byte}}{\text{s}}\times\frac{\text{FLOP}}{\text{byte}}
-=\underbrace{\text{FLOP/s}}_{\text{每秒运算量}}$$
+=\underbrace{\text{FLOP/s}}_{\text{每秒运算量}}
+```
 
-分子、分母里的 byte 抵消了，所以 $B\cdot I$ 能和峰值计算速度比较。这里使用十进制单位：$1\ \text{TB/s}=10^{12}\ \text{byte/s}$，$1\ \text{TFLOP/s}=10^{12}\ \text{FLOP/s}$。
+分子、分母里的 byte 抵消了，所以 $`B\cdot I`$ 能和峰值计算速度比较。这里使用十进制单位：$`1\ \text{TB/s}=10^{12}\ \text{byte/s}`$，$`1\ \text{TFLOP/s}=10^{12}\ \text{FLOP/s}`$。
 
-- 当 $B\cdot I<P_{\text{peak}}$ 时，程序处于**内存受限区**。增加数据复用、减少字节数、改善访存才有效。
-- 当 $B\cdot I\ge P_{\text{peak}}$ 时，程序处于**计算受限区**。此时计算单元已经饱和，继续提高算术强度不再增加吞吐。
+- 当 $`B\cdot I<P_{\text{peak}}`$ 时，程序处于**内存受限区**。增加数据复用、减少字节数、改善访存才有效。
+- 当 $`B\cdot I\ge P_{\text{peak}}`$ 时，程序处于**计算受限区**。此时计算单元已经饱和，继续提高算术强度不再增加吞吐。
 
 两条线的交点称为 ridge point：
 
-$$I_{\text{ridge}}=\frac{P_{\text{peak}}}{B}$$
+```math
+I_{\text{ridge}}=\frac{P_{\text{peak}}}{B}
+```
 
-Roofline 图的横轴是算术强度 $I$，越往右表示每搬 1 byte 能多算几次；纵轴是实际可达到的速度 $P$，越往上越快。屋顶为何先斜后平，可以画成：
+Roofline 图的横轴是算术强度 $`I`$，越往右表示每搬 1 byte 能多算几次；纵轴是实际可达到的速度 $`P`$，越往上越快。屋顶为何先斜后平，可以画成：
 
 ```text
 性能 P (TFLOP/s)
@@ -426,33 +444,37 @@ Roofline 图的横轴是算术强度 $I$，越往右表示每搬 1 byte 能多�
                  ridge point
 ```
 
-在下面这台 $B=1$ TB/s、$P_{peak}=100$ TFLOP/s 的假想 GPU 上：
+在下面这台 $`B=1`$ TB/s、$`P_{peak}=100`$ TFLOP/s 的假想 GPU 上：
 
-| $I$ (FLOP/byte) | 带宽允许的 $B\times I$ | 再和 100 取较小值 | 最终上限 |
+| $`I`$ (FLOP/byte) | 带宽允许的 $`B\times I`$ | 再和 100 取较小值 | 最终上限 |
 |---:|---:|---:|---:|
-| 10 | 10 TFLOP/s | $\min(100,10)$ | 10 TFLOP/s |
-| 50 | 50 TFLOP/s | $\min(100,50)$ | 50 TFLOP/s |
-| 100 | 100 TFLOP/s | $\min(100,100)$ | 100 TFLOP/s |
-| 250 | 250 TFLOP/s | $\min(100,250)$ | 100 TFLOP/s |
+| 10 | 10 TFLOP/s | $`\min(100,10)`$ | 10 TFLOP/s |
+| 50 | 50 TFLOP/s | $`\min(100,50)`$ | 50 TFLOP/s |
+| 100 | 100 TFLOP/s | $`\min(100,100)`$ | 100 TFLOP/s |
+| 250 | 250 TFLOP/s | $`\min(100,250)`$ | 100 TFLOP/s |
 
 #### 补充例子：用数字判断瓶颈
 
 假设 GPU 峰值为 100 TFLOP/s，显存带宽为 1 TB/s：
 
-$$I_{\text{ridge}}=\frac{100\times10^{12}}{1\times10^{12}}=100\ \text{FLOP/byte}$$
+```math
+I_{\text{ridge}}=\frac{100\times10^{12}}{1\times10^{12}}=100\ \text{FLOP/byte}
+```
 
-- kernel 的 $I=10$ FLOP/byte 时，最多约 $10$ TFLOP/s，是 memory-bound。
-- kernel 的 $I=250$ FLOP/byte 时，带宽允许 250 TFLOP/s，但硬件峰值只有 100，所以是 compute-bound。
+- kernel 的 $`I=10`$ FLOP/byte 时，最多约 $`10`$ TFLOP/s，是 memory-bound。
+- kernel 的 $`I=250`$ FLOP/byte 时，带宽允许 250 TFLOP/s，但硬件峰值只有 100，所以是 compute-bound。
 
 #### 补充例子：三个算子的算术强度为什么差很多？
 
 下面都用 FP32，并暂时忽略 cache、索引和 launch 开销。
 
-**例 1：向量加法 $z=x+y$**
+**例 1：向量加法 $`z=x+y`$**
 
-每个元素需要读取 $x,y$ 共 8 bytes，写出 $z$ 需要 4 bytes，做一次加法：
+每个元素需要读取 $`x,y`$ 共 8 bytes，写出 $`z`$ 需要 4 bytes，做一次加法：
 
-$$I_{\text{add}}\approx\frac{1}{12}=0.083\ \text{FLOP/byte}$$
+```math
+I_{\text{add}}\approx\frac{1}{12}=0.083\ \text{FLOP/byte}
+```
 
 它几乎注定是 memory-bound。即使 ALU 再快十倍，也不能让 12 bytes 更快到达。
 
@@ -460,42 +482,54 @@ $$I_{\text{add}}\approx\frac{1}{12}=0.083\ \text{FLOP/byte}$$
 
 读取、写回共约 8 bytes，做一次比较/选择：
 
-$$I_{\text{ReLU}}\approx\frac{1}{8}=0.125\ \text{FLOP/byte}$$
+```math
+I_{\text{ReLU}}\approx\frac{1}{8}=0.125\ \text{FLOP/byte}
+```
 
 这也是典型的 memory-bound pointwise operation，因而非常适合与邻近算子融合。
 
 > 把 ReLU 近似记成 1 FLOP 只是为了建立数量级。严格说，比较/选择未必按硬件计数规则算作一个浮点加法或乘法；这不是性能合同，只是说明“它搬 8 bytes，却只做极少工作”。
 
-**例 3：$N\times N$ 方阵乘**
+**例 3：$`N\times N`$ 方阵乘**
 
-先用 $2\times2$ 看懂计数。设 $C=AB$：
+先用 $`2\times2`$ 看懂计数。设 $`C=AB`$：
 
-$$C_{00}=A_{00}B_{00}+A_{01}B_{10}$$
+```math
+C_{00}=A_{00}B_{00}+A_{01}B_{10}
+```
 
-这里有 2 次乘法和 1 次加法。工程上通常把每一个“乘加”近似计为 2 FLOPs，所以每个输出约 $2N$ FLOPs。矩阵共有 $N^2$ 个输出：
+这里有 2 次乘法和 1 次加法。工程上通常把每一个“乘加”近似计为 2 FLOPs，所以每个输出约 $`2N`$ FLOPs。矩阵共有 $`N^2`$ 个输出：
 
-$$N^2\times 2N=2N^3\ \text{FLOPs}$$
+```math
+N^2\times 2N=2N^3\ \text{FLOPs}
+```
 
-当 $N=2$ 时是 $2\times2^3=16$ FLOPs；若把每格最后少一次加法严格扣掉会略少，但大矩阵里近似足够好。
+当 $`N=2`$ 时是 $`2\times2^3=16`$ FLOPs；若把每格最后少一次加法严格扣掉会略少，但大矩阵里近似足够好。
 
-理想情况下，整个 $A$ 读一次、整个 $B$ 读一次、整个 $C$ 写一次。每个矩阵有 $N^2$ 个 FP32 数，每个数 4 bytes，因此：
+理想情况下，整个 $`A`$ 读一次、整个 $`B`$ 读一次、整个 $`C`$ 写一次。每个矩阵有 $`N^2`$ 个 FP32 数，每个数 4 bytes，因此：
 
-$$\underbrace{4N^2}_{\text{读 A}}+
+```math
+\underbrace{4N^2}_{\text{读 A}}+
 \underbrace{4N^2}_{\text{读 B}}+
 \underbrace{4N^2}_{\text{写 C}}
-=12N^2\ \text{bytes}$$
+=12N^2\ \text{bytes}
+```
 
 于是：
 
-$$I_{\text{matmul}}\approx\frac{2N^3}{12N^2}=\frac{N}{6}\ \text{FLOP/byte}$$
+```math
+I_{\text{matmul}}\approx\frac{2N^3}{12N^2}=\frac{N}{6}\ \text{FLOP/byte}
+```
 
-当 $N=1024$ 时：
+当 $`N=1024`$ 时：
 
-$$I\approx\frac{1024}{6}=170.67\approx171\ \text{FLOP/byte}$$
+```math
+I\approx\frac{1024}{6}=170.67\approx171\ \text{FLOP/byte}
+```
 
 矩阵越大，搬来的元素被重复用于越多乘加，因此 matmul 更容易走到 Roofline 的水平部分。
 
-> 这里的 $12N^2$ bytes 是理想最小数据流量，也就是流量下界；因此 $N/6$ FLOP/byte 是算术强度的乐观上界。若数据不能留在 cache/shared memory、矩阵被重复读入，分母会增大，真实算术强度会更低。算术强度既由算法决定，也由实现的数据复用决定。
+> 这里的 $`12N^2`$ bytes 是理想最小数据流量，也就是流量下界；因此 $`N/6`$ FLOP/byte 是算术强度的乐观上界。若数据不能留在 cache/shared memory、矩阵被重复读入，分母会增大，真实算术强度会更低。算术强度既由算法决定，也由实现的数据复用决定。
 
 #### 补充例子：同一个 kernel 换一块 GPU，瓶颈会改变
 
@@ -508,8 +542,10 @@ $$I\approx\frac{1024}{6}=170.67\approx171\ \text{FLOP/byte}$$
 
 GPU B 的 225 不是猜出来的：
 
-$$1.5\times10^{12}\ \text{byte/s}\times150\ \text{FLOP/byte}
-=225\times10^{12}\ \text{FLOP/s}=225\ \text{TFLOP/s}$$
+```math
+1.5\times10^{12}\ \text{byte/s}\times150\ \text{FLOP/byte}
+=225\times10^{12}\ \text{FLOP/s}=225\ \text{TFLOP/s}
+```
 
 它低于计算屋顶 300 TFLOP/s，所以最终取 225。
 
@@ -539,11 +575,15 @@ $$1.5\times10^{12}\ \text{byte/s}\times150\ \text{FLOP/byte}
 
 对 FP32 ReLU，若近似计为一次 4-byte 读取、一次 4-byte 写入和一次操作：
 
-$$\text{bytes per FLOP}=8,\qquad I=\frac{1}{8}=0.125\ \text{FLOP/byte}$$
+```math
+\text{bytes per FLOP}=8,\qquad I=\frac{1}{8}=0.125\ \text{FLOP/byte}
+```
 
 换成 FP16 后，传输约 4 bytes：
 
-$$\text{bytes per FLOP}=4,\qquad I=\frac{1}{4}=0.25\ \text{FLOP/byte}$$
+```math
+\text{bytes per FLOP}=4,\qquad I=\frac{1}{4}=0.25\ \text{FLOP/byte}
+```
 
 所以低精度把算术强度提高了一倍。
 
@@ -583,13 +623,17 @@ x>0?:   是 是 否 否 是 否 是 否
 总时间约 5 步，但每一步只有一半 lanes 有效
 ```
 
-如果每一步本来可以让 8 个 lane 工作，那么 5 步总共有 $8\times5=40$ 个“lane-step”座位。真正做有效工作的只有：
+如果每一步本来可以让 8 个 lane 工作，那么 5 步总共有 $`8\times5=40`$ 个“lane-step”座位。真正做有效工作的只有：
 
-$$4\text{ 个 lane}\times2\text{ 步}+4\text{ 个 lane}\times3\text{ 步}=20$$
+```math
+4\text{ 个 lane}\times2\text{ 步}+4\text{ 个 lane}\times3\text{ 步}=20
+```
 
 所以这个简化例子的执行效率是：
 
-$$\frac{20}{40}=50\%$$
+```math
+\frac{20}{40}=50\%
+```
 
 如果先按条件把数据分组，让一个 warp 全是正数、另一个全是非正数，两组各自不再 divergence。不过，分组本身需要读写和调度成本，只有当分支足够昂贵、数据会重复使用时才值得。
 
@@ -620,7 +664,7 @@ Mixture-of-Experts（MoE）可以想成有多个“专家小网络”，每个 t
 y = torch.where(mask, expensive_a(x), expensive_b(x))
 ```
 
-`mask` 是一排真/假选择，例如 `[真, 假, 真, 假]`。`where` 最后在每个位置从两排结果中选一个，但 Python 参数通常要先算好：如果 `expensive_a` 需 10 次操作，`expensive_b` 也需 10 次，那么程序可能先做完 $10+10=20$ 次，再选择；它不是只做被选中的 10 次。消除了显式 `if`，却可能把计算量翻倍。正确目标不是“代码里没有 `if`”，而是让硬件执行的总工作和空闲 lane 都尽可能少。
+`mask` 是一排真/假选择，例如 `[真, 假, 真, 假]`。`where` 最后在每个位置从两排结果中选一个，但 Python 参数通常要先算好：如果 `expensive_a` 需 10 次操作，`expensive_b` 也需 10 次，那么程序可能先做完 $`10+10=20`$ 次，再选择；它不是只做被选中的 10 次。消除了显式 `if`，却可能把计算量翻倍。正确目标不是“代码里没有 `if`”，而是让硬件执行的总工作和空闲 lane 都尽可能少。
 
 ### 6.2 技巧二：低精度计算
 
@@ -635,13 +679,15 @@ y = torch.where(mask, expensive_a(x), expensive_b(x))
 - 浮点格式可以粗略看成“符号 + 指数 + 有效数字”。符号管正负，指数管能表示多大/多小的范围，有效数字（mantissa/significand）管细节有多精。
 - bits 固定时，给指数更多位置，范围通常更大，但留给有效数字的位置变少，精度下降。
 
-十进制类比：若只能保留两位有效数字，$1.234$ 会被舍入成 $1.2$，$1234$ 可能写成 $1.2\times10^3$。它还能表示“大约一千二百”，却丢失了 34。低精度浮点也会把真实数舍入到附近可表示的格点，例如某个玩具格式可能把 $1.234$ 存成 $1.25$。
+十进制类比：若只能保留两位有效数字，$`1.234`$ 会被舍入成 $`1.2`$，$`1234`$ 可能写成 $`1.2\times10^3`$。它还能表示“大约一千二百”，却丢失了 34。低精度浮点也会把真实数舍入到附近可表示的格点，例如某个玩具格式可能把 $`1.234`$ 存成 $`1.25`$。
 
 **tensor** 就是规则排列的一堆数。**quantize（量化）**是把高精度数映射成少 bit 的整数/浮点编码；**dequantize（反量化）**是用 scale 把编码解释回近似实数。最简单形式是：
 
-$$q=\operatorname{round}(x/s),\qquad \hat x=q\times s$$
+```math
+q=\mathrm{round}(x/s),\qquad \hat x=q\times s
+```
 
-例如 scale $s=0.1$，$x=1.26$：$q=\operatorname{round}(12.6)=13$，还原后 $\hat x=13\times0.1=1.3$。误差是 $0.04$。scale 太大，格子太粗；scale 太小，大数可能超出可表示范围。
+例如 scale $`s=0.1`$，$`x=1.26`$：$`q=\mathrm{round}(12.6)=13`$，还原后 $`\hat x=13\times0.1=1.3`$。误差是 $`0.04`$。scale 太大，格子太粗；scale 太小，大数可能超出可表示范围。
 
 #### Mixed precision 的基本模式
 
@@ -661,23 +707,23 @@ $$q=\operatorname{round}(x/s),\qquad \hat x=q\times s$$
 
 当 bit 数很少时，单一格式难以覆盖所有 tensor 的分布。
 
-在同一个指数区间内，可以粗略想成：M3 用 3 bits 把区间切成约 $2^3=8$ 份，M2 只切成约 $2^2=4$ 份，所以像 1.2 这种数，E4M3 通常能找到更近的格点。反过来，E5 多一个 exponent bit，可覆盖更大的数量级；当数非常大时，E4M3 可能溢出，而 E5M2 仍能表示一个较粗的近似值。真实 FP8 的保留值、NaN/无穷和舍入规则依具体标准而定，不能只用这张粗略切格图替代格式规范。
+在同一个指数区间内，可以粗略想成：M3 用 3 bits 把区间切成约 $`2^3=8`$ 份，M2 只切成约 $`2^2=4`$ 份，所以像 1.2 这种数，E4M3 通常能找到更近的格点。反过来，E5 多一个 exponent bit，可覆盖更大的数量级；当数非常大时，E4M3 可能溢出，而 E5M2 仍能表示一个较粗的近似值。真实 FP8 的保留值、NaN/无穷和舍入规则依具体标准而定，不能只用这张粗略切格图替代格式规范。
 
 #### MXFP8 的 block scaling
 
 课程介绍的 MXFP8 使用多个缩放因子，而不是整个 tensor 共用一个 scale。例如每 32 个数对应一个低精度 scale。这样局部区域可以适配自己的数值范围，但带来新问题：
 
-用只有四个数的玩具例子看原因：$[0.1,0.2,100,120]$。假设低精度编码只能用整数 $-127$ 到 $127$。
+用只有四个数的玩具例子看原因：$`[0.1,0.2,100,120]`$。假设低精度编码只能用整数 $`-127`$ 到 $`127`$。
 
-**整组共用一个 scale：**为了装下 120，可取 $s=120/127\approx0.945$。
+**整组共用一个 scale：**为了装下 120，可取 $`s=120/127\approx0.945`$。
 
-- $0.1/0.945\approx0.11$，舍入后为 0，还原后也是 0；
-- $0.2/0.945\approx0.21$，舍入后为 0，还原后也是 0；
-- $120/0.945\approx127$，可以还原成约 120。
+- $`0.1/0.945\approx0.11`$，舍入后为 0，还原后也是 0；
+- $`0.2/0.945\approx0.21`$，舍入后为 0，还原后也是 0；
+- $`120/0.945\approx127`$，可以还原成约 120。
 
 大数保住了，两个小数却全消失。
 
-**分成 $[0.1,0.2]$ 和 $[100,120]$ 两组：**第一组可用 $s_1=0.2/127\approx0.00157$，0.1 会编码成约 64，不再变成 0；第二组仍用 $s_2\approx0.945$。这就是 block scaling：不同局部范围用不同尺子。真实 MX 格式的 scale 和编码规则更具体，本例只解释“为什么分组”。
+**分成 $`[0.1,0.2]`$ 和 $`[100,120]`$ 两组：**第一组可用 $`s_1=0.2/127\approx0.00157`$，0.1 会编码成约 64，不再变成 0；第二组仍用 $`s_2\approx0.945`$。这就是 block scaling：不同局部范围用不同尺子。真实 MX 格式的 scale 和编码规则更具体，本例只解释“为什么分组”。
 
 - 转置后，原来的 32 元素分组方向改变；
 - 因而训练实现可能同时维护原矩阵和转置矩阵各自量化后的副本；
@@ -699,9 +745,11 @@ MXFP4 更极端：可表示值非常稀疏，因此需要更细粒度的 scale�
 
 若显存带宽恰为 1 TB/s，而且一次 decode step 必须把全部权重完整流过一次，那么：
 
-$$\frac{4\ \text{GB}}{1000\ \text{GB/s}}=0.004\ \text{s}=4\ \text{ms}$$
+```math
+\frac{4\ \text{GB}}{1000\ \text{GB/s}}=0.004\ \text{s}=4\ \text{ms}
+```
 
-同理 2 GB 需 2 ms，1 GB 需 1 ms。这是只读权重的理想下界。这里 GB 是十进制 $10^9$ bytes；GiB 是二进制 $2^{30}$ bytes，$1\ \text{GiB}\approx1.074\ \text{GB}$。真实系统还受 cache、并行、kernel 和通信影响，但这个估算解释了低精度为什么对 memory-bound inference 很有吸引力。
+同理 2 GB 需 2 ms，1 GB 需 1 ms。这是只读权重的理想下界。这里 GB 是十进制 $`10^9`$ bytes；GiB 是二进制 $`2^{30}`$ bytes，$`1\ \text{GiB}\approx1.074\ \text{GB}`$。真实系统还受 cache、并行、kernel 和通信影响，但这个估算解释了低精度为什么对 memory-bound inference 很有吸引力。
 
 > 训练显存不能用“参数量 × dtype”直接估完，因为还可能存在高精度 master weights、gradients、Adam 的一阶/二阶状态和各种 activation。
 
@@ -717,12 +765,14 @@ $$\frac{4\ \text{GB}}{1000\ \text{GB/s}}=0.004\ \text{s}=4\ \text{ms}$$
 
 先算极小模型：2 层、3 个旧 token、每层 2 个 KV heads、每个 head 2 个数、batch=1、FP16/BF16 每数 2 bytes。容量为：
 
-$$\underbrace{2}_{K\text{ 和 }V}\times
+```math
+\underbrace{2}_{K\text{ 和 }V}\times
 \underbrace{2}_{\text{层}}\times
 \underbrace{3}_{\text{token}}\times
 \underbrace{2}_{\text{heads}}\times
 \underbrace{2}_{\text{每 head 数字}}\times
-\underbrace{2}_{\text{bytes}}=96\ \text{bytes}$$
+\underbrace{2}_{\text{bytes}}=96\ \text{bytes}
+```
 
 考虑一个用于建立量级直觉的 dense multi-head attention 模型：
 
@@ -735,16 +785,22 @@ $$\underbrace{2}_{K\text{ 和 }V}\times
 
 BF16 KV cache 的容量约为：
 
-$$2\times32\times32768\times32\times128\times2\ \text{bytes}=16\ \text{GiB}$$
+```math
+2\times32\times32768\times32\times128\times2\ \text{bytes}=16\ \text{GiB}
+```
 
 把大数也验一遍：
 
-$$2\times32\times32768\times32\times128\times2
-=17{,}179{,}869{,}184\ \text{bytes}$$
+```math
+2\times32\times32768\times32\times128\times2
+=17{,}179{,}869{,}184\ \text{bytes}
+```
 
-$$\frac{17{,}179{,}869{,}184}{2^{30}}
+```math
+\frac{17{,}179{,}869{,}184}{2^{30}}
 =\frac{17{,}179{,}869{,}184}{1{,}073{,}741{,}824}
-=16\ \text{GiB}$$
+=16\ \text{GiB}
+```
 
 若能安全使用 1-byte 格式，理想容量约降到 8 GiB。实际模型可能使用 GQA（多个 query heads 分组共享 K/V）或 MQA（所有 query heads 共享更少的 K/V heads），从结构上减少 KV heads；这说明低精度和架构设计可以共同缓解内存瓶颈。
 
@@ -770,9 +826,11 @@ dot product 会把许多乘积相加。如果每个乘积有很小的舍入误�
 
 例子：
 
-$$y=\sin^2(x)+\cos^2(x)$$
+```math
+y=\sin^2(x)+\cos^2(x)
+```
 
-数学恒等式告诉我们，对任何 $x$，$\sin^2(x)+\cos^2(x)=1$。这里故意不把它直接化简为 1，因为要用它观察一串逐元素算子怎样产生中间数组。
+数学恒等式告诉我们，对任何 $`x`$，$`\sin^2(x)+\cos^2(x)=1`$。这里故意不把它直接化简为 1，因为要用它观察一串逐元素算子怎样产生中间数组。
 
 朴素动态图可能产生：
 
@@ -782,17 +840,17 @@ sin → square ┐
 cos → square ┘
 ```
 
-若每个节点是独立 kernel，就会多次读取、写回 HBM，并承担多次 kernel launch。融合后，一个 kernel 可以读取一次 $x$，在寄存器或 shared memory 中完成所有逐元素操作，再写回一次 $y$。
+若每个节点是独立 kernel，就会多次读取、写回 HBM，并承担多次 kernel launch。融合后，一个 kernel 可以读取一次 $`x`$，在寄存器或 shared memory 中完成所有逐元素操作，再写回一次 $`y`$。
 
 按“完整数组读/写一次”计，未融合版本可能是：
 
-1. `sin`：读 $x$，写 $s$；
-2. `square`：读 $s$，写 $s^2$；
-3. `cos`：再读 $x$，写 $c$；
-4. `square`：读 $c$，写 $c^2$；
-5. `add`：读 $s^2$、读 $c^2$，写 $y$。
+1. `sin`：读 $`x`$，写 $`s`$；
+2. `square`：读 $`s`$，写 $`s^2`$；
+3. `cos`：再读 $`x`$，写 $`c`$；
+4. `square`：读 $`c`$，写 $`c^2`$；
+5. `add`：读 $`s^2`$、读 $`c^2`$，写 $`y`$。
 
-合计 6 次数组读取、5 次数组写入、5 次 launch。融合后只需读 $x$ 一次、写 $y$ 一次，并在寄存器中保留单个元素的临时值。
+合计 6 次数组读取、5 次数组写入、5 次 launch。融合后只需读 $`x`$ 一次、写 $`y`$ 一次，并在寄存器中保留单个元素的临时值。
 
 ```python
 import torch
@@ -811,30 +869,36 @@ compiled_f = torch.compile(f)
 
 `bias` 是给每个位置加的偏置；GELU 是 Transformer 常用的平滑门函数，负数被压小，较大正数大致保留。先看四个数：
 
-$$x=[-1,0,1,2],\qquad b=[1,1,1,1]$$
+```math
+x=[-1,0,1,2],\qquad b=[1,1,1,1]
+```
 
-先加 bias 得 $t=x+b=[0,1,2,3]$，再做 GELU，约得：
+先加 bias 得 $`t=x+b=[0,1,2,3]`$，再做 GELU，约得：
 
-$$y\approx[0,\ 0.841,\ 1.955,\ 2.996]$$
+```math
+y\approx[0,\ 0.841,\ 1.955,\ 2.996]
+```
 
-未融合时，完整的中间数组 $t$ 会写回 HBM，随后又读回来；融合时，每个 thread 算出一个 $t_i$ 后立即算 GELU，不必保存整排 $t$。
+未融合时，完整的中间数组 $`t`$ 会写回 HBM，随后又读回来；融合时，每个 thread 算出一个 $`t_i`$ 后立即算 GELU，不必保存整排 $`t`$。
 
-设 $x,b,y$ 都有 $N$ 个 FP16 元素，并把 bias 简化为同形状张量。
+设 $`x,b,y`$ 都有 $`N`$ 个 FP16 元素，并把 bias 简化为同形状张量。
 
 **未融合：**
 
-1. bias add 读取 $x,b$：$4N$ bytes；
-2. 写出中间量：$2N$ bytes；
-3. GELU 读中间量：$2N$ bytes；
-4. 写出 $y$：$2N$ bytes。
+1. bias add 读取 $`x,b`$：$`4N`$ bytes；
+2. 写出中间量：$`2N`$ bytes；
+3. GELU 读中间量：$`2N`$ bytes；
+4. 写出 $`y`$：$`2N`$ bytes。
 
-总计约 $10N$ bytes。
+总计约 $`10N`$ bytes。
 
-**融合：**读取 $x,b$ 后在寄存器中立即做 GELU，只写最终 $y$：
+**融合：**读取 $`x,b`$ 后在寄存器中立即做 GELU，只写最终 $`y`$：
 
-$$4N+2N=6N\ \text{bytes}$$
+```math
+4N+2N=6N\ \text{bytes}
+```
 
-这个简化例子把 HBM traffic 降低约 40%。若 $N=10^8$，传输量从约 1.0 GB 降到 0.6 GB。对 memory-bound pointwise chain，这种差异很可能直接变成可见的加速。
+这个简化例子把 HBM traffic 降低约 40%。若 $`N=10^8`$，传输量从约 1.0 GB 降到 0.6 GB。对 memory-bound pointwise chain，这种差异很可能直接变成可见的加速。
 
 #### 例子二：Transformer 中常见的 fusion 机会
 
@@ -842,7 +906,7 @@ $$4N+2N=6N\ \text{bytes}$$
 
 - matmul **epilogue（尾处理）**：矩阵乘刚结束时顺便做 `Linear（线性矩阵乘） → Bias → GELU`；
 - **residual（残差）**块：`Dropout（随机置零） → Add（加回旁路） → LayerNorm（按特征归一化）`；
-- **gated MLP（带门控前馈层）**：`SiLU（一种平滑门函数）(xW_1) ⊙ (xW_2)`，$\odot$ 表示逐元素乘；
+- **gated MLP（带门控前馈层）**：`SiLU（一种平滑门函数）(xW_1) ⊙ (xW_2)`，$`\odot`$ 表示逐元素乘；
 - attention：scale、mask、softmax、dropout 与后续 matmul；
 - **optimizer（优化器）**：根据梯度更新参数及其状态。
 
@@ -860,7 +924,7 @@ $$4N+2N=6N\ \text{bytes}$$
 
 ### 6.4 技巧四：Recomputation
 
-**forward（前向）**是输入从第 1 层一路计算到损失；**backward（反向）**从损失倒着使用导数，求每个参数怎样影响损失。导数常需要前向的中间结果。例如 $y=\operatorname{sigmoid}(x)$ 时，$\frac{dy}{dx}=y(1-y)$，所以 backward 需要知道前向算出的 $y$。
+**forward（前向）**是输入从第 1 层一路计算到损失；**backward（反向）**从损失倒着使用导数，求每个参数怎样影响损失。导数常需要前向的中间结果。例如 $`y=\mathrm{sigmoid}(x)`$ 时，$`\frac{dy}{dx}=y(1-y)`$，所以 backward 需要知道前向算出的 $`y`$。
 
 这些中间结果叫 **activation（激活）**。通常会保存它们，避免 backward 重复计算。但如果读取和保存 activation 比重算更贵，就可以交换资源：
 
@@ -872,27 +936,27 @@ $$4N+2N=6N\ \text{bytes}$$
 
 - 传统方案：forward 保存中间量，backward 再读取，约 8 次内存读写；
 - 重计算方案：丢弃中间 activation，backward 需要时从输入重做，约 5 次内存读写；
-- 内存访问变为原来的 $5/8$，代价是多算几次 sigmoid。
+- 内存访问变为原来的 $`5/8`$，代价是多算几次 sigmoid。
 
-把这 8 次和 5 次逐项列出来。设 $s_2=\sigma(x)$、$s_1=\sigma(s_2)$、$out=\sigma(s_1)$，$dout$ 是从后续计算传回的输出梯度。
+把这 8 次和 5 次逐项列出来。设 $`s_2=\sigma(x)`$、$`s_1=\sigma(s_2)`$、$`out=\sigma(s_1)`$，$`dout`$ 是从后续计算传回的输出梯度。
 
-> **先限定记账口径。**这是课程第 35–36 页的“计算图边界/activation 保存”示意，不是把每个 sigmoid 当作独立 kernel 后统计真实 HBM transactions。它假设链内刚算出的值可以当场传给下一步；旧方案额外把 $s_2,s_1,out$ 写一份供以后使用。若三层真是三个独立 kernels，中间量还会被下一层读，绝对次数会更多。这个 8/5 例子只隔离“保存 activation”与“以后重算”的差别。
+> **先限定记账口径。**这是课程第 35–36 页的“计算图边界/activation 保存”示意，不是把每个 sigmoid 当作独立 kernel 后统计真实 HBM transactions。它假设链内刚算出的值可以当场传给下一步；旧方案额外把 $`s_2,s_1,out`$ 写一份供以后使用。若三层真是三个独立 kernels，中间量还会被下一层读，绝对次数会更多。这个 8/5 例子只隔离“保存 activation”与“以后重算”的差别。
 
 **保存所有中间量（8 次）：**
 
 | 阶段 | 访问 |
 |---|---|
-| forward | ①读 $x$；②写 $s_2$；③写 $s_1$；④写 $out$ |
-| backward | ⑤读 $s_2$；⑥读 $s_1$；⑦读 $dout$；⑧写最终输入梯度 $dx$ |
+| forward | ①读 $`x`$；②写 $`s_2`$；③写 $`s_1`$；④写 $`out`$ |
+| backward | ⑤读 $`s_2`$；⑥读 $`s_1`$；⑦读 $`dout`$；⑧写最终输入梯度 $`dx`$ |
 
 **重计算（5 次）：**
 
 | 阶段 | 访问 |
 |---|---|
-| forward | ①读 $x$；②写最终输出 $out$，不写 $s_2,s_1$ |
-| backward | ③再读 $x$；在当前计算中重算 $s_2,s_1,out$；④读 $dout$；⑤写 $dx$ |
+| forward | ①读 $`x`$；②写最终输出 $`out`$，不写 $`s_2,s_1`$ |
+| backward | ③再读 $`x`$；在当前计算中重算 $`s_2,s_1,out`$；④读 $`dout`$；⑤写 $`dx`$ |
 
-因此旧图是 $1+3+3+1=8$，新图是 $1+1+2+1=5$。不同实现的精确计数可能不同，结论不是永远恰好省 3 次，而是：少把大 activation 写到 HBM、再读回来，代价是多执行便宜的数学函数。
+因此旧图是 $`1+3+3+1=8`$，新图是 $`1+1+2+1=5`$。不同实现的精确计数可能不同，结论不是永远恰好省 3 次，而是：少把大 activation 写到 HBM、再读回来，代价是多执行便宜的数学函数。
 
 工程中常见名称包括 activation checkpointing、gradient checkpointing。真正实现通常不会丢弃所有 activation，而是在网络中保存若干 checkpoint，在 checkpoint 之间重算，以控制计算和内存的折中。
 
@@ -904,9 +968,9 @@ $$4N+2N=6N\ \text{bytes}$$
 x → L1 → a1 → L2 → a2 → ... → L12 → a12
 ```
 
-**全部保存：**保存 $a_1$ 到 $a_{12}$，backward 不必重做 forward。
+**全部保存：**保存 $`a_1`$ 到 $`a_{12}`$，backward 不必重做 forward。
 
-**每 3 层保存一次：**必须保留重算起点 $x,a_3,a_6,a_9$。最终输出 $a_{12}$ 还要交给损失/后续层，本来就会被持有；这里不把它重复叫作下一段的重算起点。反向传播到 $L_{10}$-$L_{12}$ 时，从 $a_9$ 重新执行这三层；处理 $L_7$-$L_9$ 时，从 $a_6$ 重做；处理第一段时从原输入 $x$ 重做。
+**每 3 层保存一次：**必须保留重算起点 $`x,a_3,a_6,a_9`$。最终输出 $`a_{12}`$ 还要交给损失/后续层，本来就会被持有；这里不把它重复叫作下一段的重算起点。反向传播到 $`L_{10}`$-$`L_{12}`$ 时，从 $`a_9`$ 重新执行这三层；处理 $`L_7`$-$`L_9`$ 时，从 $`a_6`$ 重做；处理第一段时从原输入 $`x`$ 重做。
 
 ```text
 recompute boundaries: x | a3 | a6 | a9
@@ -914,25 +978,31 @@ recompute segments:      1-3  4-6  7-9  10-12
 final output:                              a12 → loss
 ```
 
-除原始输入 $x$ 与最终输出外，保存的内部边界 activation 从 11 份降到 3 份（$a_3,a_6,a_9$），而每个 segment 的 forward 需要额外执行一次。实际 autograd 还要保存一些不可重建或成本过高的量，然而这个模型足以解释基本交换关系。
+除原始输入 $`x`$ 与最终输出外，保存的内部边界 activation 从 11 份降到 3 份（$`a_3,a_6,a_9`$），而每个 segment 的 forward 需要额外执行一次。实际 autograd 还要保存一些不可重建或成本过高的量，然而这个模型足以解释基本交换关系。
 
-这里 $x,a_3,a_6,a_9$ 是各段的起点；内部的 $a_3,a_6,a_9$ 通常称为 **checkpoints（检查点）**，好比只保留每三站的地图。区间内部的 $a_1,a_2,a_4,a_5,\ldots$ 是临时 activation，forward 之后丢掉；backward 到该区间时，再从最近边界重新走一遍。12 个层的原始 forward 仍执行一次，反向期间 4 个三层区间各额外执行一次，所以被 checkpoint 覆盖的层通常多做约一遍 forward，而不是无限重算。
+这里 $`x,a_3,a_6,a_9`$ 是各段的起点；内部的 $`a_3,a_6,a_9`$ 通常称为 **checkpoints（检查点）**，好比只保留每三站的地图。区间内部的 $`a_1,a_2,a_4,a_5,\ldots`$ 是临时 activation，forward 之后丢掉；backward 到该区间时，再从最近边界重新走一遍。12 个层的原始 forward 仍执行一次，反向期间 4 个三层区间各额外执行一次，所以被 checkpoint 覆盖的层通常多做约一遍 forward，而不是无限重算。
 
 #### 例子二：Transformer activation 的容量量级
 
-一个形状为 $[B,T,D]=[8,4096,4096]$ 的 BF16 activation tensor 包含：
+一个形状为 $`[B,T,D]=[8,4096,4096]`$ 的 BF16 activation tensor 包含：
 
-这里 $B$ 是 batch size（同时几条序列），$T$ 是每条序列的 token 数，$D$ 是每个 token 的隐藏向量长度。
+这里 $`B`$ 是 batch size（同时几条序列），$`T`$ 是每条序列的 token 数，$`D`$ 是每个 token 的隐藏向量长度。
 
-$$8\times4096\times4096=134{,}217{,}728\ \text{elements}$$
+```math
+8\times4096\times4096=134{,}217{,}728\ \text{elements}
+```
 
 容量约为：
 
-$$134{,}217{,}728\times2\ \text{bytes}=256\ \text{MiB}$$
+```math
+134{,}217{,}728\times2\ \text{bytes}=256\ \text{MiB}
+```
 
-因为 $1\ \text{MiB}=2^{20}=1{,}048{,}576$ bytes，所以 $268{,}435{,}456/1{,}048{,}576=256$ MiB。32 层若各保存一份：
+因为 $`1\ \text{MiB}=2^{20}=1{,}048{,}576`$ bytes，所以 $`268{,}435{,}456/1{,}048{,}576=256`$ MiB。32 层若各保存一份：
 
-$$256\ \text{MiB}\times32=8192\ \text{MiB}=8\ \text{GiB}$$
+```math
+256\ \text{MiB}\times32=8192\ \text{MiB}=8\ \text{GiB}
+```
 
 仅仅每层保存一份这样的 tensor，32 层就是约 8 GiB。真实 Transformer 每层还会产生 Q/K/V、MLP 中间量、归一化统计等，因此 activation memory 可能更大。
 
@@ -954,8 +1024,8 @@ global memory 不是按“单个标量的理想价格”服务每次读取。硬
 以连续 4-byte 元素为例：
 
 - 32 个线程读取连续元素，总共需要 128 bytes；
-- 因为 $32\times4=128$ bytes，而 $128/32=4$，在当前 CUDA 文档的简化模型中可由 4 个 32-byte transaction 满足；
-- **利用率** $=$ 真正需要的字节数 $/$ 硬件实际搬运的字节数。这里两者都是 128 bytes，所以是 100%；
+- 因为 $`32\times4=128`$ bytes，而 $`128/32=4`$，在当前 CUDA 文档的简化模型中可由 4 个 32-byte transaction 满足；
+- **利用率** $`=`$ 真正需要的字节数 $`/`$ 硬件实际搬运的字节数。这里两者都是 128 bytes，所以是 100%；
 - 若相邻线程访问相隔至少 32 bytes 的地址，最差可能需要 32 个 transaction，实际只用其中很少的字节。
 
 所以最常用的经验规则是：
@@ -970,21 +1040,23 @@ global memory 不是按“单个标量的理想价格”服务每次读取。硬
 A[0,0], A[0,1], A[0,2], ..., A[1,0], A[1,1], ...
 ```
 
-例如一个 $3\times4$ FP32 矩阵从 byte address 0 开始：
+例如一个 $`3\times4`$ FP32 矩阵从 byte address 0 开始：
 
-$$
+```math
 \begin{bmatrix}
 A_{00}@0&A_{01}@4&A_{02}@8&A_{03}@12\\
 A_{10}@16&A_{11}@20&A_{12}@24&A_{13}@28\\
 A_{20}@32&A_{21}@36&A_{22}@40&A_{23}@44
 \end{bmatrix}
-$$
+```
 
 row-major 的地址公式是：
 
-$$\operatorname{addr}(A[r,c])=\operatorname{base}+4(r\times4+c)$$
+```math
+\mathrm{addr}(A[r,c])=\mathrm{base}+4(r\times4+c)
+```
 
-同一行从 $c$ 到 $c+1$ 只增加 4 bytes；同一列从 $r$ 到 $r+1$ 增加整行的 $4\times4=16$ bytes。因此让相邻线程沿列索引变化通常更连续；若相邻线程跨行取同一列，地址步长很大，容易产生更多事务。
+同一行从 $`c`$ 到 $`c+1`$ 只增加 4 bytes；同一列从 $`r`$ 到 $`r+1`$ 增加整行的 $`4\times4=16`$ bytes。因此让相邻线程沿列索引变化通常更连续；若相邻线程跨行取同一列，地址步长很大，容易产生更多事务。
 
 #### 例子一：直接列出线程访问地址
 
@@ -1020,17 +1092,21 @@ $$\operatorname{addr}(A[r,c])=\operatorname{base}+4(r\times4+c)$$
 
 虽然仍然只使用 32 bytes 的有效数据，这些地址却分散在多个 segment 中，需要很多 transaction。硬件搬来了大量没有被当前 warp 使用的字节。
 
-这里 stride-16 指元素索引每次跳 16 格。每格 4 bytes，所以相邻 lane 的地址差是 $16\times4=64$ bytes，而不是 16 bytes。
+这里 stride-16 指元素索引每次跳 16 格。每格 4 bytes，所以相邻 lane 的地址差是 $`16\times4=64`$ bytes，而不是 16 bytes。
 
 #### 例子二：矩阵转置为什么常用 shared-memory tile？
 
-先看 $2\times3$ 数组：
+先看 $`2\times3`$ 数组：
 
-$$A=\begin{bmatrix}1&2&3\\4&5&6\end{bmatrix}$$
+```math
+A=\begin{bmatrix}1&2&3\\4&5&6\end{bmatrix}
+```
 
 row-major 内存顺序是 [1, 2, 3, 4, 5, 6]，其元素地址可记成 [0, 4, 8, 12, 16, 20]。转置后的逻辑矩阵是：
 
-$$A^\top=\begin{bmatrix}1&4\\2&5\\3&6\end{bmatrix}$$
+```math
+A^\top=\begin{bmatrix}1&4\\2&5\\3&6\end{bmatrix}
+```
 
 如果 transpose 只是 **view（视图）**，并没有搬动这些数：逻辑上的第一行 [1, 4] 实际地址仍是 [0, 12]，相差 12 bytes；下一行 [2, 5] 是 [4, 16]。**stride** 就是某个维度前进 1 格时，底层地址要跳多少格。permute/transpose 可以只改 shape 与 strides，所以操作本身便宜，但后续访问可能不连续。
 
@@ -1071,9 +1147,9 @@ Tiling 是本讲最重要的技术。核心流程是：
 
 这里有三种容易混叫成 “tile” 的东西：
 
-- **输出 tile**：一个 block 最终负责的 $C$ 的小方块；
+- **输出 tile**：一个 block 最终负责的 $`C`$ 的小方块；
 - **A 输入 tile**与**B 输入 tile**：为了算这个输出块，在某一轮从 A、B 装进来的小方块；
-- **k-phase（reduction 阶段）**：沿矩阵乘内部的 $k$ 方向分轮。每轮换一对 A/B 输入 tiles，并把结果加到同一个输出 tile。
+- **k-phase（reduction 阶段）**：沿矩阵乘内部的 $`k`$ 方向分轮。每轮换一对 A/B 输入 tiles，并把结果加到同一个输出 tile。
 
 下面为了讲复用，会跟踪两个相邻输出 tiles。真实 kernel 通常让不同 blocks 各算一个输出 tile；因此某个 A tile 可能会被另一个 block 再从 global memory 读取。复用发生在“同一个 block、同一个输出 tile 内”，不是全 GPU 永久只读一次。
 
@@ -1083,32 +1159,38 @@ Tiling 是本讲最重要的技术。核心流程是：
 
 ##### 第一步：矩阵乘到底在算什么？
 
-两个 $N\times N$ 矩阵相乘：
+两个 $`N\times N`$ 矩阵相乘：
 
-$$C=AB$$
+```math
+C=AB
+```
 
-输出中的一个数 $C_{i,j}$，等于 $A$ 的第 $i$ 行与 $B$ 的第 $j$ 列做点积：
+输出中的一个数 $`C_{i,j}`$，等于 $`A`$ 的第 $`i`$ 行与 $`B`$ 的第 $`j`$ 列做点积：
 
-$$C_{i,j}=\sum_{k=0}^{N-1}A_{i,k}B_{k,j}$$
+```math
+C_{i,j}=\sum_{k=0}^{N-1}A_{i,k}B_{k,j}
+```
 
-先看 $4\times4$ 的情况。输出第一行的四个数分别是：
+先看 $`4\times4`$ 的情况。输出第一行的四个数分别是：
 
-$$\begin{aligned}
+```math
+\begin{aligned}
 C_{0,0}&=A_{0,0}B_{0,0}+A_{0,1}B_{1,0}+A_{0,2}B_{2,0}+A_{0,3}B_{3,0}\\
 C_{0,1}&=A_{0,0}B_{0,1}+A_{0,1}B_{1,1}+A_{0,2}B_{2,1}+A_{0,3}B_{3,1}\\
 C_{0,2}&=A_{0,0}B_{0,2}+A_{0,1}B_{1,2}+A_{0,2}B_{2,2}+A_{0,3}B_{3,2}\\
 C_{0,3}&=A_{0,0}B_{0,3}+A_{0,1}B_{1,3}+A_{0,2}B_{2,3}+A_{0,3}B_{3,3}
-\end{aligned}$$
+\end{aligned}
+```
 
-注意：同一个 $A_{0,0}$ 出现了四次。
+注意：同一个 $`A_{0,0}`$ 出现了四次。
 
 ```text
 A[0,0] 被用于：C[0,0]、C[0,1]、C[0,2]、C[0,3]
 ```
 
-原因很简单：$A_{0,0}$ 要和 $B$ 第 0 行的每一列配对，所以它参与输出第 0 行的全部 4 个结果。
+原因很简单：$`A_{0,0}`$ 要和 $`B`$ 第 0 行的每一列配对，所以它参与输出第 0 行的全部 4 个结果。
 
-同理，$B_{0,0}$ 会用于：
+同理，$`B_{0,0}`$ 会用于：
 
 ```text
 B[0,0] 被用于：C[0,0]、C[1,0]、C[2,0]、C[3,0]
@@ -1127,32 +1209,36 @@ B[0,0] 被用于：C[0,0]、C[1,0]、C[2,0]、C[3,0]
 
 四个线程彼此独立。如果它们不通过 shared memory 合作：
 
-- 线程 0 去 global memory 读取一次 $A_{0,0}$；
-- 线程 1 又读取一次 $A_{0,0}$；
-- 线程 2 再读取一次 $A_{0,0}$；
-- 线程 3 再读取一次 $A_{0,0}$。
+- 线程 0 去 global memory 读取一次 $`A_{0,0}`$；
+- 线程 1 又读取一次 $`A_{0,0}`$；
+- 线程 2 再读取一次 $`A_{0,0}`$；
+- 线程 3 再读取一次 $`A_{0,0}`$。
 
-虽然四个线程想要的是同一个数，但每个线程都自己去“远处仓库”取了一遍。因此在 $4\times4$ 例子中，每个 $A$ 元素大致会被读取 4 次，每个 $B$ 元素也大致会被读取 4 次。
+虽然四个线程想要的是同一个数，但每个线程都自己去“远处仓库”取了一遍。因此在 $`4\times4`$ 例子中，每个 $`A`$ 元素大致会被读取 4 次，每个 $`B`$ 元素也大致会被读取 4 次。
 
 这里的 “global reads” 是教学记账：读取一个标量元素算一次。真实硬件会把一组相邻标量请求合并成 transaction，也可能由 cache 命中，所以不要把标量次数误当成实际总线事务数。
 
-推广到 $N\times N$：
+推广到 $`N\times N`$：
 
-- 固定一个 $A_{i,k}$，它要贡献给 $C_{i,0},C_{i,1},\ldots,C_{i,N-1}$，共 $N$ 个输出；
-- 固定一个 $B_{k,j}$，它要贡献给 $C_{0,j},C_{1,j},\ldots,C_{N-1,j}$，也有 $N$ 个输出；
-- 没有线程间复用时，一个输入元素因此大致从 global memory 读取 $N$ 次。
+- 固定一个 $`A_{i,k}`$，它要贡献给 $`C_{i,0},C_{i,1},\ldots,C_{i,N-1}`$，共 $`N`$ 个输出；
+- 固定一个 $`B_{k,j}`$，它要贡献给 $`C_{0,j},C_{1,j},\ldots,C_{N-1,j}`$，也有 $`N`$ 个输出；
+- 没有线程间复用时，一个输入元素因此大致从 global memory 读取 $`N`$ 次。
 
-整个 $A$ 有 $N^2$ 个元素，所以读取次数约为：
+整个 $`A`$ 有 $`N^2`$ 个元素，所以读取次数约为：
 
-$$\underbrace{N^2}_{A\text{ 的元素数}}\times\underbrace{N}_{\text{每个元素重复读取次数}}=N^3$$
+```math
+\underbrace{N^2}_{A\text{ 的元素数}}\times\underbrace{N}_{\text{每个元素重复读取次数}}=N^3
+```
 
-$B$ 也一样，因此两份输入合计：
+$`B`$ 也一样，因此两份输入合计：
 
-$$\text{naive input reads}\approx 2N^3$$
+```math
+\text{naive input reads}\approx 2N^3
+```
 
-##### 第三步：tile size $T=2$ 时发生了什么？
+##### 第三步：tile size $`T=2`$ 时发生了什么？
 
-仍然看 $4\times4$，现在让一个 thread block 一起计算一个 $2\times2$ 的输出 tile：
+仍然看 $`4\times4`$，现在让一个 thread block 一起计算一个 $`2\times2`$ 的输出 tile：
 
 ```text
 第一个输出 tile：
@@ -1161,7 +1247,7 @@ C[0,0]  C[0,1]
 C[1,0]  C[1,1]
 ```
 
-block 中的线程先合作，把下面两个 $2\times2$ 输入 tiles 各从 global memory 读取一次：
+block 中的线程先合作，把下面两个 $`2\times2`$ 输入 tiles 各从 global memory 读取一次：
 
 ```text
 A tile                  B tile
@@ -1171,9 +1257,9 @@ A[1,0] A[1,1]           B[1,0] B[1,1]
 
 然后把它们放进 shared memory。此时：
 
-- $A_{0,0}$ 从 global memory 只读了 1 次；
-- 但 shared memory 中的 $A_{0,0}$ 可以同时用于 $C_{0,0}$ 和 $C_{0,1}$；
-- 一次昂贵读取，支持了 $T=2$ 个输出。
+- $`A_{0,0}`$ 从 global memory 只读了 1 次；
+- 但 shared memory 中的 $`A_{0,0}`$ 可以同时用于 $`C_{0,0}`$ 和 $`C_{0,1}`$；
+- 一次昂贵读取，支持了 $`T=2`$ 个输出。
 
 接着计算右上角输出 tile：
 
@@ -1182,11 +1268,11 @@ C[0,2]  C[0,3]
 C[1,2]  C[1,3]
 ```
 
-这时需要再把包含 $A_{0,0}$ 的 tile 读取一次，让它服务 $C_{0,2}$ 和 $C_{0,3}$。
+这时需要再把包含 $`A_{0,0}`$ 的 tile 读取一次，让它服务 $`C_{0,2}`$ 和 $`C_{0,3}`$。
 
-更精确地说，右上角输出 tile 一般由另一个 block 计算；那个 block 无法直接读取前一个 block 的 shared memory，所以它会再装一次包含 $A_{0,0}$ 的输入 tile。这正是为什么每个元素仍是 $N/T$ 次，而不是全局只读 1 次。
+更精确地说，右上角输出 tile 一般由另一个 block 计算；那个 block 无法直接读取前一个 block 的 shared memory，所以它会再装一次包含 $`A_{0,0}`$ 的输入 tile。这正是为什么每个元素仍是 $`N/T`$ 次，而不是全局只读 1 次。
 
-所以 $A_{0,0}$ 的读取过程从：
+所以 $`A_{0,0}`$ 的读取过程从：
 
 ```text
 朴素：为了 4 个输出，去 global memory 4 次
@@ -1195,69 +1281,93 @@ C[1,2]  C[1,3]
 
 也就是：
 
-$$4\quad\longrightarrow\quad\frac{4}{2}=2$$
+```math
+4\quad\longrightarrow\quad\frac{4}{2}=2
+```
 
-##### 第四步：为什么一般情况是 $N/T$？
+##### 第四步：为什么一般情况是 $`N/T`$？
 
-固定一个 $A_{i,k}$：
+固定一个 $`A_{i,k}`$：
 
-1. 它总共要服务 $N$ 个输出列；
-2. 一个宽度为 $T$ 的输出 tile 一次覆盖 $T$ 个输出列；
+1. 它总共要服务 $`N`$ 个输出列；
+2. 一个宽度为 $`T`$ 的输出 tile 一次覆盖 $`T`$ 个输出列；
 3. 因而需要的输出 tiles 数量是：
 
-$$\frac{\text{总输出列数}}{\text{每个 tile 覆盖的列数}}=\frac{N}{T}$$
+```math
+\frac{\text{总输出列数}}{\text{每个 tile 覆盖的列数}}=\frac{N}{T}
+```
 
-每个输出 tile 把 $A_{i,k}$ 从 global memory 装入一次，所以一个 $A$ 元素的 global reads 从 $N$ 次降到 $N/T$ 次。
+每个输出 tile 把 $`A_{i,k}`$ 从 global memory 装入一次，所以一个 $`A`$ 元素的 global reads 从 $`N`$ 次降到 $`N/T`$ 次。
 
-对 $B_{k,j}$ 完全对称：它要服务 $N$ 个输出行，而每个 tile 一次覆盖 $T$ 行，所以也是 $N/T$ 次。
+对 $`B_{k,j}`$ 完全对称：它要服务 $`N`$ 个输出行，而每个 tile 一次覆盖 $`T`$ 行，所以也是 $`N/T`$ 次。
 
-若 $N$ 不能被 $T$ 整除，严格写法是 $\lceil N/T\rceil$；课程先使用能整除的情况建立直觉。
+若 $`N`$ 不能被 $`T`$ 整除，严格写法是 $`\lceil N/T\rceil`$；课程先使用能整除的情况建立直觉。
 
 ##### 第五步：把总读取次数写完整
 
 | 项目 | 朴素方法 | Tiled 方法 |
 |---|---:|---:|
-| $A$ 的 global reads | $N^3$ | $N^3/T$ |
-| $B$ 的 global reads | $N^3$ | $N^3/T$ |
-| 输入合计 | $2N^3$ | $2N^3/T$ |
-| 输出写回 | $N^2$ | $N^2$ |
-| 主要数学运算 | 约 $2N^3$ FLOPs | 仍约 $2N^3$ FLOPs |
+| $`A`$ 的 global reads | $`N^3`$ | $`N^3/T`$ |
+| $`B`$ 的 global reads | $`N^3`$ | $`N^3/T`$ |
+| 输入合计 | $`2N^3`$ | $`2N^3/T`$ |
+| 输出写回 | $`N^2`$ | $`N^2`$ |
+| 主要数学运算 | 约 $`2N^3`$ FLOPs | 仍约 $`2N^3`$ FLOPs |
 
 global input reads 的缩减倍数为：
 
-$$\frac{2N^3}{2N^3/T}=T$$
+```math
+\frac{2N^3}{2N^3/T}=T
+```
 
 所以 tile size 为 32 时，理想模型下 global input traffic 约减少 32 倍。数学运算并没有减少；只是从远处搬来的每个数被重复使用了 32 次。
 
-##### 第六步：完整计算 $N=1024,T=32$
+##### 第六步：完整计算 $`N=1024,T=32`$
 
-一个 $1024\times1024$ 矩阵有：
+一个 $`1024\times1024`$ 矩阵有：
 
-$$1024^2=1{,}048{,}576\ \text{个元素}$$
+```math
+1024^2=1{,}048{,}576\ \text{个元素}
+```
 
 **朴素方法：**每个元素读取 1024 次。
 
-$$A\text{ reads}=1{,}048{,}576\times1024=1{,}073{,}741{,}824$$
+```math
+A\text{ reads}=1{,}048{,}576\times1024=1{,}073{,}741{,}824
+```
 
-$$B\text{ reads}=1{,}073{,}741{,}824$$
+```math
+B\text{ reads}=1{,}073{,}741{,}824
+```
 
-$$\text{总 input reads}=2{,}147{,}483{,}648$$
+```math
+\text{总 input reads}=2{,}147{,}483{,}648
+```
 
 **Tiled 方法：**每次加载服务 32 个输出，所以每个元素读取：
 
-$$\frac{1024}{32}=32\ \text{次}$$
+```math
+\frac{1024}{32}=32\ \text{次}
+```
 
 于是：
 
-$$A\text{ reads}=1{,}048{,}576\times32=33{,}554{,}432$$
+```math
+A\text{ reads}=1{,}048{,}576\times32=33{,}554{,}432
+```
 
-$$B\text{ reads}=33{,}554{,}432$$
+```math
+B\text{ reads}=33{,}554{,}432
+```
 
-$$\text{总 input reads}=67{,}108{,}864$$
+```math
+\text{总 input reads}=67{,}108{,}864
+```
 
 验证缩减倍数：
 
-$$\frac{2{,}147{,}483{,}648}{67{,}108{,}864}=32$$
+```math
+\frac{2{,}147{,}483{,}648}{67{,}108{,}864}=32
+```
 
 如果输入是 FP16，每个数 2 bytes，那么这个简化模型中的输入读取流量是：
 
@@ -1266,13 +1376,17 @@ $$\frac{2{,}147{,}483{,}648}{67{,}108{,}864}=32$$
 分块：   67,108,864 × 2 bytes = 128 MiB
 ```
 
-> **重要边界**：这是为了理解 tiling 而使用的理论模型，暂时忽略硬件 cache、transaction 合并、寄存器、输出写回和边界 tile。真实的“朴素 kernel”可能因 cache 获得一部分复用，因此实测不一定刚好是 32 倍；但“shared-memory tiling 主动把一次 global read 复用于 $T$ 个输出”的推导不变。
+> **重要边界**：这是为了理解 tiling 而使用的理论模型，暂时忽略硬件 cache、transaction 合并、寄存器、输出写回和边界 tile。真实的“朴素 kernel”可能因 cache 获得一部分复用，因此实测不一定刚好是 32 倍；但“shared-memory tiling 主动把一次 global read 复用于 $`T`$ 个输出”的推导不变。
 
 上面的二进制容量可逐步验证：
 
-$$4\ \text{GiB}=4\times2^{30}=4{,}294{,}967{,}296\ \text{bytes}$$
+```math
+4\ \text{GiB}=4\times2^{30}=4{,}294{,}967{,}296\ \text{bytes}
+```
 
-$$128\ \text{MiB}=128\times2^{20}=134{,}217{,}728\ \text{bytes}$$
+```math
+128\ \text{MiB}=128\times2^{20}=134{,}217{,}728\ \text{bytes}
+```
 
 前者除以后者仍是 32。
 
@@ -1300,9 +1414,9 @@ tile 过大：
 
 因此最优 tile 取决于矩阵形状、dtype、shared memory、寄存器、warp 数量和具体 GPU。`torch.compile(..., mode="max-autotune")` 的一个作用就是在支持的算子上测试多种实现/配置，付出更长编译时间换取更快运行时间。
 
-只看理论复用，$N=8$ 时有：
+只看理论复用，$`N=8`$ 时有：
 
-| tile size $T$ | 每个输入元素约读 $N/T$ 次 | 理想流量缩减 | 直观代价 |
+| tile size $`T`$ | 每个输入元素约读 $`N/T`$ 次 | 理想流量缩减 | 直观代价 |
 |---:|---:|---:|---|
 | 2 | 4 | 2 倍 | 小块，复用少，资源轻 |
 | 4 | 2 | 4 倍 | 中间选择 |
@@ -1310,11 +1424,12 @@ tile 过大：
 
 所以“大 tile 复用更好”只是公式的一面；资源装不下或让 occupancy 太低时，实际反而更慢。
 
-#### 例子一：手算一个 $4\times4$ 矩阵乘的 $2\times2$ tile
+#### 例子一：手算一个 $`4\times4`$ 矩阵乘的 $`2\times2`$ tile
 
 令：
 
-$$A=\begin{bmatrix}
+```math
+A=\begin{bmatrix}
 1&2&3&4\\
 5&6&7&8\\
 9&10&11&12\\
@@ -1325,37 +1440,44 @@ B=\begin{bmatrix}
 0&1&0&2\\
 1&0&1&0\\
 0&1&0&1
-\end{bmatrix}$$
+\end{bmatrix}
+```
 
-只计算输出左上角 tile $C[0:2,0:2]$。切片 $0:2$ 表示“从编号 0 开始，到 2 之前停止”，也就是行 0、1 与列 0、1。**reduction 维度**就是公式中最后要被求和消掉的 $k$ 轴；这里 $k=0,1,2,3$，tile 宽 2，所以分为 $k=0,1$ 与 $k=2,3$ 两个阶段。每阶段先得到 partial result（部分和），最后相加。
+只计算输出左上角 tile $`C[0:2,0:2]`$。切片 $`0:2`$ 表示“从编号 0 开始，到 2 之前停止”，也就是行 0、1 与列 0、1。**reduction 维度**就是公式中最后要被求和消掉的 $`k`$ 轴；这里 $`k=0,1,2,3`$，tile 宽 2，所以分为 $`k=0,1`$ 与 $`k=2,3`$ 两个阶段。每阶段先得到 partial result（部分和），最后相加。
 
-**阶段 1：**装入 $A$ 左上和 $B$ 左上两个 tiles：
+**阶段 1：**装入 $`A`$ 左上和 $`B`$ 左上两个 tiles：
 
-$$\begin{bmatrix}1&2\\5&6\end{bmatrix}
+```math
+\begin{bmatrix}1&2\\5&6\end{bmatrix}
 \begin{bmatrix}1&0\\0&1\end{bmatrix}
-=\begin{bmatrix}1&2\\5&6\end{bmatrix}$$
+=\begin{bmatrix}1&2\\5&6\end{bmatrix}
+```
 
-例如这一阶段左上输出的部分结果是 $1\times1+2\times0=1$。
+例如这一阶段左上输出的部分结果是 $`1\times1+2\times0=1`$。
 
-**阶段 2：**装入 $A$ 右上和 $B$ 左下两个 tiles：
+**阶段 2：**装入 $`A`$ 右上和 $`B`$ 左下两个 tiles：
 
-$$\begin{bmatrix}3&4\\7&8\end{bmatrix}
+```math
+\begin{bmatrix}3&4\\7&8\end{bmatrix}
 \begin{bmatrix}1&0\\0&1\end{bmatrix}
-=\begin{bmatrix}3&4\\7&8\end{bmatrix}$$
+=\begin{bmatrix}3&4\\7&8\end{bmatrix}
+```
 
-第二阶段同一位置的部分结果是 $3\times1+4\times0=3$。因此最终 $C_{0,0}=1+3=4$。
+第二阶段同一位置的部分结果是 $`3\times1+4\times0=3`$。因此最终 $`C_{0,0}=1+3=4`$。
 
 把两个 partial results 在寄存器/shared memory 中相加：
 
-$$C[0:2,0:2]=\begin{bmatrix}4&6\\12&14\end{bmatrix}$$
+```math
+C[0:2,0:2]=\begin{bmatrix}4&6\\12&14\end{bmatrix}
+```
 
-关键不是这个小矩阵本身，而是每次装入的 $A/B$ tile 会被用来计算多个输出元素。若逐个输出元素直接访问 global memory，同样的数据会被反复搬运。
+关键不是这个小矩阵本身，而是每次装入的 $`A/B`$ tile 会被用来计算多个输出元素。若逐个输出元素直接访问 global memory，同样的数据会被反复搬运。
 
 #### 例子二：边界 tile 的浪费
 
-矩阵是 $5\times5$，tile 是 $4\times4$。每个轴都需要 $\lceil5/4\rceil=2$ 个 tiles，因此输出覆盖区相当于 $8\times8$：
+矩阵是 $`5\times5`$，tile 是 $`4\times4`$。每个轴都需要 $`\lceil5/4\rceil=2`$ 个 tiles，因此输出覆盖区相当于 $`8\times8`$：
 
-$\lceil x\rceil$ 表示向上取整：$5/4=1.25$，但一个 tile 不够，必须要 2 个。
+$`\lceil x\rceil`$ 表示向上取整：$`5/4=1.25`$，但一个 tile 不够，必须要 2 个。
 
 ```text
 ┌────┬────┐
@@ -1365,11 +1487,11 @@ $\lceil x\rceil$ 表示向上取整：$5/4=1.25$，但一个 tile 不够，必�
 └────┴────┘
 ```
 
-4 个 blocks 各有 $4\times4=16$ 个 thread slots，总共 $4\times16=64$ 个位置。只有 25 个输出有效，所以 $64-25=39$ 个 slots 越界。kernel 用 mask 让这 39 个位置既不读取非法地址，也不写出结果，但这些边界 blocks 仍占据调度和执行资源。这就是把维度从 256 改成 257 时性能可能突然下降的微观原因。
+4 个 blocks 各有 $`4\times4=16`$ 个 thread slots，总共 $`4\times16=64`$ 个位置。只有 25 个输出有效，所以 $`64-25=39`$ 个 slots 越界。kernel 用 mask 让这 39 个位置既不读取非法地址，也不写出结果，但这些边界 blocks 仍占据调度和执行资源。这就是把维度从 256 改成 257 时性能可能突然下降的微观原因。
 
 #### 例子三：Attention 中 Q tile 的复用
 
-FlashAttention 会把一个 $Q$ tile 留在片上，然后依次让它与多个 $K$ tiles 相乘。若 $Q$ 每次都从 HBM 重读，序列越长重复流量越大；把 $Q$ 留在 SRAM/register 中，就能让一次读取参与多个 score tiles。
+FlashAttention 会把一个 $`Q`$ tile 留在片上，然后依次让它与多个 $`K`$ tiles 相乘。若 $`Q`$ 每次都从 HBM 重读，序列越长重复流量越大；把 $`Q`$ 留在 SRAM/register 中，就能让一次读取参与多个 score tiles。
 
 这与矩阵乘 tiling 完全是同一个思想，只是还要用 online softmax 解决跨 tiles 的归一化。
 
@@ -1413,10 +1535,10 @@ FlashAttention 会把一个 $Q$ tile 留在片上，然后依次让它与多个 
 
 ### 7.3 效应三：Wave quantization
 
-假设一个 matmul kernel 让每个 thread block 负责一个 $256\times128$ 的输出 tile。输出沿第一轴有 $\lceil N/256\rceil$ 块，沿第二轴有 $\lceil N/128\rceil$ 块，所以 block 总数是两者相乘：
+假设一个 matmul kernel 让每个 thread block 负责一个 $`256\times128`$ 的输出 tile。输出沿第一轴有 $`\lceil N/256\rceil`$ 块，沿第二轴有 $`\lceil N/128\rceil`$ 块，所以 block 总数是两者相乘：
 
-- 维度 1792 时：$\lceil1792/256\rceil\times\lceil1792/128\rceil=7\times14=98$ 个 tiles；
-- 维度 1793 时：$8\times15=120$ 个 tiles。
+- 维度 1792 时：$`\lceil1792/256\rceil\times\lceil1792/128\rceil=7\times14=98`$ 个 tiles；
+- 维度 1793 时：$`8\times15=120`$ 个 tiles。
 
 A100 有 108 个启用的 SM。课程前面的芯片结构图画的是完整 GA100 设计中的 128 个 SM，而实际 A100 产品常启用 108 个；本例讨论实际设备调度，所以使用 108，两处没有矛盾。为建立最简单时间模型，暂时假设每个 SM 同时只运行这个 kernel 的 1 个 block，而且每个 block 用时相近：
 
@@ -1424,11 +1546,13 @@ A100 有 108 个启用的 SM。课程前面的芯片结构图画的是完整 GA1
 - 120 blocks：第一波最多做 108 个，剩 12 个必须等第二波，约 2 个“block 时间”完成；
 - 第二波只有 12/108 的 SM 工作，其余 96 个空着等尾巴。
 
-因此工作量只从 98 增到 120（约 22.4%），简化运行时间却可能从 1 波跳到 2 波，吞吐 $=$ 工作量/时间 会出现明显下跌。真实硬件上一个 SM 可能同时驻留多个 blocks，block 时间也不完全相同；此例只是解释阶梯产生的机制。
+因此工作量只从 98 增到 120（约 22.4%），简化运行时间却可能从 1 波跳到 2 波，吞吐 $`=`$ 工作量/时间 会出现明显下跌。真实硬件上一个 SM 可能同时驻留多个 blocks，block 时间也不完全相同；此例只是解释阶梯产生的机制。
 
 一般形式是：
 
-$$\text{waves}=\left\lceil\frac{\text{number of thread blocks}}{\text{可同时执行的 blocks}}\right\rceil$$
+```math
+\text{waves}=\left\lceil\frac{\text{number of thread blocks}}{\text{可同时执行的 blocks}}\right\rceil
+```
 
 只要工作块数量刚好越过一波的容量，尾部就可能产生低利用率。这就是性能曲线的周期性来源之一。
 
@@ -1444,51 +1568,67 @@ $$\text{waves}=\left\lceil\frac{\text{number of thread blocks}}{\text{可同时�
 - **key（K）**：“我这里有什么信息的标签？”；
 - **value（V）**：“如果你关注我，真正拿走的内容是什么？”。
 
-以某个 query $q=[1,0]$ 为例，三个 key 是：
+以某个 query $`q=[1,0]`$ 为例，三个 key 是：
 
-$$k_{\text{猫}}=[1,0],\quad k_{\text{追}}=[0.5,0.5],\quad k_{\text{鱼}}=[0,1]$$
+```math
+k_{\text{猫}}=[1,0],\quad k_{\text{追}}=[0.5,0.5],\quad k_{\text{鱼}}=[0,1]
+```
 
 **dot product（点积）**是对应数字相乘再相加。因此未缩放分数为：
 
-$$q\cdot k_{\text{猫}}=1,\quad q\cdot k_{\text{追}}=0.5,\quad q\cdot k_{\text{鱼}}=0$$
+```math
+q\cdot k_{\text{猫}}=1,\quad q\cdot k_{\text{追}}=0.5,\quad q\cdot k_{\text{鱼}}=0
+```
 
-标准 scaled dot-product attention 还要除以 $\sqrt d$。这里每条向量有 $d=2$ 个数，所以 $\sqrt d=\sqrt2\approx1.414$：
+标准 scaled dot-product attention 还要除以 $`\sqrt d`$。这里每条向量有 $`d=2`$ 个数，所以 $`\sqrt d=\sqrt2\approx1.414`$：
 
-$$[1,0.5,0]/\sqrt2\approx[0.707,0.354,0]$$
+```math
+[1,0.5,0]/\sqrt2\approx[0.707,0.354,0]
+```
 
 softmax 把它变成约 [0.456, 0.320, 0.225]，它们都为正且总和约为 1。若三个 value 是：
 
-$$v_{\text{猫}}=[10,0],\quad v_{\text{追}}=[0,10],\quad v_{\text{鱼}}=[5,5]$$
+```math
+v_{\text{猫}}=[10,0],\quad v_{\text{追}}=[0,10],\quad v_{\text{鱼}}=[5,5]
+```
 
 最终输出是加权和：
 
-$$0.456[10,0]+0.320[0,10]+0.225[5,5]\approx[5.68,4.32]$$
+```math
+0.456[10,0]+0.320[0,10]+0.225[5,5]\approx[5.68,4.32]
+```
 
 所以 attention 的一句人话是：**query 与每个 key 打分，用 softmax 变成关注比例，再按比例混合 values。**
 
 对单个 attention head，设：
 
-- $Q,K,V\in\mathbb{R}^{N\times d}$；
-- $N$ 是序列长度；
-- $d$ 是 head dimension。
+- $`Q,K,V\in\mathbb{R}^{N\times d}`$；
+- $`N`$ 是序列长度；
+- $`d`$ 是 head dimension。
 
 计算过程：
 
-$$S=\frac{QK^\top}{\sqrt d}\in\mathbb{R}^{N\times N}$$
+```math
+S=\frac{QK^\top}{\sqrt d}\in\mathbb{R}^{N\times N}
+```
 
-$Q$ 有 $N$ 行，每行是一个 token 的 query；$K^\top$ 把 $K$ 的行列交换，使每个 query 能与每个 key 做点积。因此 $QK^\top$ 有 $N\times N$ 个分数。除以 $\sqrt d$ 是为了当向量维度 $d$ 变大时，分数不要自然变得过大，从而让 softmax 过早饱和。
+$`Q`$ 有 $`N`$ 行，每行是一个 token 的 query；$`K^\top`$ 把 $`K`$ 的行列交换，使每个 query 能与每个 key 做点积。因此 $`QK^\top`$ 有 $`N\times N`$ 个分数。除以 $`\sqrt d`$ 是为了当向量维度 $`d`$ 变大时，分数不要自然变得过大，从而让 softmax 过早饱和。
 
-$$P=\operatorname{softmax}_{\text{row}}(S)$$
+```math
+P=\mathrm{softmax}_{\text{row}}(S)
+```
 
-$$O=PV\in\mathbb{R}^{N\times d}$$
+```math
+O=PV\in\mathbb{R}^{N\times d}
+```
 
-> **补充澄清**：attention core 包含两个主要 batched matmul：$QK^\top$ 和 $PV$。如果把生成 $Q,K,V$ 的三个线性投影也算入，则还有三次 projection matmul。课程幻灯片把它口头概括为围绕 $Q,K,V$ 的矩阵乘链；理解时应以公式为准。
+> **补充澄清**：attention core 包含两个主要 batched matmul：$`QK^\top`$ 和 $`PV`$。如果把生成 $`Q,K,V`$ 的三个线性投影也算入，则还有三次 projection matmul。课程幻灯片把它口头概括为围绕 $`Q,K,V`$ 的矩阵乘链；理解时应以公式为准。
 
-### 8.2 朴素实现的问题不是只有 $O(N^2)$ FLOPs
+### 8.2 朴素实现的问题不是只有 $`O(N^2)`$ FLOPs
 
-$O(N^2)$ 的最直观含义是“每个 query 都要看每个 key”：$N=4$ 时有 $4\times4=16$ 对；$N=8$ 时有 $8\times8=64$ 对。序列翻倍，分数个数变成 4 倍。
+$`O(N^2)`$ 的最直观含义是“每个 query 都要看每个 key”：$`N=4`$ 时有 $`4\times4=16`$ 对；$`N=8`$ 时有 $`8\times8=64`$ 对。序列翻倍，分数个数变成 4 倍。
 
-朴素实现通常会把 $N\times N$ 的 score $S$ 和 probability $P$ 写到 HBM，再读回来做 softmax 和第二个 matmul。长序列下，这些中间量非常大。
+朴素实现通常会把 $`N\times N`$ 的 score $`S`$ 和 probability $`P`$ 写到 HBM，再读回来做 softmax 和第二个 matmul。长序列下，这些中间量非常大。
 
 **materialize（物化）**是指真的为整个中间矩阵分配内存并把每个元素写进去，而不只是数学上说它存在。**batched matmul** 是把多个 batch/head 的矩阵乘一起交给 GPU；每一个 head 内仍有上面的两个核心 matmul。
 
@@ -1496,56 +1636,72 @@ FlashAttention 的关键观点是 **IO-aware**：不仅计算 FLOPs，还显式�
 
 它仍然计算精确的 softmax attention；主要收益来自：
 
-- 不把完整 $S$、$P$ 物化到 HBM；
-- 按 tile 读取 $Q,K,V$；
-- 在 SRAM/register 中融合 score、softmax 和 $V$ 加权；
-- backward 时重算需要的局部量，而不是保存 $N^2$ activation。
+- 不把完整 $`S`$、$`P`$ 物化到 HBM；
+- 按 tile 读取 $`Q,K,V`$；
+- 在 SRAM/register 中融合 score、softmax 和 $`V`$ 加权；
+- backward 时重算需要的局部量，而不是保存 $`N^2`$ activation。
 
 ### 8.3 难点：softmax 是全局归一化
 
 矩阵乘很容易切块，但一行 softmax 的分母依赖该行全部元素：
 
-$$\operatorname{softmax}(x_i)=\frac{e^{x_i-m}}{\sum_j e^{x_j-m}},\qquad m=\max_j x_j$$
+```math
+\mathrm{softmax}(x_i)=\frac{e^{x_i-m}}{\sum_j e^{x_j-m}},\qquad m=\max_j x_j
+```
 
 只看一个 tile，既不知道全局最大值，也不知道完整分母。解决方法是 **online softmax**。
 
-$e^x$ 是指数函数，$e\approx2.718$。它把分数变成正数，而且分数大一点，权重会明显更大。先对 [1, 2, 4] 做普通 softmax：
+$`e^x`$ 是指数函数，$`e\approx2.718`$。它把分数变成正数，而且分数大一点，权重会明显更大。先对 [1, 2, 4] 做普通 softmax：
 
-$$[e^1,e^2,e^4]\approx[2.718,7.389,54.598]$$
+```math
+[e^1,e^2,e^4]\approx[2.718,7.389,54.598]
+```
 
-总和约 $64.705$，所以概率约：
+总和约 $`64.705`$，所以概率约：
 
-$$[2.718,7.389,54.598]/64.705\approx[0.042,0.114,0.844]$$
+```math
+[2.718,7.389,54.598]/64.705\approx[0.042,0.114,0.844]
+```
 
-直接算很大的 $e^{1000}$ 会溢出。减去同一个最大值 4 不改变比例：
+直接算很大的 $`e^{1000}`$ 会溢出。减去同一个最大值 4 不改变比例：
 
-$$[e^{-3},e^{-2},e^0]\approx[0.0498,0.1353,1]$$
+```math
+[e^{-3},e^{-2},e^0]\approx[0.0498,0.1353,1]
+```
 
-除以总和 $1.1851$，仍约为 [0.042, 0.114, 0.844]。所以“减最大值”既稳定又不改变答案。
+除以总和 $`1.1851`$，仍约为 [0.042, 0.114, 0.844]。所以“减最大值”既稳定又不改变答案。
 
 ### 8.4 Online softmax 的可合并状态（补充推导）
 
 对已经处理的一组 logits，维护：
 
-- 最大值 $m$；
-- 稳定化分母 $\ell=\sum_i e^{x_i-m}$；
-- 若同时累积 value，维护 $o=\sum_i e^{x_i-m}v_i$。
+- 最大值 $`m`$；
+- 稳定化分母 $`\ell=\sum_i e^{x_i-m}`$；
+- 若同时累积 value，维护 $`o=\sum_i e^{x_i-m}v_i`$。
 
-这里 logit 就是 softmax 前的原始分数；$\ell$ 读作 ell，不是数字 1。$v_i$ 可以是一个数，也可以是一条 value 向量；对应地 $o$ 也是数或向量。$o$ 还没除以分母，所以最终才做 $O=o/\ell$。
+这里 logit 就是 softmax 前的原始分数；$`\ell`$ 读作 ell，不是数字 1。$`v_i`$ 可以是一个数，也可以是一条 value 向量；对应地 $`o`$ 也是数或向量。$`o`$ 还没除以分母，所以最终才做 $`O=o/\ell`$。
 
-新 tile 有自己的 $(m_b,\ell_b,o_b)$。合并时令：
+新 tile 有自己的 $`(m_b,\ell_b,o_b)`$。合并时令：
 
-$$m'=\max(m,m_b)$$
+```math
+m'=\max(m,m_b)
+```
 
-$$\ell'=e^{m-m'}\ell+e^{m_b-m'}\ell_b$$
+```math
+\ell'=e^{m-m'}\ell+e^{m_b-m'}\ell_b
+```
 
-$$o'=e^{m-m'}o+e^{m_b-m'}o_b$$
+```math
+o'=e^{m-m'}o+e^{m_b-m'}o_b
+```
 
 最终输出：
 
-$$O=\frac{o'}{\ell'}$$
+```math
+O=\frac{o'}{\ell'}
+```
 
-为什么要乘 $e^{m-m'}$？因为旧累计量原本以旧最大值 $m$ 为基准；发现更大值后，必须把它重新缩放到新基准 $m'$。这个状态可以按 tile 递增更新，因此无需一次看到整行 logits。
+为什么要乘 $`e^{m-m'}`$？因为旧累计量原本以旧最大值 $`m`$ 为基准；发现更大值后，必须把它重新缩放到新基准 $`m'`$。这个状态可以按 tile 递增更新，因此无需一次看到整行 logits。
 
 #### 一个两块小例子
 
@@ -1553,37 +1709,57 @@ $$O=\frac{o'}{\ell'}$$
 
 **第一块 [1, 2]：**
 
-$$m_1=2$$
+```math
+m_1=2
+```
 
-$$\ell_1=e^{1-2}+e^{2-2}=e^{-1}+1\approx1.367879$$
+```math
+\ell_1=e^{1-2}+e^{2-2}=e^{-1}+1\approx1.367879
+```
 
-$$o_1=e^{-1}\times10+1\times20\approx23.678794$$
+```math
+o_1=e^{-1}\times10+1\times20\approx23.678794
+```
 
 **第二块 [4, 3]：**
 
-$$m_2=4$$
+```math
+m_2=4
+```
 
-$$\ell_2=1+e^{-1}\approx1.367879$$
+```math
+\ell_2=1+e^{-1}\approx1.367879
+```
 
-$$o_2=1\times30+e^{-1}\times40\approx44.715178$$
+```math
+o_2=1\times30+e^{-1}\times40\approx44.715178
+```
 
-**合并：**新最大值 $m'=4$。旧块原本以 2 为基准，现在必须乘 $e^{2-4}=e^{-2}\approx0.135335$：
+**合并：**新最大值 $`m'=4`$。旧块原本以 2 为基准，现在必须乘 $`e^{2-4}=e^{-2}\approx0.135335`$：
 
-$$\ell'=e^{-2}\ell_1+\ell_2
+```math
+\ell'=e^{-2}\ell_1+\ell_2
 \approx0.135335\times1.367879+1.367879
-\approx1.553002$$
+\approx1.553002
+```
 
-$$o'=e^{-2}o_1+o_2
+```math
+o'=e^{-2}o_1+o_2
 \approx0.135335\times23.678794+44.715178
-\approx47.919754$$
+\approx47.919754
+```
 
 最终加权输出：
 
-$$O=o'/\ell'\approx47.919754/1.553002\approx30.856213$$
+```math
+O=o'/\ell'\approx47.919754/1.553002\approx30.856213
+```
 
 直接一次算完整行时，以 4 为最大值的未归一化权重为：
 
-$$[e^{-3},e^{-2},1,e^{-1}]\approx[0.049787,0.135335,1,0.367879]$$
+```math
+[e^{-3},e^{-2},1,e^{-1}]\approx[0.049787,0.135335,1,0.367879]
+```
 
 分母同样是 1.553002；与 [10, 20, 30, 40] 的加权和同样是 47.919754，答案仍是 30.856213。分块只改变计算顺序，没有改变 softmax 结果。
 
@@ -1591,40 +1767,40 @@ $$[e^{-3},e^{-2},1,e^{-1}]\approx[0.049787,0.135335,1,0.367879]$$
 
 可用下面的简化流程理解：
 
-1. 把一个 $Q$ tile 保持在片上；
-2. 依次加载 $K,V$ tiles；
-3. 在片上计算局部 $S=QK^\top$；
+1. 把一个 $`Q`$ tile 保持在片上；
+2. 依次加载 $`K,V`$ tiles；
+3. 在片上计算局部 $`S=QK^\top`$；
 4. 立刻更新 online max、normalizer 和加权 value 累加器；
-5. 不把完整 $S$ 或 $P$ 写入 HBM；
-6. 遍历完所有 $K,V$ tiles 后，只写回最终输出 tile。
+5. 不把完整 $`S`$ 或 $`P`$ 写入 HBM；
+6. 遍历完所有 $`K,V`$ tiles 后，只写回最终输出 tile。
 
 用“1 个 query、4 个 K/V、tile size=2”完整走一遍：
 
-1. 从 HBM 读入 query $q$，留在片上；
-2. 从 HBM 读入 $(k_0,k_1)$ 和 $(v_0,v_1)$；
-3. 在片上算两个 scores，用它们建立第一块的 $m,\ell,o$，不写出 scores/probabilities；
-4. 丢弃已消费的局部 scores，再读 $(k_2,k_3)$ 和 $(v_2,v_3)$；
-5. 算后两个 scores，用第 8.4 节公式更新同一个 $m,\ell,o$；
-6. 算 $O=o/\ell$，只把最终输出 $O$ 写回 HBM。
+1. 从 HBM 读入 query $`q`$，留在片上；
+2. 从 HBM 读入 $`(k_0,k_1)`$ 和 $`(v_0,v_1)`$；
+3. 在片上算两个 scores，用它们建立第一块的 $`m,\ell,o`$，不写出 scores/probabilities；
+4. 丢弃已消费的局部 scores，再读 $`(k_2,k_3)`$ 和 $`(v_2,v_3)`$；
+5. 算后两个 scores，用第 8.4 节公式更新同一个 $`m,\ell,o`$；
+6. 算 $`O=o/\ell`$，只把最终输出 $`O`$ 写回 HBM。
 
 为了突出中间量，暂时不数双方都必须读取的 Q/K/V。朴素方案会：
 
 | 中间步骤 | HBM 访问的标量个数 |
 |---|---:|
-| 写 score $S$ | 4 |
-| softmax 读 $S$ | 4 |
-| 写 probability $P$ | 4 |
-| 第二个 matmul 读 $P$ | 4 |
+| 写 score $`S`$ | 4 |
+| softmax 读 $`S`$ | 4 |
+| 写 probability $`P`$ | 4 |
+| 第二个 matmul 读 $`P`$ | 4 |
 | 合计 | 16 |
 
-FlashAttention 对这 16 次 $S/P$ 中间访问是 0；score 和 probability tile 算完立刻在片上消费。它仍要读 Q/K/V、写最终 O，而且真实 tile 是矩阵块，但这个四元素例子展示了关键差别。
+FlashAttention 对这 16 次 $`S/P`$ 中间访问是 0；score 和 probability tile 算完立刻在片上消费。它仍要读 Q/K/V、写最终 O，而且真实 tile 是矩阵块，但这个四元素例子展示了关键差别。
 
 这里同时出现了：
 
-- **tiling**：把 $Q,K,V$ 分块放入片上存储；
-- **fusion**：把 matmul、scale、mask、softmax、$PV$ 尽量放在同一个 kernel/流水中；
+- **tiling**：把 $`Q,K,V`$ 分块放入片上存储；
+- **fusion**：把 matmul、scale、mask、softmax、$`PV`$ 尽量放在同一个 kernel/流水中；
 - **online softmax**：让全局归一化可以分块递增；
-- **recomputation**：backward 重建局部 score/probability，避免保存完整 $N^2$ 中间矩阵。
+- **recomputation**：backward 重建局部 score/probability，避免保存完整 $`N^2`$ 中间矩阵。
 
 ### 8.6 为什么 FlashAttention 会更快？
 
@@ -1700,15 +1876,15 @@ fusion 通常减少 HBM traffic 和 launch overhead，但也可能增加寄存�
 5. `sin(x)**2 + cos(x)**2` 为什么适合 fusion？
 6. recomputation 为什么可能同时减少显存容量和内存流量？
 7. 对 row-major 矩阵，为什么相邻线程读取相邻列通常比读取同一列的不同行更容易 coalesce？
-8. $N=2048,T=64$ 时，课程简化模型下 tiling 把每个输入元素的 global reads 从多少降到多少？
-9. 1792 到 1793 的例子中，为什么多出的 22 个 tiles 会造成远大于 $22/98$ 的性能损失？
+8. $`N=2048,T=64`$ 时，课程简化模型下 tiling 把每个输入元素的 global reads 从多少降到多少？
+9. 1792 到 1793 的例子中，为什么多出的 22 个 tiles 会造成远大于 $`22/98`$ 的性能损失？
 10. Online softmax 需要维护哪几个状态？为什么新最大值出现时必须重新缩放旧累计量？
-11. FlashAttention 为什么可以不保存完整 $N\times N$ attention matrix？
+11. FlashAttention 为什么可以不保存完整 $`N\times N`$ attention matrix？
 12. 请用一句话解释本讲中低精度、fusion、recomputation、coalescing、tiling 的共同目标。
-13. FP16 向量加法 $z=x+y$ 每个元素约有多少算术强度？在峰值 100 TFLOP/s、带宽 1 TB/s 的 GPU 上，Roofline 上限约是多少？
+13. FP16 向量加法 $`z=x+y`$ 每个元素约有多少算术强度？在峰值 100 TFLOP/s、带宽 1 TB/s 的 GPU 上，Roofline 上限约是多少？
 14. 10 亿参数仅保存一份 BF16 权重约需要多少十进制 GB？为什么训练总显存会远高于它？
-15. 简化的 `bias + GELU` 例子中，fusion 把流量从 $10N$ 降到 $6N$ bytes，降低了百分之多少？
-16. $5\times5$ 输出使用 $4\times4$ tiles 时，tile 网格覆盖 64 个位置，其中有效输出比例是多少？
+15. 简化的 `bias + GELU` 例子中，fusion 把流量从 $`10N`$ 降到 $`6N`$ bytes，降低了百分之多少？
+16. $`5\times5`$ 输出使用 $`4\times4`$ tiles 时，tile 网格覆盖 64 个位置，其中有效输出比例是多少？
 17. 为什么一个不发生拷贝的 `permute`/`transpose` 仍可能让后续 GPU kernel 变慢？
 
 <details>
@@ -1716,20 +1892,20 @@ fusion 通常减少 HBM traffic 和 launch overhead，但也可能增加寄存�
 
 1. GPU 在大量 warps 之间切换；一个 warp 等待内存时，SM 可以执行其他就绪 warp，以总吞吐隐藏延迟。
 2. 同一 block 保证被调度到同一 SM，线程可以访问同一 shared memory 并进行 block 内同步。
-3. 带宽上限为 $2\times20=40$ TFLOP/s，低于 150 TFLOP/s，因此 memory-bound，最高约 40 TFLOP/s。
+3. 带宽上限为 $`2\times20=40`$ TFLOP/s，低于 150 TFLOP/s，因此 memory-bound，最高约 40 TFLOP/s。
 4. 运算量近似不变，但每次读写字节减半，所以 FLOP/byte 翻倍。
 5. 中间量只被相邻逐元素操作消费，可在寄存器/片上存储中完成，无需每一步写回 HBM。
 6. 它丢弃部分 forward activations，backward 时重算，用额外 FLOPs 换更少的保存和读取。
 7. row-major 中同一行的相邻列在地址上连续；同一列的不同行相隔一整行。
-8. 从 $N=2048$ 次降到 $N/T=32$ 次，约减少 64 倍。
-9. 98 个 tiles 可在 108 个 SM 上一波完成；120 个需要第二波，而第二波只有 12 个工作块，大部分 SM 空闲。在每波都算 1 个时间单位的玩具模型里，tile throughput 从 $98/1=98$ 降到 $120/2=60$，下降 $(98-60)/98\approx38.8\%$；真实降幅受 block 驻留数和每块耗时影响。
-10. 最大值 $m$、稳定化分母 $\ell$，若直接累积输出还要有加权和 $o$。最大值改变后，旧指数项的基准变了，必须乘指数比例换到新基准。
+8. 从 $`N=2048`$ 次降到 $`N/T=32`$ 次，约减少 64 倍。
+9. 98 个 tiles 可在 108 个 SM 上一波完成；120 个需要第二波，而第二波只有 12 个工作块，大部分 SM 空闲。在每波都算 1 个时间单位的玩具模型里，tile throughput 从 $`98/1=98`$ 降到 $`120/2=60`$，下降 $`(98-60)/98\approx38.8\%`$；真实降幅受 block 驻留数和每块耗时影响。
+10. 最大值 $`m`$、稳定化分母 $`\ell`$，若直接累积输出还要有加权和 $`o`$。最大值改变后，旧指数项的基准变了，必须乘指数比例换到新基准。
 11. 它逐块计算 score，在线更新 softmax 与 value 加权结果；中间 score/probability 留在片上并及时消费，backward 再按 tile 重算。
 12. 减少昂贵的数据移动，并让已搬入快内存的数据产生更多有效计算。
-13. 两次 FP16 读取加一次写入共约 6 bytes，一次加法，所以 $I\approx1/6=0.167$ FLOP/byte；带宽上限约 $0.167$ TFLOP/s，远低于峰值，是 memory-bound。
+13. 两次 FP16 读取加一次写入共约 6 bytes，一次加法，所以 $`I\approx1/6=0.167`$ FLOP/byte；带宽上限约 $`0.167`$ TFLOP/s，远低于峰值，是 memory-bound。
 14. 约 2 GB。训练还可能需要 gradients、optimizer states、高精度 master weights、activations、临时 buffer 和通信空间。
-15. $(10N-6N)/(10N)=40\%$。
-16. $25/64\approx39.1\%$；约 60.9% 的覆盖位置是边界填充或无效 lane。
+15. $`(10N-6N)/(10N)=40\%`$。
+16. $`25/64\approx39.1\%`$；约 60.9% 的覆盖位置是边界填充或无效 lane。
 17. view 虽未搬数据，却改变了 strides。相邻线程可能因此访问相距很远的地址，破坏 coalescing；若这个布局被重复使用，先做一次 contiguous copy 反而可能更快。
 
 </details>
@@ -1741,7 +1917,7 @@ fusion 通常减少 HBM traffic 和 launch overhead，但也可能增加寄存�
 1. GPU 是吞吐机器，CPU 更偏向延迟机器。
 2. warp 是 32 线程的关键调度组；block 是 shared memory 与同步的边界。
 3. 现代 GPU 的主要矛盾是 compute 增长快于 memory/communication。
-4. Roofline 用 $\min(P_{peak},B\cdot I)$ 判断 memory-bound 还是 compute-bound。
+4. Roofline 用 $`\min(P_{peak},B\cdot I)`$ 判断 memory-bound 还是 compute-bound。
 5. 高性能 kernel 的核心是少搬、连续搬、重复用。
 6. 矩阵形状会影响对齐、tile 利用率、kernel 选择和 wave 数量，所以性能并不平滑。
 7. FlashAttention 用 tiling、fusion、online softmax 和 recomputation 精确地计算 attention，同时显著减少 HBM IO。

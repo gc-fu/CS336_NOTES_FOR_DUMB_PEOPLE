@@ -67,41 +67,41 @@ Einops/einsum 把每条 axis 的语义写在代码里，减少 shape 错误
 
 1. Tensor 大小：
 
-$$
+```math
 M=\left(\prod_i s_i\right)b
-$$
+```
 
-$s_i$ 是第 $i$ 条 axis 的长度，$b$ 是每元素字节数，$M$ 的单位是 byte。
+$`s_i`$ 是第 $`i`$ 条 axis 的长度，$`b`$ 是每元素字节数，$`M`$ 的单位是 byte。
 
-2. 矩阵乘 $X_{B\times D}W_{D\times K}$：
+2. 矩阵乘 $`X_{B\times D}W_{D\times K}`$：
 
-$$
+```math
 F=BK(2D-1)\approx 2BDK\quad\text{FLOPs}
-$$
+```
 
 3. 运行时间的理想下界：
 
-$$
+```math
 t_{\text{ideal}}=\max\left(\frac{F}{P_{\text{peak}}},\frac{Q}{B_{\text{mem}}}\right)
-$$
+```
 
-$F$ 是 FLOPs，$P_{\text{peak}}$ 是 FLOP/s，$Q$ 是 bytes，$B_{\text{mem}}$ 是 byte/s。
+$`F`$ 是 FLOPs，$`P_{\text{peak}}`$ 是 FLOP/s，$`Q`$ 是 bytes，$`B_{\text{mem}}`$ 是 byte/s。
 
 4. 算术强度与 Roofline：
 
-$$
+```math
 I=\frac{F}{Q},\qquad
 P_{\text{actual}}\le P_{\text{roofline}}
 =\min(P_{\text{peak}},B_{\text{mem}}I)
-$$
+```
 
 5. dense 网络训练粗估：
 
-$$
+```math
 C_{\text{train}}\approx 6N D_{\text{tok}}
-$$
+```
 
-$N$ 是每个 token 大致激活的参数数，$D_{\text{tok}}$ 是训练 token 数；前向约 $2N D_{\text{tok}}$，反向约 $4N D_{\text{tok}}$。下标 `tok` 用来避免与矩阵 hidden width $D$ 混淆。
+$`N`$ 是每个 token 大致激活的参数数，$`D_{\text{tok}}`$ 是训练 token 数；前向约 $`2N D_{\text{tok}}`$，反向约 $`4N D_{\text{tok}}`$。下标 `tok` 用来避免与矩阵 hidden width $`D`$ 混淆。
 
 ### 0.4 三个课程数字
 
@@ -140,7 +140,7 @@ for p in model.parameters():    # model 是占位名；依次拿一个参数
 
 - `=` 是“把右边结果交给左边名字”，不是数学上的恒等关系；
 - `#` 后面是注释，不会执行；
-- `2e9` 表示 $2\times10^9$；
+- `2e9` 表示 $`2\times10^9`$；
 - `f"{x}"` 会把变量 `x` 填进字符串；
 - `class Block(nn.Module)` 定义一种模块；`def forward(self, x)` 定义输入怎样变成输出；
 - `@` 在 tensor 之间表示矩阵乘，不是逐元素乘。
@@ -237,17 +237,17 @@ x4 = torch.zeros(32, 16, 16, 64)
 
 shape 是 `(32,16,16,64)`，rank 是 4，元素总数逐步乘：
 
-$$
+```math
 32\times16=512
-$$
+```
 
-$$
+```math
 512\times16=8192
-$$
+```
 
-$$
+```math
 8192\times64=524{,}288\text{ elements}
-$$
+```
 
 axis 不是固定的“行/列”。同一个 axis 0 在这里表示 batch，在一张图片里可能表示 channel。**数字只告诉长度，变量名和上下文才告诉语义。**
 
@@ -257,12 +257,12 @@ axis 不是固定的“行/列”。同一个 axis 0 在这里表示 batch，在
 
 浮点数可先用这个近似结构理解：
 
-$$
+```math
 \text{value}=\text{sign}\times\text{significand}\times2^{\text{exponent}}
-$$
+```
 
 - **sign（符号）**决定正负；
-- **exponent（指数）**像科学记数法的“$10^k$”中的 $k$，主要决定能表示多大、多小的数量级；
+- **exponent（指数）**像科学记数法的“$`10^k`$”中的 $`k`$，主要决定能表示多大、多小的数量级；
 - **fraction（小数/尾数字段）**参与组成 significand（有效数字），位数越多，同一数量级中相邻可表示数通常越密，精度越高。
 
 因此“exponent 更多”主要扩大 dynamic range（动态范围），“fraction 更多”主要提高 resolution/precision（分辨率/精度）。真实 IEEE 编码还有 bias、特殊值与隐含位；这里先抓住因果。
@@ -287,7 +287,7 @@ x_fp16 = torch.tensor([1e-8], dtype=torch.float16)
 x_bf16 = torch.tensor([1e-8], dtype=torch.bfloat16)
 ```
 
-- `x_fp16` 通常显示为 `0`：$10^{-8}$ 对 FP16 太小；
+- `x_fp16` 通常显示为 `0`：$`10^{-8}`$ 对 FP16 太小；
 - `x_bf16` 仍非零：BF16 的 exponent 范围接近 FP32。
 
 但“范围大”不等于“精度高”。BF16 尾数位更少，相邻可表示数的间距更大。
@@ -386,25 +386,25 @@ assert z.is_contiguous() is True
 
 **【课程】**tensor 占用字节数：
 
-$$
+```math
 M=E\times b
-$$
+```
 
-- $M$：memory，单位 byte；
-- $E$：元素总数，单位 element；
-- $b$：每个元素的字节数，单位 byte/element。
+- $`M`$：memory，单位 byte；
+- $`E`$：元素总数，单位 element；
+- $`b`$：每个元素的字节数，单位 byte/element。
 
 单位相消：
 
-$$
+```math
 \text{element}\times\frac{\text{byte}}{\text{element}}=\text{byte}
-$$
+```
 
 课程小例子：`torch.zeros(4,8,dtype=torch.float32)`。
 
-1. 元素数：$4\times8=32$；
-2. FP32：$4$ bytes/element；
-3. 大小：$32\times4=128$ bytes。
+1. 元素数：$`4\times8=32`$；
+2. FP32：$`4`$ bytes/element；
+3. 大小：$`32\times4=128`$ bytes。
 
 代码核对：
 
@@ -419,17 +419,17 @@ memory = elements * bytes_per_element# 128 bytes
 
 课程大例子：GPT-3 风格 MLP 权重，shape 为 `(12288×4, 12288)=(49152,12288)`，FP32。
 
-$$
+```math
 E=49{,}152\times12{,}288=603{,}979{,}776
-$$
+```
 
-$$
+```math
 M=603{,}979{,}776\times4=2{,}415{,}919{,}104\text{ bytes}
-$$
+```
 
-$$
+```math
 M/2^{20}=2304\text{ MiB},\qquad M/2^{30}=2.25\text{ GiB}
-$$
+```
 
 讲义口语化写约 `2.3 GB`；精确说是 `2.416 GB` 十进制或 `2.25 GiB` 二进制。
 
@@ -499,9 +499,9 @@ assert z.shape == (3, 3)
 
 手算第 `(0,0)` 个输出：所有输入都是 1，
 
-$$
+```math
 z_{0,0}=1\times1+1\times1+1\times1+1\times1=4
-$$
+```
 
 **【课程例 2：带 batch】**
 
@@ -532,9 +532,9 @@ xh = rearrange(x, "seq (heads hidden1) -> seq heads hidden1",
 
 因为总元素数不变：
 
-$$
+```math
 3\times8=24=3\times2\times4
-$$
+```
 
 `heads=2` 已知，故 `hidden1=8/2=4`。括号 `(heads hidden1)` 表示这两条 axis 在输入中合成一条。下面代码**承接上一段中定义的 `xh`**：
 
@@ -547,7 +547,7 @@ y = rearrange(yh, "seq heads hidden2 -> seq (heads hidden2)")
 # (3,2,4) -> (3,8)
 ```
 
-第一行对 `hidden1=4` 求和；最后一行把 `heads=2` 与 `hidden2=4` 合并，$2\times4=8$。
+第一行对 `hidden1=4` 求和；最后一行把 `heads=2` 与 `hidden2=4` 合并，$`2\times4=8`$。
 
 这里不能只看 shape。把值全部摊开：
 
@@ -654,7 +654,7 @@ out = repeat(v, "hidden -> batch hidden", batch=2)
 #  [10,20,30]]                         # shape (2,3)
 ```
 
-元素数从 3 变成 $2\times3=6$。
+元素数从 3 变成 $`2\times3=6`$。
 
 **例 2：tile 整行与重复每个元素不同**
 
@@ -699,17 +699,17 @@ einops 让语义更清楚，但底层能否返回 view 仍取决于布局；必�
 
 ### 4.1 参数是什么，怎样计数
 
-**【补充解释】**parameter（参数）是训练要修改的 tensor 元素。一个无 bias 的线性层权重 $W$ shape 为 `(D,K)`，参数数：
+**【补充解释】**parameter（参数）是训练要修改的 tensor 元素。一个无 bias 的线性层权重 $`W`$ shape 为 `(D,K)`，参数数：
 
-$$
+```math
 N_W=D\times K
-$$
+```
 
-若另有 bias $b$ shape `(K,)`，总参数：
+若另有 bias $`b`$ shape `(K,)`，总参数：
 
-$$
+```math
 N=DK+K
-$$
+```
 
 例：输入宽度 3、输出宽度 2：
 
@@ -723,23 +723,23 @@ total:         8 parameters
 
 ### 4.2 单个 tensor 与整个模型
 
-模型若有参数 tensor $p_1,p_2,\ldots$，其参数本体显存：
+模型若有参数 tensor $`p_1,p_2,\ldots`$，其参数本体显存：
 
-$$
-M_{\text{param}}=\sum_j \operatorname{numel}(p_j)\times\operatorname{element\_size}(p_j)
-$$
+```math
+M_{\text{param}}=\sum_j \mathrm{numel}(p_j)\times\mathrm{element\_size}(p_j)
+```
 
-如果所有 $N$ 个参数都是 BF16：
+如果所有 $`N`$ 个参数都是 BF16：
 
-$$
+```math
 M_{\text{param}}=N\times2\text{ bytes}
-$$
+```
 
 700 亿参数的本体：
 
-$$
+```math
 70\times10^9\times2=140\times10^9\text{ bytes}=140\text{ GB}
-$$
+```
 
 这已经大于一张 80 GB GPU，但训练总显存远不止参数本体。
 
@@ -747,9 +747,9 @@ $$
 
 **【课程】**总设备显存：
 
-$$
+```math
 8\times80\text{ GB}=640\text{ GB}=640\times10^9\text{ bytes}
-$$
+```
 
 课程的 mixed-precision AdamW 简化账，对每个参数：
 
@@ -757,29 +757,29 @@ $$
 |---|---:|---:|
 | 参数 | BF16 | 2 |
 | 梯度 | BF16 | 2 |
-| Adam 一阶矩 $m$ | FP32 | 4 |
-| Adam 二阶矩 $v$ | FP32 | 4 |
+| Adam 一阶矩 $`m`$ | FP32 | 4 |
+| Adam 二阶矩 $`v`$ | FP32 | 4 |
 | 合计 |  | 12 |
 
 因此参数上界：
 
-$$
+```math
 N_{\max}=\frac{640\times10^9\text{ bytes}}{12\text{ bytes/parameter}}
-$$
+```
 
 先约分单位，再算数字：
 
-$$
+```math
 N_{\max}=53.333\ldots\times10^9\text{ parameters}\approx53.3\text{B parameters}
-$$
+```
 
 这是**不可能真正达到的容量上界**，因为没有给 activation、临时 workspace、CUDA context、allocator 碎片、通信 buffer 留空间，也假设 8 张卡能完美切分。
 
-若实现还保存 4-byte FP32 master parameter，每参数变为 $12+4=16$ bytes：
+若实现还保存 4-byte FP32 master parameter，每参数变为 $`12+4=16`$ bytes：
 
-$$
+```math
 640\times10^9/16=40\times10^9=40\text{B parameters}
-$$
+```
 
 仅一个配置差异，上界就从 53.3B 降到 40B。
 
@@ -795,111 +795,111 @@ $$
 - `FLOPs` 在口语中常表示复数“很多次浮点运算”；
 - `FLOP/s` 是速度。例如 `989.5 TFLOP/s = 989.5×10^12 FLOP/s`。
 
-若工作量 $F$ 的单位是 FLOP，实际吞吐 $P$ 的单位是 FLOP/s：
+若工作量 $`F`$ 的单位是 FLOP，实际吞吐 $`P`$ 的单位是 FLOP/s：
 
-$$
+```math
 t=\frac{F}{P}
-$$
+```
 
 单位检查：
 
-$$
+```math
 \frac{\text{FLOP}}{\text{FLOP}/\text{s}}=\text{s}
-$$
+```
 
 ### 5.2 从一个输出元素推导矩阵乘
 
 **【课程】**设：
 
-- $X$ shape `(B,D)`；$B$ 可理解为 batch 中有多少行，$D$ 是输入宽度；
-- $W$ shape `(D,K)`；$K$ 是输出宽度；
-- $Y=XW$ shape `(B,K)`。
+- $`X`$ shape `(B,D)`；$`B`$ 可理解为 batch 中有多少行，$`D`$ 是输入宽度；
+- $`W`$ shape `(D,K)`；$`K`$ 是输出宽度；
+- $`Y=XW`$ shape `(B,K)`。
 
-输出第 $b$ 行、第 $k$ 列：
+输出第 $`b`$ 行、第 $`k`$ 列：
 
-$$
+```math
 Y_{b,k}=\sum_{d=1}^{D}X_{b,d}W_{d,k}
-$$
+```
 
-先只算一个 $Y_{b,k}$：
+先只算一个 $`Y_{b,k}`$：
 
-- 有 $D$ 对数相乘：$D$ 次 multiplication；
-- 把 $D$ 个乘积加起来：$D-1$ 次 addition；
-- 合计：$D+(D-1)=2D-1$ FLOPs。
+- 有 $`D`$ 对数相乘：$`D`$ 次 multiplication；
+- 把 $`D`$ 个乘积加起来：$`D-1`$ 次 addition；
+- 合计：$`D+(D-1)=2D-1`$ FLOPs。
 
-输出一共有 $B\times K$ 个元素，所以精确朴素计数：
+输出一共有 $`B\times K`$ 个元素，所以精确朴素计数：
 
-$$
+```math
 F_{\text{matmul}}=BK(2D-1)
-$$
+```
 
-当 $D$ 很大，$-1$ 相对 $2D$ 很小，常写：
+当 $`D`$ 很大，$`-1`$ 相对 $`2D`$ 很小，常写：
 
-$$
+```math
 F_{\text{matmul}}\approx2BDK
-$$
+```
 
 这里约定一次 multiply 和一次 add 各算 1 FLOP；硬件可能用一条 fused multiply-add 指令完成，但行业通常仍把它算 2 FLOPs。
 
 **【补充例子：所有数字手算】**
 
-$$
+```math
 X=\begin{bmatrix}1&2&3\\4&5&6\end{bmatrix},\quad
 W=\begin{bmatrix}1&0\\0&1\\1&1\end{bmatrix}
-$$
+```
 
-$X$ 是 `(B=2,D=3)`，$W$ 是 `(D=3,K=2)`，输出 `(2,2)`。
+$`X`$ 是 `(B=2,D=3)`，$`W`$ 是 `(D=3,K=2)`，输出 `(2,2)`。
 
 第一个输出：
 
-$$
+```math
 Y_{1,1}=1\times1+2\times0+3\times1=4
-$$
+```
 
-这用了 3 次乘法、2 次加法，共 $2D-1=5$ FLOPs。4 个输出共：
+这用了 3 次乘法、2 次加法，共 $`2D-1=5`$ FLOPs。4 个输出共：
 
-$$
+```math
 B\times K\times(2D-1)=2\times2\times5=20\text{ FLOPs}
-$$
+```
 
-近似式给 $2BDK=2\times2\times3\times2=24$ FLOPs。小矩阵上相差 4，说明 `≈` 不是 `=`；当 $D=12288$ 时，少算的相对比例才很小。
+近似式给 $`2BDK=2\times2\times3\times2=24`$ FLOPs。小矩阵上相差 4，说明 `≈` 不是 `=`；当 $`D=12288`$ 时，少算的相对比例才很小。
 
 ### 5.3 训练 70B 模型的时间估算
 
 **【课程】**dense Transformer 训练常用：
 
-$$
+```math
 C\approx6N D_{\text{tok}}
-$$
+```
 
-- $C$：总训练计算，单位 FLOP；
-- $N$：每个 token 大致激活的模型参数数，单位 parameter；
-- $D_{\text{tok}}$：训练 token 数，单位 token；
+- $`C`$：总训练计算，单位 FLOP；
+- $`N`$：每个 token 大致激活的模型参数数，单位 parameter；
+- $`D_{\text{tok}}`$：训练 token 数，单位 token；
 - 系数 6：每个参数、每个 token，前向大约 2 FLOPs，反向大约是前向 2 倍，即再约 4 FLOPs；第 10 节会推。
 
-给 $N=70\times10^9$、$D_{\text{tok}}=15\times10^{12}$：
+给 $`N=70\times10^9`$、$`D_{\text{tok}}=15\times10^{12}`$：
 
-$$
+```math
 C\approx6\times(70\times10^9)\times(15\times10^{12})
-$$
+```
 
 先算普通数字：
 
-$$
+```math
 6\times70\times15=6300
-$$
+```
 
 再算十的幂：
 
-$$
+```math
 10^9\times10^{12}=10^{21}
-$$
+```
 
 所以：
 
-$$
+```math
 C=6300\times10^{21}=6.3\times10^{24}\text{ FLOPs}
-$$
+```
 
 课程采用 H100 SXM 标称 BF16 Tensor Core `1979 TFLOP/s` 的 sparse 数字，再除以 2 得 dense。这里先把三个词拆开：
 
@@ -909,34 +909,34 @@ $$
 
 所以本讲训练的是一般 dense 模型时，不能把 1979 直接当峰值，要除以 2：
 
-$$
+```math
 P_{\text{one,peak}}=\frac{1979\times10^{12}}{2}
 =989.5\times10^{12}\text{ FLOP/s}
-$$
+```
 
 若 model FLOPs utilization（MFU，模型浮点运算利用率）为 50%，1024 张卡的实际模型吞吐粗估：
 
-$$
+```math
 P_{\text{cluster}}=989.5\times10^{12}\times0.5\times1024
-$$
+```
 
-$$
+```math
 =5.06624\times10^{17}\text{ FLOP/s}
-$$
+```
 
 一天 86400 秒，每天完成：
 
-$$
+```math
 5.06624\times10^{17}\times86400
 =4.37723136\times10^{22}\text{ FLOP/day}
-$$
+```
 
 所需天数：
 
-$$
+```math
 \frac{6.3\times10^{24}}{4.37723136\times10^{22}}
 =143.93\text{ days}\approx144\text{ days}
-$$
+```
 
 **【视频补充】**课堂口头报告约 143 天；按讲义中上述显示数字逐位计算是 143.93 天，即四舍五入约 144 天。这一级估算不应被理解为精确工期。
 
@@ -994,9 +994,9 @@ actual_flops_per_sec = flops / elapsed
 
 **【课程】**对明确的模型计算量：
 
-$$
-\operatorname{MFU}=\frac{P_{\text{actual model}}}{P_{\text{promised peak}}}
-$$
+```math
+\mathrm{MFU}=\frac{P_{\text{actual model}}}{P_{\text{promised peak}}}
+```
 
 - 分子：按模型公式统计的有用 FLOP/s；
 - 分母：同 dtype、同 dense/sparse 口径下的硬件峰值 FLOP/s；
@@ -1004,10 +1004,10 @@ $$
 
 例：某 H100 dense BF16 训练实际模型吞吐 `500 TFLOP/s`：
 
-$$
-\operatorname{MFU}=\frac{500\times10^{12}}{989.5\times10^{12}}
+```math
+\mathrm{MFU}=\frac{500\times10^{12}}{989.5\times10^{12}}
 =0.5053=50.53\%
-$$
+```
 
 十的幂抵消，所以也可直接算 `500/989.5`。
 
@@ -1023,21 +1023,21 @@ MFU 与 hardware FLOPs utilization（HFU）口径可能不同：activation check
 
 **【课程】**memory bandwidth（内存带宽）是显存每秒最多可传多少字节。课程对 H100 使用：
 
-$$
+```math
 B_{\text{mem}}=3.35\text{ TB/s}=3.35\times10^{12}\text{ byte/s}
-$$
+```
 
-若算子至少要搬 $Q$ bytes，理想搬运时间：
+若算子至少要搬 $`Q`$ bytes，理想搬运时间：
 
-$$
+```math
 t_{\text{memory}}=\frac{Q}{B_{\text{mem}}}
-$$
+```
 
 单位：
 
-$$
+```math
 \frac{\text{byte}}{\text{byte}/\text{s}}=\text{s}
-$$
+```
 
 **【补充解释：先指定在哪一层数 bytes】**GPU 不是只有一个“内存”：
 
@@ -1054,214 +1054,214 @@ register（寄存器）
 Tensor Core / 普通计算单元
 ```
 
-同一个矩阵元素可能只从 HBM 读一次，却从 SRAM/register 被使用很多次。因此 $Q$ 不是脱离层级的唯一真值。**本讲所有 Roofline 数字默认 $Q=\text{HBM 与芯片之间传输的 bytes}$**，因为 $B_{\text{mem}}=3.35$ TB/s 也是 HBM 带宽。若改用 SRAM bandwidth，就必须重新数 SRAM 边界的 $Q$，不能拿一种 $Q$ 配另一层 bandwidth。
+同一个矩阵元素可能只从 HBM 读一次，却从 SRAM/register 被使用很多次。因此 $`Q`$ 不是脱离层级的唯一真值。**本讲所有 Roofline 数字默认 $`Q=\text{HBM 与芯片之间传输的 bytes}`$**，因为 $`B_{\text{mem}}=3.35`$ TB/s 也是 HBM 带宽。若改用 SRAM bandwidth，就必须重新数 SRAM 边界的 $`Q`$，不能拿一种 $`Q`$ 配另一层 bandwidth。
 
 ### 7.2 arithmetic intensity：每搬一个字节做多少运算
 
 **【课程】**arithmetic intensity（算术强度）：
 
-$$
+```math
 I=\frac{F}{Q}
-$$
+```
 
-- $I$：单位 FLOP/byte；
-- $F$：这个算子的浮点工作量；
-- $Q$：数据在目标内存层级与计算单元之间至少搬运的字节。
+- $`I`$：单位 FLOP/byte；
+- $`F`$：这个算子的浮点工作量；
+- $`Q`$：数据在目标内存层级与计算单元之间至少搬运的字节。
 
-注意“目标内存层级”：从 HBM 读到芯片与从 SRAM/register 读不是同一个 $Q$。本讲 Roofline 主要针对 GPU HBM 带宽，并采用理想的“必要数据各读一次、输出写一次”估算。
+注意“目标内存层级”：从 HBM 读到芯片与从 SRAM/register 读不是同一个 $`Q`$。本讲 Roofline 主要针对 GPU HBM 带宽，并采用理想的“必要数据各读一次、输出写一次”估算。
 
 ### 7.3 Roofline 从时间公式推出来
 
 若计算和搬运完美重叠，总时间仍不能小于较慢者：
 
-$$
+```math
 t_{\text{ideal}}=\max\left(\frac{F}{P_{\text{peak}}},\frac{Q}{B_{\text{mem}}}\right)
-$$
+```
 
 Roofline 给出的不是实测值，而是在上述理想 traffic 和完美重叠假设下的**吞吐上界**。先定义：
 
-- $P_{\text{roofline}}$：Roofline 模型允许的最高吞吐；
-- $P_{\text{actual}}$：真实程序测到的吞吐。
+- $`P_{\text{roofline}}`$：Roofline 模型允许的最高吞吐；
+- $`P_{\text{actual}}`$：真实程序测到的吞吐。
 
 于是：
 
-$$
+```math
 P_{\text{actual}}\le P_{\text{roofline}}
 =\min(P_{\text{peak}},B_{\text{mem}}I)
-$$
+```
 
 机器的转折算术强度（ridge point）：
 
-$$
+```math
 I_{\text{ridge}}=\frac{P_{\text{peak}}}{B_{\text{mem}}}
-$$
+```
 
 代入课程 H100 dense BF16 数字：
 
-$$
+```math
 I_{\text{ridge}}
 =\frac{989.5\times10^{12}\text{ FLOP/s}}
 {3.35\times10^{12}\text{ byte/s}}
-$$
+```
 
-秒与 $10^{12}$ 同时消掉：
+秒与 $`10^{12}`$ 同时消掉：
 
-$$
+```math
 I_{\text{ridge}}=\frac{989.5}{3.35}=295.373\ldots\text{ FLOP/byte}
-$$
+```
 
 判断法：
 
-- $I<295.37$：带宽先碰顶，memory-bound（内存受限）；
-- $I>295.37$：计算先碰顶，compute-bound（计算受限）；
+- $`I<295.37`$：带宽先碰顶，memory-bound（内存受限）；
+- $`I>295.37`$：计算先碰顶，compute-bound（计算受限）；
 - 附近两者都重要。
 
 理想 MFU 上界也可写：
 
-$$
-\operatorname{MFU}_{\text{roofline}}\le
+```math
+\mathrm{MFU}_{\text{roofline}}\le
 \min\left(1,\frac{I}{I_{\text{ridge}}}\right)
-$$
+```
 
 ### 7.4 Roofline 例 1：一百万个 BF16 ReLU
 
-**【课程原例】**令 $n=1{,}048{,}576=2^{20}$。ReLU 对每项做 `max(x,0)`，课程粗算 1 FLOP/element。
+**【课程原例】**令 $`n=1{,}048{,}576=2^{20}`$。ReLU 对每项做 `max(x,0)`，课程粗算 1 FLOP/element。
 
 数据量：
 
-- 读 $n$ 个 BF16：$2n$ bytes；
-- 写 $n$ 个 BF16：$2n$ bytes；
-- 总 $Q=4n$ bytes。
+- 读 $`n`$ 个 BF16：$`2n`$ bytes；
+- 写 $`n`$ 个 BF16：$`2n`$ bytes；
+- 总 $`Q=4n`$ bytes。
 
 逐位代入：
 
-$$
+```math
 Q=4\times1{,}048{,}576=4{,}194{,}304\text{ bytes}=4\text{ MiB}
-$$
+```
 
-$$
+```math
 F=n=1{,}048{,}576\text{ FLOPs}
-$$
+```
 
-$$
+```math
 I=\frac{1{,}048{,}576}{4{,}194{,}304}=0.25\text{ FLOP/byte}
-$$
+```
 
 计算时间下界：
 
-$$
+```math
 t_{\text{compute}}=\frac{1.048576\times10^6}{989.5\times10^{12}}
 =1.06\times10^{-9}\text{ s}
-$$
+```
 
 搬运时间下界：
 
-$$
+```math
 t_{\text{memory}}=\frac{4.194304\times10^6}{3.35\times10^{12}}
 =1.252\times10^{-6}\text{ s}
-$$
+```
 
 搬运约比计算慢：
 
-$$
+```math
 \frac{1.252\times10^{-6}}{1.06\times10^{-9}}\approx1181
-$$
+```
 
 所以 ReLU 强烈 memory-bound。把 1 FLOP 改快一点几乎没用；把 ReLU 融合进前后 kernel、避免额外 HBM 往返更重要。
 
 **【视频补充】**GELU 可粗算约 20 FLOPs/element，同样读写 4 bytes/element：
 
-$$
+```math
 I_{\text{GELU}}=20/4=5\text{ FLOP/byte}<295.37
-$$
+```
 
 它仍可能是 memory-bound，所以孤立 GELU 不一定比 ReLU 慢 20 倍。
 
 ### 7.5 Roofline 例 2：长度 1024 的 dot product
 
-**【课程】**两个 BF16 向量 $x,y$，长度 $n=1024$，输出一个 BF16 数。
+**【课程】**两个 BF16 向量 $`x,y`$，长度 $`n=1024`$，输出一个 BF16 数。
 
-FLOPs：$n$ 次乘、$n-1$ 次加：
+FLOPs：$`n`$ 次乘、$`n-1`$ 次加：
 
-$$
+```math
 F=2n-1=2047\text{ FLOPs}
-$$
+```
 
 bytes：读两个向量、写一个输出：
 
-$$
+```math
 Q=2n+2n+2=4n+2=4098\text{ bytes}
-$$
+```
 
-$$
+```math
 I=2047/4098=0.4995\text{ FLOP/byte}
-$$
+```
 
 明显小于 295.37，因此 memory-bound。这里忽略 reduction 的中间同步和累加精度，实际只会更复杂。
 
 ### 7.6 Roofline 例 3：BF16 方阵乘
 
-**【课程】**$X,W,Y$ 都是 `(n,n)`，理想假设每个输入从 HBM 只读一次、输出只写一次。
+**【课程】**$`X,W,Y`$ 都是 `(n,n)`，理想假设每个输入从 HBM 只读一次、输出只写一次。
 
 FLOPs：
 
-$$
+```math
 F=n^2(2n-1)
-$$
+```
 
-bytes：两个输入和一个输出，各 $n^2$ 个 BF16：
+bytes：两个输入和一个输出，各 $`n^2`$ 个 BF16：
 
-$$
+```math
 Q=3\times n^2\times2=6n^2\text{ bytes}
-$$
+```
 
 算术强度：
 
-$$
+```math
 I=\frac{n^2(2n-1)}{6n^2}=\frac{2n-1}{6}
-$$
+```
 
-当 $n=1024$：
+当 $`n=1024`$：
 
-$$
+```math
 I=\frac{2048-1}{6}=\frac{2047}{6}=341.17\text{ FLOP/byte}
-$$
+```
 
-因为 $341.17>295.37$，在这套理想模型与硬件上刚刚进入 compute-bound。
+因为 $`341.17>295.37`$，在这套理想模型与硬件上刚刚进入 compute-bound。
 
 把工作量也展开：
 
-$$
+```math
 F=1024^2\times2047
 =1{,}048{,}576\times2047
 =2{,}146{,}435{,}072\text{ FLOPs}
-$$
+```
 
-$$
+```math
 Q=6\times1{,}048{,}576=6{,}291{,}456\text{ bytes}=6\text{ MiB}
-$$
+```
 
 ### 7.7 Roofline 例 4：为什么单 token 推理常变成 matvec
 
 **【课程+补充推导】**若只有一个输入向量 `(1,n)` 乘权重 `(n,n)`：
 
-- FLOPs：$F=n(2n-1)$；
-- bytes：读输入 $2n$，读权重 $2n^2$，写输出 $2n$，故 $Q=2n^2+4n$。
+- FLOPs：$`F=n(2n-1)`$；
+- bytes：读输入 $`2n`$，读权重 $`2n^2`$，写输出 $`2n`$，故 $`Q=2n^2+4n`$。
 
-$n=1024$：
+$`n=1024`$：
 
-$$
+```math
 F=1024\times2047=2{,}096{,}128\text{ FLOPs}
-$$
+```
 
-$$
+```math
 Q=2\times1024^2+4\times1024
 =2{,}101{,}248\text{ bytes}
-$$
+```
 
-$$
+```math
 I=2{,}096{,}128/2{,}101{,}248=0.9976\text{ FLOP/byte}
-$$
+```
 
 远小于 295.37。训练时很多 token 一起复用权重，像大 matmul；自回归解码每次只有很少 token，像 matvec，同一份权重搬进来只做很少计算，因此常受带宽限制。
 
@@ -1273,7 +1273,7 @@ $$
 - 假设计算与传输完美重叠；
 - 忽略 kernel launch、同步、通信、索引和控制流；
 - 峰值要求适合 Tensor Core 的 dtype/shape；
-- $Q$ 是否包含临时输出取决于是否 kernel fusion；
+- $`Q`$ 是否包含临时输出取决于是否 kernel fusion；
 - 小矩阵即便理论 compute-bound，也可能因并行度不足达不到峰值。
 
 因此课程总结“大 matmul compute-bound，其他常 memory-bound”要带条件：是这台机器、这种 dtype、足够大且实现良好的算子，不是宇宙定律。
@@ -1317,13 +1317,13 @@ class Model(nn.Module):
 - `ModuleList` 让 PyTorch 找到其中所有子模块参数；普通 Python list 可能不会被正确注册；
 - forward 循环依次把上一层 `(4,8)` 输出交给下一层，三层后仍是 `(4,8)`。
 
-参数数：每层 $D\times D=8\times8=64$，3 层：
+参数数：每层 $`D\times D=8\times8=64`$，3 层：
 
-$$
+```math
 N=D^2L=8^2\times3=64\times3=192
-$$
+```
 
-此代码没有 bias，所以不要额外加 $D$。
+此代码没有 bias，所以不要额外加 $`D`$。
 
 ---
 
@@ -1344,137 +1344,137 @@ $$
 
 ### 9.2 只会四则运算也能理解的“导数桥”
 
-**【补充解释】**符号 $\partial$ 读作“偏”。$\frac{\partial f}{\partial a}$ 叫 $f$ 对 $a$ 的偏导数：**只让 $a$ 增加一点点，把另一个变量 $b$ 固定不动，观察 $f$ 每增加 1 单位 $a$ 大约改变多少。**
+**【补充解释】**符号 $`\partial`$ 读作“偏”。$`\frac{\partial f}{\partial a}`$ 叫 $`f`$ 对 $`a`$ 的偏导数：**只让 $`a`$ 增加一点点，把另一个变量 $`b`$ 固定不动，观察 $`f`$ 每增加 1 单位 $`a`$ 大约改变多少。**
 
-如果把“小一点点”取为 $\Delta a=0.001$，有限差分（finite difference）就是：
+如果把“小一点点”取为 $`\Delta a=0.001`$，有限差分（finite difference）就是：
 
-$$
+```math
 \frac{f(a+0.001,b)-f(a,b)}{0.001}
-$$
+```
 
 间隔越接近 0，它越接近瞬时变化率，也就是导数。本题只需三条规则，而且都能由小增量推出：
 
-1. **自己的变化率是 1：**$a$ 增加 $\Delta a$，表达式 $a$ 也增加 $\Delta a$，所以 $\partial a/\partial a=1$；
-2. **乘固定数：**固定 $b$ 时，$ab$ 从 $ab$ 变成 $(a+\Delta a)b=ab+b\Delta a$，所以每 1 单位 $a$ 带来 $b$ 单位变化，即 $\partial(ab)/\partial a=b$；同理固定 $a$ 时，$\partial(ab)/\partial b=a$；
-3. **平方规则：**$u$ 增加 $\Delta u$ 时，
+1. **自己的变化率是 1：**$`a`$ 增加 $`\Delta a`$，表达式 $`a`$ 也增加 $`\Delta a`$，所以 $`\partial a/\partial a=1`$；
+2. **乘固定数：**固定 $`b`$ 时，$`ab`$ 从 $`ab`$ 变成 $`(a+\Delta a)b=ab+b\Delta a`$，所以每 1 单位 $`a`$ 带来 $`b`$ 单位变化，即 $`\partial(ab)/\partial a=b`$；同理固定 $`a`$ 时，$`\partial(ab)/\partial b=a`$；
+3. **平方规则：**$`u`$ 增加 $`\Delta u`$ 时，
 
-$$
+```math
 (u+\Delta u)^2-u^2=2u\Delta u+(\Delta u)^2
-$$
+```
 
-两边除以 $\Delta u$ 得 $2u+\Delta u$；当 $\Delta u$ 趋近 0，剩下 $2u$，所以 $\partial(u^2)/\partial u=2u$。这也是幂规则在平方情形的来源。
+两边除以 $`\Delta u`$ 得 $`2u+\Delta u`$；当 $`\Delta u`$ 趋近 0，剩下 $`2u`$，所以 $`\partial(u^2)/\partial u=2u`$。这也是幂规则在平方情形的来源。
 
-为什么计算图上“沿链相乘”？如果 $a$ 先改变 $u$，$u$ 再改变 $f$，对很小变化有：
+为什么计算图上“沿链相乘”？如果 $`a`$ 先改变 $`u`$，$`u`$ 再改变 $`f`$，对很小变化有：
 
-$$
+```math
 \Delta u\approx\frac{\partial u}{\partial a}\Delta a
-$$
+```
 
-$$
+```math
 \Delta f\approx\frac{\partial f}{\partial u}\Delta u
-$$
+```
 
 把第一行代入第二行：
 
-$$
+```math
 \Delta f\approx
 \frac{\partial f}{\partial u}
 \frac{\partial u}{\partial a}\Delta a
-$$
+```
 
-再除以 $\Delta a$，就得到链式法则：
+再除以 $`\Delta a`$，就得到链式法则：
 
-$$
+```math
 \frac{\partial f}{\partial a}
 =\frac{\partial f}{\partial u}
 \frac{\partial u}{\partial a}
-$$
+```
 
-直觉例子：如果 $a$ 每增加 1，$u$ 约增加 4；而 $u$ 每增加 1，$f$ 约增加 16；那么 $a$ 每增加 1，$f$ 就约增加 $4\times16=64$。
+直觉例子：如果 $`a`$ 每增加 1，$`u`$ 约增加 4；而 $`u`$ 每增加 1，$`f`$ 约增加 16；那么 $`a`$ 每增加 1，$`f`$ 就约增加 $`4\times16=64`$。
 
 ### 9.3 两变量函数，先手算再交给 PyTorch
 
 **【补充例子】**定义：
 
-$$
+```math
 u=ab+a,\qquad f=u^2
-$$
+```
 
-取 $a=2,b=3$。forward：
+取 $`a=2,b=3`$。forward：
 
-$$
+```math
 u=2\times3+2=8
-$$
+```
 
-$$
+```math
 f=8^2=64
-$$
+```
 
 反向用链式法则。先求最靠近输出的局部导数：
 
-$$
+```math
 \frac{\partial f}{\partial u}=2u=16
-$$
+```
 
-再求 $u$ 对两个输入：
+再求 $`u`$ 对两个输入：
 
-$$
+```math
 \frac{\partial u}{\partial a}=b+1=3+1=4
-$$
+```
 
-为什么有 `+1`？因为 $u=ab+a$ 中，$ab$ 对 $a$ 的导数是 $b$，第二个 $a$ 对自己的导数是 1。
+为什么有 `+1`？因为 $`u=ab+a`$ 中，$`ab`$ 对 $`a`$ 的导数是 $`b`$，第二个 $`a`$ 对自己的导数是 1。
 
-$$
+```math
 \frac{\partial u}{\partial b}=a=2
-$$
+```
 
 沿路径相乘：
 
-$$
+```math
 \frac{\partial f}{\partial a}
 =\frac{\partial f}{\partial u}\frac{\partial u}{\partial a}
 =16\times4=64
-$$
+```
 
-$$
+```math
 \frac{\partial f}{\partial b}
 =\frac{\partial f}{\partial u}\frac{\partial u}{\partial b}
 =16\times2=32
-$$
+```
 
-现在不用相信符号，用 $0.001$ 做两次有限差分验算。
+现在不用相信符号，用 $`0.001`$ 做两次有限差分验算。
 
-**只改变 $a$，固定 $b=3$：**
+**只改变 $`a`$，固定 $`b=3`$：**
 
-$$
+```math
 f(2,3)=(2\times3+2)^2=8^2=64
-$$
+```
 
-$$
+```math
 f(2.001,3)=(2.001\times3+2.001)^2
 =8.004^2=64.064016
-$$
+```
 
-$$
+```math
 \frac{f(2.001,3)-f(2,3)}{0.001}
 =\frac{64.064016-64}{0.001}=64.016
-$$
+```
 
 这非常接近解析结果 64；多出的 0.016 来自步长还不是 0。
 
-**只改变 $b$，固定 $a=2$：**
+**只改变 $`b`$，固定 $`a=2`$：**
 
-$$
+```math
 f(2,3.001)=(2\times3.001+2)^2
 =8.002^2=64.032004
-$$
+```
 
-$$
+```math
 \frac{f(2,3.001)-f(2,3)}{0.001}
 =\frac{64.032004-64}{0.001}=32.004
-$$
+```
 
-它非常接近解析结果 32。现在 $\partial$、固定另一个变量、局部变化率和沿链相乘都落到了四则运算上。
+它非常接近解析结果 32。现在 $`\partial`$、固定另一个变量、局部变化率和沿链相乘都落到了四则运算上。
 
 对应 PyTorch：
 
@@ -1507,26 +1507,26 @@ loss.backward()
 
 逐步手算：
 
-$$
+```math
 \text{pred}=1\times1+2\times1+3\times1=6
-$$
+```
 
-$$
+```math
 \text{loss}=\frac12(6-5)^2=\frac12
-$$
+```
 
-对第 $i$ 个权重：
+对第 $`i`$ 个权重：
 
-$$
+```math
 \frac{\partial\text{loss}}{\partial w_i}
 =(\text{pred}-\text{target})x_i
-$$
+```
 
-因为误差 $6-5=1$：
+因为误差 $`6-5=1`$：
 
-$$
+```math
 w.\text{grad}=1\times[1,2,3]=[1,2,3]
-$$
+```
 
 ### 9.5 `zero_grad`、`no_grad`、`detach` 不一样
 
@@ -1547,79 +1547,79 @@ $$
 
 **【课程】**一层：
 
-$$
+```math
 H_2=H_1W_2
-$$
+```
 
 shape：
 
-- $H_1$：`(B,D)`；
-- $W_2$：`(D,D)`；
-- $H_2$：`(B,D)`。
+- $`H_1`$：`(B,D)`；
+- $`W_2`$：`(D,D)`；
+- $`H_2`$：`(B,D)`。
 
 forward 矩阵乘：
 
-$$
+```math
 F_{\text{forward}}\approx2BDD=2BD^2
-$$
+```
 
 backward 要算两样：
 
 1. 给上一层的梯度：
 
-$$
+```math
 \frac{\partial L}{\partial H_1}
 =\frac{\partial L}{\partial H_2}W_2^T
-$$
+```
 
-这是 `(B,D)@(D,D)->(B,D)`，约 $2BD^2$ FLOPs。
+这是 `(B,D)@(D,D)->(B,D)`，约 $`2BD^2`$ FLOPs。
 
 2. 权重梯度：
 
-$$
+```math
 \frac{\partial L}{\partial W_2}
 =H_1^T\frac{\partial L}{\partial H_2}
-$$
+```
 
-这是 `(D,B)@(B,D)->(D,D)`，也约 $2BD^2$ FLOPs。
+这是 `(D,B)@(B,D)->(D,D)`，也约 $`2BD^2`$ FLOPs。
 
 所以：
 
-$$
+```math
 F_{\text{backward}}\approx2BD^2+2BD^2=4BD^2
-$$
+```
 
-$$
+```math
 F_{\text{forward+backward}}\approx6BD^2
-$$
+```
 
-反向约为前向的 $4/2=2$ 倍；整个训练步约为只做 forward 的 $6/2=3$ 倍。
+反向约为前向的 $`4/2=2`$ 倍；整个训练步约为只做 forward 的 $`6/2=3`$ 倍。
 
-### 10.2 从一层推到 $6N D_{\text{tok}}$
+### 10.2 从一层推到 $`6N D_{\text{tok}}`$
 
-**【课程+补充解释】**对 dense Transformer，把每个大权重矩阵的元素总数粗略合成 $N$ 个参数。对一个 token：
+**【课程+补充解释】**对 dense Transformer，把每个大权重矩阵的元素总数粗略合成 $`N`$ 个参数。对一个 token：
 
 - forward 每个参数大致参与一次 multiply-add，约 2 FLOPs/parameter/token；
 - backward 计算输入梯度约 2；
 - backward 计算权重梯度约 2；
 - 合计约 6 FLOPs/parameter/token。
 
-训练 $D_{\text{tok}}$ 个 token：
+训练 $`D_{\text{tok}}`$ 个 token：
 
-$$
+```math
 C_{\text{train}}\approx6N D_{\text{tok}}
-$$
+```
 
-这里刻意写 $D_{\text{tok}}$，避免与本讲矩阵 hidden width $D$ 混淆。
+这里刻意写 $`D_{\text{tok}}`$，避免与本讲矩阵 hidden width $`D`$ 混淆。
 
 公式成立的主要条件：
 
-- dense 模型，每 token 大致激活全部 $N$ 个参数；
+- dense 模型，每 token 大致激活全部 $`N`$ 个参数；
 - 大矩阵乘占主要计算；
 - 训练包括 forward 和 backward；
 - optimizer update 相对矩阵乘计算较小。
 
-它粗略忽略或合并了 attention 的序列长度平方项、embedding/loss、归一化、激活函数、optimizer、通信、重算和数据移动。长 context 下 attention $T^2$ 项可能显著；小模型或特殊算子中参数矩阵乘不主导时会失真。MoE（mixture of experts）应使用**每 token 实际激活的参数量**，不是所有 expert 的总参数量。它不是推理公式；推理没有权重梯度那两次矩阵乘。
+它粗略忽略或合并了 attention 的序列长度平方项、embedding/loss、归一化、激活函数、optimizer、通信、重算和数据移动。长 context 下 attention $`T^2`$ 项可能显著；小模型或特殊算子中参数矩阵乘不主导时会失真。MoE（mixture of experts）应使用**每 token 实际激活的参数量**，不是所有 expert 的总参数量。它不是推理公式；推理没有权重梯度那两次矩阵乘。
 
 ---
 
@@ -1642,52 +1642,52 @@ $$
 
 参数数：
 
-$$
+```math
 N=D^2L=4^2\times3=16\times3=48
-$$
+```
 
 课程 mixed-precision 简化：BF16 参数和梯度，FP32 optimizer state。
 
 参数：
 
-$$
+```math
 M_p=48\times2=96\text{ bytes}
-$$
+```
 
 梯度：
 
-$$
+```math
 M_g=48\times2=96\text{ bytes}
-$$
+```
 
 AdaGrad 一个 FP32 state：
 
-$$
+```math
 M_{\text{Ada}}=48\times4=192\text{ bytes}
-$$
+```
 
 课程为教学简化，按每层保存一个 `(B,D)` BF16 activation：
 
-$$
+```math
 M_a=B\times D\times L\times2
 =2\times4\times3\times2=48\text{ bytes}
-$$
+```
 
 总计：
 
-$$
+```math
 M_{\text{total,Ada}}=96+96+192+48=432\text{ bytes}
-$$
+```
 
 若换 Adam 两个 FP32 state：
 
-$$
+```math
 M_{\text{Adam state}}=48\times(4+4)=384\text{ bytes}
-$$
+```
 
-$$
+```math
 M_{\text{total,Adam}}=96+96+384+48=624\text{ bytes}
-$$
+```
 
 这是“端到端组成项”示范，但没有计 allocator、输入、ReLU mask、临时矩阵乘 workspace 等，不能当 PyTorch 实测峰值。
 
@@ -1695,7 +1695,7 @@ $$
 
 **【补充例子】**假设：
 
-- $N=1\times10^9$ 参数；
+- $`N=1\times10^9`$ 参数；
 - BF16 参数 2 B、BF16 梯度 2 B；
 - Adam 两个 FP32 state 共 8 B；
 - 另存 FP32 master parameter 4 B；
@@ -1704,51 +1704,51 @@ $$
 
 模型状态每参数：
 
-$$
+```math
 2+2+8+4=16\text{ bytes/parameter}
-$$
+```
 
-$$
+```math
 M_{\text{model state}}=10^9\times16=16\times10^9\text{ bytes}=16\text{ GB}
-$$
+```
 
 先算一份 `(B,S,H)` activation 元素数：
 
-$$
+```math
 8\times2048\times4096
 =8\times8{,}388{,}608
 =67{,}108{,}864\text{ elements}
-$$
+```
 
 24 层、每层 8 份：
 
-$$
+```math
 67{,}108{,}864\times24\times8
 =12{,}884{,}901{,}888\text{ elements}
-$$
+```
 
 BF16 字节：
 
-$$
+```math
 M_a=12{,}884{,}901{,}888\times2
 =25{,}769{,}803{,}776\text{ bytes}=24\text{ GiB}
-$$
+```
 
 粗略合计（统一用十进制 GB）：
 
-$$
+```math
 16\text{ GB}+25.77\text{ GB}=41.77\text{ GB}
-$$
+```
 
-还没有计算临时 workspace、attention score、logits、通信和框架开销。例子显示：即使参数本体只有 2 GB，训练峰值也可能几十 GB。若 microbatch 从 8 降到 2，在其他假设不变时 activation 线性降为 $24/4=6$ GiB，但 16 GB 模型状态不变。
+还没有计算临时 workspace、attention score、logits、通信和框架开销。例子显示：即使参数本体只有 2 GB，训练峰值也可能几十 GB。若 microbatch 从 8 降到 2，在其他假设不变时 activation 线性降为 $`24/4=6`$ GiB，但 16 GB 模型状态不变。
 
 ### 11.4 哪些显存随什么缩放
 
 | 项目 | 主要随谁增长 | 降 microbatch 是否降低 |
 |---|---|---:|
-| 参数 | 参数量 $N$ | 否 |
-| 梯度 | 参数量 $N$ | 否 |
-| optimizer state | 参数量 $N$ | 否 |
+| 参数 | 参数量 $`N`$ | 否 |
+| 梯度 | 参数量 $`N`$ | 否 |
+| optimizer state | 参数量 $`N`$ | 否 |
 | activation | batch × sequence × hidden × layers × 保存份数 | 是 |
 | attention score（朴素） | batch × heads × sequence² × layers | 是，且强烈受序列长度影响 |
 
@@ -1760,20 +1760,20 @@ $$
 
 ### 12.1 AdaGrad 的状态与更新
 
-**【课程】**对每个参数 $p$ 和当前梯度 $g$，AdaGrad 保存累计平方 $G$：
+**【课程】**对每个参数 $`p`$ 和当前梯度 $`g`$，AdaGrad 保存累计平方 $`G`$：
 
-$$
+```math
 G\leftarrow G+g^2
-$$
+```
 
-$$
+```math
 p\leftarrow p-\eta\frac{g}{\sqrt{G}+\epsilon}
-$$
+```
 
-- $G$：optimizer state，shape 与参数相同；
-- $g$：当前累计梯度；
-- $\eta$：learning rate（学习率）；
-- $\epsilon$：防止分母为 0 的小数，例如 $10^{-5}$。
+- $`G`$：optimizer state，shape 与参数相同；
+- $`g`$：当前累计梯度；
+- $`\eta`$：learning rate（学习率）；
+- $`\epsilon`$：防止分母为 0 的小数，例如 $`10^{-5}`$。
 
 课程简化实现：
 
@@ -1835,7 +1835,7 @@ for step in range(3):
 
 | 行执行后 | 关键状态变化 |
 |---|---|
-| 创建 `model` | 参数在 `device` 上，shape 每层 `(16,16)`，两层共 $16²×2=512$ 参数 |
+| 创建 `model` | 参数在 `device` 上，shape 每层 `(16,16)`，两层共 $`16²×2=512`$ 参数 |
 | 创建 AdamW | optimizer 持有参数引用；moment 通常在第一次 step 时惰性创建 |
 | `zero_grad()` | 上一步 `.grad` 设为 `None`/清零；参数值不变，moment 不变 |
 | `get_batch` | 新建 `x,target`，此处 shape 都是 `(4,16)` |
@@ -1860,30 +1860,30 @@ for step in range(3):
 
 ### 13.1 它保持“大 batch 梯度”，一次只放小 batch activation
 
-**【课程】**假设目标 batch $B=64$，拆成 $K=4$ 个 microbatch，每个：
+**【课程】**假设目标 batch $`B=64`$，拆成 $`K=4`$ 个 microbatch，每个：
 
-$$
+```math
 B_{\text{micro}}=64/4=16
-$$
+```
 
 课程示例 `D=1024,L=16`，每层一份 BF16 `(B,D)` activation。完整 batch：
 
-$$
+```math
 M_a=2\times B\times D\times L
-$$
+```
 
-$$
+```math
 =2\times64\times1024\times16
 =2{,}097{,}152\text{ bytes}=2\text{ MiB}
-$$
+```
 
 一个 microbatch：
 
-$$
+```math
 M_{a,\text{micro}}
 =2\times16\times1024\times16
 =524{,}288\text{ bytes}=0.5\text{ MiB}
-$$
+```
 
 因为每个 microbatch backward 后，其中间 activation 可释放，而 parameter `.grad` 保留并累加，峰值 activation 约降 4 倍。
 
@@ -1904,13 +1904,13 @@ for micro_x, micro_y in four_microbatches:
 optimizer.step()                       # 累够四份，只更新一次
 ```
 
-为什么除以 4？若每个 `loss_fn` 返回该 microbatch 的 mean，直接相加得到四个 mean 的和，是目标大 batch mean 的 4 倍。除以 $K=4$ 后：
+为什么除以 4？若每个 `loss_fn` 返回该 microbatch 的 mean，直接相加得到四个 mean 的和，是目标大 batch mean 的 4 倍。除以 $`K=4`$ 后：
 
-$$
+```math
 g=\frac{g_1+g_2+g_3+g_4}{4}
-$$
+```
 
-才等于四个等大 microbatch 合成的大 batch 平均梯度。若 microbatch 大小不等，应按样本/token 数加权，不能简单都除 $K$。
+才等于四个等大 microbatch 合成的大 batch 平均梯度。若 microbatch 大小不等，应按样本/token 数加权，不能简单都除 $`K`$。
 
 ### 13.3 梯度累积的边界与视频勘误
 
@@ -1927,7 +1927,7 @@ $$
 
 ### 14.1 用“以后重算”换“现在不存”
 
-**【课程】**正常 forward 保存每层 backward 所需 activation，显存随层数 $L$ 约为 $O(L)$。checkpointing 只保存少数边界；backward 需要内部 activation 时，再重跑对应 forward 段。
+**【课程】**正常 forward 保存每层 backward 所需 activation，显存随层数 $`L`$ 约为 $`O(L)`$。checkpointing 只保存少数边界；backward 需要内部 activation 时，再重跑对应 forward 段。
 
 下面是可运行的**单层 API 示意**；它承接第 8 节定义的 `Block` 类以及页首 imports：
 
@@ -1943,67 +1943,67 @@ y.sum().backward()
 
 **【视频补充】**课程 toy block 是 matrix multiply 后 ReLU；checkpoint 整块时无需同时长期保存块内所有中间值，直觉上可省掉其中一部分。本例的“约一半”不能推广成所有模型恒定比例。
 
-但是，`checkpoint(layer, x)` 只说明“一个 layer 可以被 checkpoint”。如果把每一层各包一次，每层输入仍是一个边界，跨层保存的边界仍可能有 $L$ 个；它主要省**层内部**的中间量。要得到下面的 $O(\sqrt L)$ 结论，必须把连续多层组成一个 segment（分段），再以 segment 为单位 checkpoint。**逐层 checkpoint 与每 $\sqrt L$ 层一个 segment 不是一回事。**
+但是，`checkpoint(layer, x)` 只说明“一个 layer 可以被 checkpoint”。如果把每一层各包一次，每层输入仍是一个边界，跨层保存的边界仍可能有 $`L`$ 个；它主要省**层内部**的中间量。要得到下面的 $`O(\sqrt L)`$ 结论，必须把连续多层组成一个 segment（分段），再以 segment 为单位 checkpoint。**逐层 checkpoint 与每 $`\sqrt L`$ 层一个 segment 不是一回事。**
 
-### 14.2 为什么最佳间隔约为 $\sqrt L$
+### 14.2 为什么最佳间隔约为 $`\sqrt L`$
 
 **【课程+补充推导】**先声明这个教学模型的条件：
 
-- 网络是无分支的顺序链，共 $L$ 层；
+- 网络是无分支的顺序链，共 $`L`$ 层；
 - 各层 activation 大小近似相同，forward 重算成本也近似相同；
 - 只统计 activation，不统计参数、梯度、optimizer state 和 allocator；
-- 每连续 $k$ 层组成一个 segment，在 segment 边界保存 checkpoint；为简化先假设 $k$ 整除 $L$。
+- 每连续 $`k`$ 层组成一个 segment，在 segment 边界保存 checkpoint；为简化先假设 $`k`$ 整除 $`L`$。
 
-如果每个 segment 有 $k$ 层：
+如果每个 segment 有 $`k`$ 层：
 
-1. segment 数是 $L/k$，所以长期保存的边界 activation 约有 $L/k$ 份；
-2. backward 处理当前 segment 时，要重算并暂时保留段内最多约 $k$ 层 activation；
+1. segment 数是 $`L/k`$，所以长期保存的边界 activation 约有 $`L/k`$ 份；
+2. backward 处理当前 segment 时，要重算并暂时保留段内最多约 $`k`$ 层 activation；
 3. 因而峰值 activation 的“层数因子”近似：
 
-$$
+```math
 M_{\text{factor}}(k)\approx\frac{L}{k}+k
-$$
+```
 
-第一项随 $k$ 增大而下降，第二项随 $k$ 增大而上升。最平衡的位置让两项相等：
+第一项随 $`k`$ 增大而下降，第二项随 $`k`$ 增大而上升。最平衡的位置让两项相等：
 
-$$
+```math
 \frac{L}{k}=k
-$$
+```
 
-两边乘 $k$：
+两边乘 $`k`$：
 
-$$
+```math
 L=k^2
-$$
+```
 
 所以：
 
-$$
+```math
 k\approx\sqrt L
-$$
+```
 
 也可以用 AM-GM（算术—几何平均不等式）确认：
 
-$$
+```math
 \frac{L}{k}+k\ge2\sqrt{\frac{L}{k}\times k}=2\sqrt L
-$$
+```
 
-等号恰好在 $L/k=k$ 时成立。因此最优量级不是背出来的，而是“边界数”和“当前段长度”两种显存相互平衡。
+等号恰好在 $`L/k=k`$ 时成立。因此最优量级不是背出来的，而是“边界数”和“当前段长度”两种显存相互平衡。
 
 三种方案现在可以精确区分：
 
-1. 全保存：activation memory $O(L)$，不额外重算；
-2. 只保存最初输入：为反向第 $i$ 层可能从开头重跑到 $i$，总重算 $1+2+\cdots+L=O(L^2)$，保存量 $O(1)$；
-3. 每约 $k=\sqrt L$ 层组成一个 checkpointed segment：边界 $L/k\approx\sqrt L$ 份，当前段最多 $k\approx\sqrt L$ 份，峰值 activation 为 $O(\sqrt L)$；每段在 backward 中大致重跑一次，额外重算总量为 $O(L)$。
+1. 全保存：activation memory $`O(L)`$，不额外重算；
+2. 只保存最初输入：为反向第 $`i`$ 层可能从开头重跑到 $`i`$，总重算 $`1+2+\cdots+L=O(L^2)`$，保存量 $`O(1)`$；
+3. 每约 $`k=\sqrt L`$ 层组成一个 checkpointed segment：边界 $`L/k\approx\sqrt L`$ 份，当前段最多 $`k\approx\sqrt L`$ 份，峰值 activation 为 $`O(\sqrt L)`$；每段在 backward 中大致重跑一次，额外重算总量为 $`O(L)`$。
 
-例：$L=16$，每 4 层一个 checkpoint：
+例：$`L=16`$，每 4 层一个 checkpoint：
 
 - 边界大约 4 个；
 - 反向某段时，最多临时重建约 4 层；
-- 峰值的层数因子从 16 级别降到约 $4+4=8$ 级别；
-- 每段 forward 在 backward 时至多再跑一次，额外工作是线性量级，不是 $16^2$。
+- 峰值的层数因子从 16 级别降到约 $`4+4=8`$ 级别；
+- 每段 forward 在 backward 时至多再跑一次，额外工作是线性量级，不是 $`16^2`$。
 
-这是在上述顺序链、等 activation、等重算成本条件下的渐近直觉。真实 Transformer 各算子保存量不同，PyTorch 实际保存哪些 tensor、能否 early-stop 重算也取决于实现；此时应按每个 segment 的真实 bytes 与时间重新优化，而不是机械地取 $\sqrt L$。
+这是在上述顺序链、等 activation、等重算成本条件下的渐近直觉。真实 Transformer 各算子保存量不同，PyTorch 实际保存哪些 tensor、能否 early-stop 重算也取决于实现；此时应按每个 segment 的真实 bytes 与时间重新优化，而不是机械地取 $`\sqrt L`$。
 
 ### 14.3 随机性和副作用陷阱
 
@@ -2030,7 +2030,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 4. **数随 batch/sequence 变化的显存。**activation、attention 中间量、workspace；
 5. **数 FLOPs。**从一个输出元素的乘法和加法开始，不背空公式；
 6. **数最少 bytes。**读几个输入、写几个输出，有没有中间结果落 HBM；
-7. **算 $I=F/Q$。**与 $P_{\text{peak}}/B_{\text{mem}}$ 比；
+7. **算 $`I=F/Q`$。**与 $`P_{\text{peak}}/B_{\text{mem}}`$ 比；
 8. **再决定优化。**compute-bound 优化计算/kernel；memory-bound 减搬运、做 fusion；activation OOM 用累积/checkpoint；模型状态 OOM 要分片或改变精度/规模；
 9. **最后实测。**同步、warmup、多次重复，用 profiler 查模型遗漏。
 
@@ -2039,7 +2039,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 ## 16. 常见误区
 
 1. **“rank 2 就是矩阵的秩为 2。”**错。本讲 rank 是 axis 数；线性代数 rank 是独立行/列数。
-2. **“shape `(2,3)` 有 5 个元素。”**错。元素数是 $2\times3=6$，不是相加。
+2. **“shape `(2,3)` 有 5 个元素。”**错。元素数是 $`2\times3=6`$，不是相加。
 3. **“BF16 和 FP16 都是 2 bytes，所以完全一样。”**错。exponent/fraction 分配不同，范围与精度不同。
 4. **“把 tensor `.to('cuda')` 不花时间。”**错。跨设备通常要复制数据。
 5. **“transpose 会把数据按新顺序复制。”**通常错。它常只改 stride、返回共享 storage 的 view。
@@ -2063,7 +2063,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 23. **“梯度累积同时省参数、状态和 activation。”**错。主要省 activation 峰值。
 24. **“累积四次却不除 loss，仍是同一个大 batch mean。”**错。等大 microbatch 时梯度放大 4 倍。
 25. **“checkpointing 让计算更少。”**错。它通过重算增加计算，换更低 activation memory。
-26. **“$6N D_{\text{tok}}$ 对所有模型、训练和推理都准确。”**错。它是 dense、矩阵乘主导训练的粗估；MoE、长 context、推理等要改账。
+26. **“$`6N D_{\text{tok}}`$ 对所有模型、训练和推理都准确。”**错。它是 dense、矩阵乘主导训练的粗估；MoE、长 context、推理等要改账。
 
 ---
 
@@ -2100,7 +2100,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 | FLOP | 一次浮点运算；是工作量单位 |
 | FLOP/s | 每秒浮点运算数；是吞吐单位 |
 | bandwidth | 每秒能搬运多少 byte |
-| HBM / SRAM / register | 从大而较远到小而较近的 GPU 存储层级；算 $Q$ 必须指定边界 |
+| HBM / SRAM / register | 从大而较远到小而较近的 GPU 存储层级；算 $`Q`$ 必须指定边界 |
 | arithmetic intensity | 每搬 1 byte 做多少 FLOPs |
 | compute-bound | 计算吞吐先成为瓶颈 |
 | memory-bound | 内存带宽先成为瓶颈 |
@@ -2139,17 +2139,17 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 14. 无 bias 线性层权重 `(3,2)` 有几个参数？有 shape `(2,)` bias 后呢？
 15. 70B BF16 参数本体多少 GB？为什么这不是训练显存？
 16. 按课程 AdamW 12 bytes/parameter，8×80 GB 理论最多多少 B 参数？若加 FP32 master weight 呢？
-17. `X(B,D)@W(D,K)` 的一个输出元素为什么是 $2D-1$ FLOPs？总 FLOPs？
-18. $B=2,D=3,K=2$ 时精确 matmul FLOPs 与 $2BDK$ 近似各多少？
-19. 工作量 $6.3×10^{24}$ FLOPs，吞吐 $5.06624×10^{17}$ FLOP/s，需要多少天？
+17. `X(B,D)@W(D,K)` 的一个输出元素为什么是 $`2D-1`$ FLOPs？总 FLOPs？
+18. $`B=2,D=3,K=2`$ 时精确 matmul FLOPs 与 $`2BDK`$ 近似各多少？
+19. 工作量 $`6.3×10^{24}`$ FLOPs，吞吐 $`5.06624×10^{17}`$ FLOP/s，需要多少天？
 20. 实际 500 TFLOP/s、峰值 989.5 TFLOP/s，MFU 是多少？
 21. 为什么 GPU 计时在起点和终点都要 synchronize？
 22. 峰值 989.5 TFLOP/s、带宽 3.35 TB/s，ridge intensity 是多少？
 23. BF16 ReLU 每项读 2 bytes、写 2 bytes、做 1 FLOP，算术强度多少？在上述 H100 上受什么限制？
 24. BF16 GELU 粗算 20 FLOPs/element、同样读写，算术强度多少？为什么不会自动 compute-bound？
 25. BF16 `1024×1024` 方阵乘的理想算术强度是多少？判断瓶颈。
-26. BF16 matvec $X_{(1,1024)}W_{(1024,1024)}$，按正文公式计算 $F,Q,I$ 并判断瓶颈。
-27. 对 $f=(ab+a)^2$，在 $a=2,b=3$ 时，从平方、乘固定数和链式法则推出 $f,\partial f/\partial a,\partial f/\partial b$；再用步长 0.001 的有限差分验算两个偏导。
+26. BF16 matvec $`X_{(1,1024)}W_{(1024,1024)}`$，按正文公式计算 $`F,Q,I`$ 并判断瓶颈。
+27. 对 $`f=(ab+a)^2`$，在 $`a=2,b=3`$ 时，从平方、乘固定数和链式法则推出 $`f,\partial f/\partial a,\partial f/\partial b`$；再用步长 0.001 的有限差分验算两个偏导。
 28. 为什么连续两次 `backward` 而不清梯度会得到两倍 `.grad`？
 29. 单层 `H1(B,D)@W(D,D)` 为什么 backward 约有两次与 forward 同量级的 matmul？
 30. 课程 toy 网络 `B=2,D=4,L=3` 有多少参数？AdaGrad 总账 432 bytes 怎样组成？Adam 624 bytes 怎样组成？
@@ -2157,49 +2157,49 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 32. 标准训练循环中 `zero_grad`、forward、`backward`、`step` 各改变什么？
 33. 64 batch 分 4 个等大 microbatch，为什么每份 mean loss 要除以 4？activation 峰值理想降几倍？
 34. 梯度累积能不能解决“参数+optimizer state 本身已超过显存”的 OOM？为什么？
-35. 顺序链有 $L$ 个等 activation、等重算成本的层，每 $k$ 层组成一个 checkpointed segment。为什么峰值 activation 层数因子约为 $L/k+k$？怎样推出 $k\approx\sqrt L$？它与逐层 `checkpoint(layer,x)` 有何区别？
-36. $6N D_{\text{tok}}$ 的 6 从哪里来？列出两个会让公式失真的条件。
+35. 顺序链有 $`L`$ 个等 activation、等重算成本的层，每 $`k`$ 层组成一个 checkpointed segment。为什么峰值 activation 层数因子约为 $`L/k+k`$？怎样推出 $`k\approx\sqrt L`$？它与逐层 `checkpoint(layer,x)` 有何区别？
+36. $`6N D_{\text{tok}}`$ 的 6 从哪里来？列出两个会让公式失真的条件。
 
 ---
 
 ## 19. 自测答案
 
 1. scalar：shape `()`、rank 0；长度 5 向量：`(5,)`、rank 1；矩阵：`(2,3)`、rank 2。
-2. 元素数 $2×3×4=24$；axis 1 是 shape 的第二项，长度 3。
-3. $4×8=32$ elements；FP32 4 B/element；$32×4=128$ bytes。
-4. $32×16×16×64=524{,}288$ elements；BF16 共 $524{,}288×2=1{,}048{,}576$ bytes = 1 MiB。
-5. $49{,}152×12{,}288=603{,}979{,}776$ elements；乘 4 得 $2{,}415{,}919{,}104$ bytes；除 $2^{20}$ 得 2304 MiB；除 $2^{30}$ 得 2.25 GiB。
-6. FP16 exponent 较少、fraction 较多，范围小；BF16 exponent 宽度与 FP32 相同、范围大，但 fraction 较少、精度粗。$10^{-8}$ 可在 FP16 下溢而 BF16 仍非零。
+2. 元素数 $`2×3×4=24`$；axis 1 是 shape 的第二项，长度 3。
+3. $`4×8=32`$ elements；FP32 4 B/element；$`32×4=128`$ bytes。
+4. $`32×16×16×64=524{,}288`$ elements；BF16 共 $`524{,}288×2=1{,}048{,}576`$ bytes = 1 MiB。
+5. $`49{,}152×12{,}288=603{,}979{,}776`$ elements；乘 4 得 $`2{,}415{,}919{,}104`$ bytes；除 $`2^{20}`$ 得 2304 MiB；除 $`2^{30}`$ 得 2.25 GiB。
+6. FP16 exponent 较少、fraction 较多，范围小；BF16 exponent 宽度与 FP32 相同、范围大，但 fraction 较少、精度粗。$`10^{-8}`$ 可在 FP16 下溢而 BF16 仍非零。
 7. 同行下一列在 storage 跳 1；下一行同列跳过整行 3 个元素，故 `(3,1)`。transpose 只交换解释后通常 `(1,3)`，并成为 non-contiguous。
 8. view 共享 storage，只改 shape/stride 等解释；copy 有独立 storage。`reshape` 不保证 view：兼容则 view，不兼容可复制。
 9. reshape 按原 storage 切成 `[[1,2],[3,4],[5,6]]`；transpose 是 `[[1,4],[2,5],[3,6]]`。
 10. `d` 未出现在输出，所以求和；保留 `batch=2,i=3,j=5`，输出 `(2,3,5)`。
-11. 输入末 axis 8 拆为 $h×d$；$h=2$，故 $d=8/2=4$；输出 `(3,2,4)`。
+11. 输入末 axis 8 拆为 $`h×d`$；$`h=2`$，故 $`d=8/2=4`$；输出 `(3,2,4)`。
 12. 每行消掉 `c` 并求和：`[1+2+3,4+5+6]=[6,15]`，shape `(2,)`。
 13. `(tile w)` 得 `[1,2,3,1,2,3]`；`(w copy)` 得 `[1,1,2,2,3,3]`。括号最右 axis 变化最快。
-14. 无 bias：$3×2=6$；加 bias：$6+2=8$ parameters。
-15. $70×10^9×2=140×10^9$ bytes = 140 GB。训练还要 gradient、optimizer state、activation、workspace 等。
-16. 总 $8×80=640$ GB。$640×10^9/12=53.333×10^9≈53.3$B；加 4-byte master 后每参数 16 B，$640/16=40$B。二者都未留 activation 等空间。
-17. 一个 dot product 有 $D$ 次乘、$D-1$ 次加，合计 $2D-1$；输出 $BK$ 个，故 $BK(2D-1)≈2BDK$。
-18. 精确：$2×2×(2×3-1)=4×5=20$ FLOPs；近似：$2×2×3×2=24$ FLOPs。
-19. 秒数必须把整个吞吐放在分母：$\frac{6.3\times10^{24}}{5.06624\times10^{17}}=1.2435\times10^7$ s；再算 $\frac{1.2435\times10^7\text{ s}}{86400\text{ s/day}}=143.93$ days，约 144 天。
-20. $500/989.5=0.5053=50.53\%$。
+14. 无 bias：$`3×2=6`$；加 bias：$`6+2=8`$ parameters。
+15. $`70×10^9×2=140×10^9`$ bytes = 140 GB。训练还要 gradient、optimizer state、activation、workspace 等。
+16. 总 $`8×80=640`$ GB。$`640×10^9/12=53.333×10^9≈53.3`$B；加 4-byte master 后每参数 16 B，$`640/16=40`$B。二者都未留 activation 等空间。
+17. 一个 dot product 有 $`D`$ 次乘、$`D-1`$ 次加，合计 $`2D-1`$；输出 $`BK`$ 个，故 $`BK(2D-1)≈2BDK`$。
+18. 精确：$`2×2×(2×3-1)=4×5=20`$ FLOPs；近似：$`2×2×3×2=24`$ FLOPs。
+19. 秒数必须把整个吞吐放在分母：$`\frac{6.3\times10^{24}}{5.06624\times10^{17}}=1.2435\times10^7`$ s；再算 $`\frac{1.2435\times10^7\text{ s}}{86400\text{ s/day}}=143.93`$ days，约 144 天。
+20. $`500/989.5=0.5053=50.53\%`$。
 21. GPU launch 异步；不同步可能只量到 CPU 排队时间。起点同步排除旧任务，终点同步保证被测任务已完成。
-22. $I_{ridge}=989.5×10^{12}/(3.35×10^{12})=295.37$ FLOP/byte。
-23. $I=1/(2+2)=0.25$ FLOP/byte；$0.25<295.37$，memory-bound。
-24. $I=20/4=5$ FLOP/byte；仍远低于 295.37，所以仍可受内存带宽限制。
-25. $I=(2n-1)/6=(2047)/6=341.17$ FLOP/byte；理想模型中 $341.17>295.37$，compute-bound。
-26. $F=n(2n-1)=1024×2047=2{,}096{,}128$ FLOPs；$Q=2n^2+4n=2{,}101{,}248$ bytes；$I=0.9976$ FLOP/byte，memory-bound。
-27. 令 $u=ab+a$。在 $(2,3)$，$u=8,f=u^2=64$。平方规则给 $\partial f/\partial u=2u=16$；固定 $b$ 时 $\partial u/\partial a=b+1=4$；固定 $a$ 时 $\partial u/\partial b=a=2$。沿链相乘：$\partial f/\partial a=16×4=64$，$\partial f/\partial b=16×2=32$。有限差分：$[f(2.001,3)-64]/0.001=(64.064016-64)/0.001=64.016$；$[f(2,3.001)-64]/0.001=(64.032004-64)/0.001=32.004$，分别逼近 64 和 32。
+22. $`I_{ridge}=989.5×10^{12}/(3.35×10^{12})=295.37`$ FLOP/byte。
+23. $`I=1/(2+2)=0.25`$ FLOP/byte；$`0.25<295.37`$，memory-bound。
+24. $`I=20/4=5`$ FLOP/byte；仍远低于 295.37，所以仍可受内存带宽限制。
+25. $`I=(2n-1)/6=(2047)/6=341.17`$ FLOP/byte；理想模型中 $`341.17>295.37`$，compute-bound。
+26. $`F=n(2n-1)=1024×2047=2{,}096{,}128`$ FLOPs；$`Q=2n^2+4n=2{,}101{,}248`$ bytes；$`I=0.9976`$ FLOP/byte，memory-bound。
+27. 令 $`u=ab+a`$。在 $`(2,3)`$，$`u=8,f=u^2=64`$。平方规则给 $`\partial f/\partial u=2u=16`$；固定 $`b`$ 时 $`\partial u/\partial a=b+1=4`$；固定 $`a`$ 时 $`\partial u/\partial b=a=2`$。沿链相乘：$`\partial f/\partial a=16×4=64`$，$`\partial f/\partial b=16×2=32`$。有限差分：$`[f(2.001,3)-64]/0.001=(64.064016-64)/0.001=64.016`$；$`[f(2,3.001)-64]/0.001=(64.032004-64)/0.001=32.004`$，分别逼近 64 和 32。
 28. PyTorch 的 backward 把新梯度加到 leaf `.grad`，不是覆盖。两次相同图计算的贡献相加；应在不想累积时 `zero_grad`。
-29. 既要算输入梯度 $(dL/dH_2)W^T$，又要算权重梯度 $H_1^T(dL/dH_2)$；两者各约 $2BD^2$，所以 backward 约 $4BD^2$，是 forward $2BD^2$ 的两倍。
-30. $N=4^2×3=48$。BF16 参数 96 B + BF16 梯度 96 B + AdaGrad FP32 state 192 B + 简化 activation 48 B = 432 B。Adam states 是 $48×8=384$ B，故 $96+96+384+48=624$ B。
-31. 每参数 $2+2+8+4=16$ B；$10^9×16=16×10^9$ bytes = 16 GB，未含 activation/临时项。
+29. 既要算输入梯度 $`(dL/dH_2)W^T`$，又要算权重梯度 $`H_1^T(dL/dH_2)`$；两者各约 $`2BD^2`$，所以 backward 约 $`4BD^2`$，是 forward $`2BD^2`$ 的两倍。
+30. $`N=4^2×3=48`$。BF16 参数 96 B + BF16 梯度 96 B + AdaGrad FP32 state 192 B + 简化 activation 48 B = 432 B。Adam states 是 $`48×8=384`$ B，故 $`96+96+384+48=624`$ B。
+31. 每参数 $`2+2+8+4=16`$ B；$`10^9×16=16×10^9`$ bytes = 16 GB，未含 activation/临时项。
 32. `zero_grad` 清旧 `.grad`；forward 算预测、loss、建图并保存中间量；`backward` 生成并累积梯度但不改参数；`step` 读取梯度、更新 optimizer state 和参数。
-33. 四个 microbatch mean 的直接和是完整 mean 的 4 倍；各除 4 后梯度平均一致。activation 同一时刻只放 $64/4=16$ 样本，理想峰值降 4 倍。
+33. 四个 microbatch mean 的直接和是完整 mean 的 4 倍；各除 4 后梯度平均一致。activation 同一时刻只放 $`64/4=16`$ 样本，理想峰值降 4 倍。
 34. 不能。累积不减少参数、parameter gradient 或 optimizer state，只减一次需要保存的 activation；要用分片、offload、低精度状态或缩小模型。
-35. 每段 $k$ 层时共有约 $L/k$ 个 segment 边界，需要长期保存约 $L/k$ 份；backward 重算当前段时临时保留最多约 $k$ 份，所以峰值因子约 $L/k+k$。令下降项与上升项平衡：$L/k=k\Rightarrow k^2=L\Rightarrow k\approx\sqrt L$；此时两项都为 $O(\sqrt L)$，每段约重跑一次使总额外重算为 $O(L)$。逐层 `checkpoint(layer,x)` 是 $k=1$ 的 API 示意，仍可能保存 $L$ 个跨层边界；只有按约 $\sqrt L$ 层分 segment 才得到上述跨层结论。
-36. forward 约 2 FLOPs/parameter/token，输入梯度约 2，权重梯度约 2，总约 6。长 context 的 attention $T^2$ 主导、MoE 只激活部分参数、矩阵乘不主导、小模型、checkpoint 重算或推理都可让公式失真；任举两项。
+35. 每段 $`k`$ 层时共有约 $`L/k`$ 个 segment 边界，需要长期保存约 $`L/k`$ 份；backward 重算当前段时临时保留最多约 $`k`$ 份，所以峰值因子约 $`L/k+k`$。令下降项与上升项平衡：$`L/k=k\Rightarrow k^2=L\Rightarrow k\approx\sqrt L`$；此时两项都为 $`O(\sqrt L)`$，每段约重跑一次使总额外重算为 $`O(L)`$。逐层 `checkpoint(layer,x)` 是 $`k=1`$ 的 API 示意，仍可能保存 $`L`$ 个跨层边界；只有按约 $`\sqrt L`$ 层分 segment 才得到上述跨层结论。
+36. forward 约 2 FLOPs/parameter/token，输入梯度约 2，权重梯度约 2，总约 6。长 context 的 attention $`T^2`$ 主导、MoE 只激活部分参数、矩阵乘不主导、小模型、checkpoint 重算或推理都可让公式失真；任举两项。
 
 ---
 
@@ -2245,7 +2245,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 | [57:10](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=3430s) | 深网络参数与 activation 账 |
 | [59:10](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=3550s) | 最小梯度例子 |
 | [60:08](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=3608s) | backward FLOPs |
-| [65:40](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=3940s) | $6N D_{\text{tok}}$ 粗估 |
+| [65:40](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=3940s) | $`6N D_{\text{tok}}`$ 粗估 |
 | [66:47](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=4007s) | AdaGrad optimizer |
 | [69:20](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=4160s) | 训练显存组成 |
 | [72:10](https://www.youtube.com/watch?v=kuYAsz7zspQ&t=4330s) | Gradient accumulation |
@@ -2265,7 +2265,7 @@ checkpointing：减小每个 microbatch 每层要长期保存的中间结果
 
 ### 21.2 哪些是课程，哪些是本笔记补充
 
-**【课程内容】**tensor rank/shape/dtype/device、FP16/BF16/FP8/FP4、mixed precision、einsum/reduce/rearrange、矩阵乘 FLOPs、H100 dense 峰值口径、MFU、ReLU/GELU/dot/matvec/matmul arithmetic intensity、Roofline、toy network、基础梯度、backward FLOPs、$6N D_{\text{tok}}$、AdaGrad、训练显存、gradient accumulation、activation checkpointing。
+**【课程内容】**tensor rank/shape/dtype/device、FP16/BF16/FP8/FP4、mixed precision、einsum/reduce/rearrange、矩阵乘 FLOPs、H100 dense 峰值口径、MFU、ReLU/GELU/dot/matvec/matmul arithmetic intensity、Roofline、toy network、基础梯度、backward FLOPs、$`6N D_{\text{tok}}`$、AdaGrad、训练显存、gradient accumulation、activation checkpointing。
 
 **【视频补充】**Marin 预测结果、低精度课堂问答、flatten 顺序、快速矩阵乘问答、benchmark 异步解释、MFU 经验、单 token inference、课程中的两处口头滑误及其上下文。
 

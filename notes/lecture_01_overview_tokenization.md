@@ -59,36 +59,36 @@ BPE：从字节开始，反复合并最常见的相邻 token 对
 
 **语言模型的链式分解：**
 
-$$
+```math
 P(t_1,t_2,\ldots,t_n)=\prod_{i=1}^{n}P(t_i\mid t_1,\ldots,t_{i-1})
-$$
+```
 
-- $t_i$：第 $i$ 个 token；
-- $P(\cdot)$：概率；
-- 竖线 $\mid$：在左边已有 token 的条件下；
-- $\prod$：把每一步的概率全部相乘。
+- $`t_i`$：第 $`i`$ 个 token；
+- $`P(\cdot)`$：概率；
+- 竖线 $`\mid`$：在左边已有 token 的条件下；
+- $`\prod`$：把每一步的概率全部相乘。
 
 **Tokenizer 压缩率：**
 
-$$
+```math
 r=\frac{B}{T}
-$$
+```
 
-- $r$：每个 token 平均承载多少 UTF-8 字节；
-- $B$：原字符串编码成 UTF-8 后的字节数；
-- $T$：token 数。
+- $`r`$：每个 token 平均承载多少 UTF-8 字节；
+- $`B`$：原字符串编码成 UTF-8 后的字节数；
+- $`T`$：token 数。
 
-课程例子有 $B=20,T=8$，所以 $r=20/8=2.5$ bytes/token。
+课程例子有 $`B=20,T=8`$，所以 $`r=20/8=2.5`$ bytes/token。
 
 **训练计算量的粗略估算：**
 
-$$
+```math
 C\approx 6ND
-$$
+```
 
-- $C$：训练所需浮点运算次数（FLOPs）；
-- $N$：模型参数数量；
-- $D$：训练 token 数量；
+- $`C`$：训练所需浮点运算次数（FLOPs）；
+- $`N`$：模型参数数量；
+- $`D`$：训练 token 数量；
 - 6：常见 dense Transformer 训练的经验系数。本讲只预告，Lecture 2 再推导。
 
 ### 0.5 四种 tokenizer 一眼比较
@@ -118,23 +118,23 @@ t3 = “ 猫”
 
 模型可能给出：
 
-$$
+```math
 P(t_1)=0.5
-$$
+```
 
-$$
+```math
 P(t_2\mid t_1)=0.4
-$$
+```
 
-$$
+```math
 P(t_3\mid t_1,t_2)=0.1
-$$
+```
 
 那么整段 token 序列的概率是：
 
-$$
+```math
 P(t_1,t_2,t_3)=0.5\times0.4\times0.1=0.02
-$$
+```
 
 `0.02` 也就是 2%。真实模型的词表可能有十万到二十万个 token，每一步都要为整个词表给出一组概率。
 
@@ -211,9 +211,9 @@ $$
 
 讲义用一个概念式表达：
 
-$$
+```math
 \text{accuracy}\approx\text{efficiency}\times\text{resources}
-$$
+```
 
 - `accuracy`：最终模型效果；
 - `resources`：数据、计算硬件、内存和通信带宽等投入；
@@ -244,7 +244,7 @@ $$
 
 **【课程】**1950 年，Claude Shannon 用语言模型估计英语的熵；之后很长一段时间，N-gram 模型被用于机器翻译和语音识别。
 
-**【补充】**N-gram 的意思是“只看最近 $n-1$ 个单位”。例如 3-gram 估计下一个词时只看前两个词。它简单，但无法自然记住很远的上下文。
+**【补充】**N-gram 的意思是“只看最近 $`n-1`$ 个单位”。例如 3-gram 估计下一个词时只看前两个词。它简单，但无法自然记住很远的上下文。
 
 ### 2.2 2010 年代的关键积木
 
@@ -370,78 +370,69 @@ Assignment 1 要实现 BPE、Transformer、cross-entropy、AdamW 和训练循环
 
 课程预告公式：
 
-$$
+```math
 C\approx6ND
-$$
+```
 
 **【补充：这个 6 从哪里来？】**这是一条针对常见 **dense Transformer 训练**的粗略核算式。`Dense` 表示每个 token 大致都会经过模型中的全部参数，而不是像 MoE 那样只激活一部分专家。
 
-先只看由参数矩阵完成的乘法。对一块权重矩阵 $W$：
+先只看由参数矩阵完成的乘法。对一块权重矩阵 $`W`$：
 
-1. 前向传播要把输入乘以 $W$。粗略地说，一个参数参与一次乘法和一次加法，约算 2 FLOPs；
-2. 总共有 $N$ 个参数、$D$ 个训练 token，所以前向主项约为：
+1. 前向传播要把输入乘以 $`W`$。粗略地说，一个参数参与一次乘法和一次加法，约算 2 FLOPs；
+2. 总共有 $`N`$ 个参数、$`D`$ 个训练 token，所以前向主项约为：
 
-   $$
-   C_{\text{forward}}\approx2ND
-   $$
+   $`C_{\text{forward}}\approx2ND`$
 
 3. 反向传播要计算输入梯度和参数梯度，粗略成本约为前向的 2 倍：
 
-   $$
-   C_{\text{backward}}\approx2C_{\text{forward}}\approx4ND
-   $$
+   $`C_{\text{backward}}\approx2C_{\text{forward}}\approx4ND`$
 
 4. 前向与反向相加：
 
-   $$
-   C_{\text{train}}
-   \approx C_{\text{forward}}+C_{\text{backward}}
-   \approx2ND+4ND
-   =6ND
-   $$
+   $`C_{\text{train}} \approx C_{\text{forward}}+C_{\text{backward}} \approx2ND+4ND =6ND`$
 
 这里每个符号只表示一件事：
 
-- $C_{\text{train}}$：整次训练的粗略浮点运算总数；
-- $N$：每个 token 大致会激活的参数数量；
-- $D$：整次训练处理的 token 数；
+- $`C_{\text{train}}`$：整次训练的粗略浮点运算总数；
+- $`N`$：每个 token 大致会激活的参数数量；
+- $`D`$：整次训练处理的 token 数；
 - 2 FLOPs：一次乘法加一次加法的常用计数约定。
 
 这**不是推理公式**。推理没有训练反向传播，因此不能照搬系数 6。
 
-它还把许多成本忽略或合并进了近似：attention 的 $T^2$ 项、embedding、loss、optimizer update、GPU 间通信、数据移动和硬件空闲时间都没有逐项列出。当参数矩阵乘是主要计算时，这条式子很有用；若短序列中的 embedding/loss、极长序列的 attention、通信或其他算子占主导，它就会失真。
+它还把许多成本忽略或合并进了近似：attention 的 $`T^2`$ 项、embedding、loss、optimizer update、GPU 间通信、数据移动和硬件空闲时间都没有逐项列出。当参数矩阵乘是主要计算时，这条式子很有用；若短序列中的 embedding/loss、极长序列的 attention、通信或其他算子占主导，它就会失真。
 
-对于 **MoE（Mixture of Experts，混合专家）**，每个 token 通常只经过少数 expert。此时 $N$ 应理解为“每 token 实际激活的参数量”，不能直接用模型包含的全部参数量。
+对于 **MoE（Mixture of Experts，混合专家）**，每个 token 通常只经过少数 expert。此时 $`N`$ 应理解为“每 token 实际激活的参数量”，不能直接用模型包含的全部参数量。
 
-手算一个课程数字：训练 $N=70$ billion（700 亿）参数模型，使用 $D=1$ trillion（1 万亿）token：
+手算一个课程数字：训练 $`N=70`$ billion（700 亿）参数模型，使用 $`D=1`$ trillion（1 万亿）token：
 
-$$
+```math
 N=70\times10^9,\qquad D=10^{12}
-$$
+```
 
-$$
+```math
 C\approx6\times70\times10^9\times10^{12}
-$$
+```
 
 先乘普通数字：
 
-$$
+```math
 6\times70=420
-$$
+```
 
 再乘 10 的幂：
 
-$$
+```math
 10^9\times10^{12}=10^{21}
-$$
+```
 
 所以：
 
-$$
+```math
 C\approx420\times10^{21}=4.2\times10^{23}\text{ FLOPs}
-$$
+```
 
-**【课程】**B200 的示例峰值约为 2.25 PFLOP/s（BF16）与 8 TB/s 显存带宽。`P` 是 peta，即 $10^{15}$；`T` 是 tera，即 $10^{12}$。关键矛盾是参数存在 HBM（高带宽显存）里，计算单元在芯片另一处，搬数据经常比做乘加更慢。
+**【课程】**B200 的示例峰值约为 2.25 PFLOP/s（BF16）与 8 TB/s 显存带宽。`P` 是 peta，即 $`10^{15}`$；`T` 是 tera，即 $`10^{12}`$。关键矛盾是参数存在 HBM（高带宽显存）里，计算单元在芯片另一处，搬数据经常比做乘加更慢。
 
 **【补充例子】**如果操作 A 和 B 分成两个 kernel：
 
@@ -468,7 +459,7 @@ Decode 难以一次并行许多时间步，而且每一步都要读取大量参�
 
 ### 4.3 Scaling laws：大实验前先学会预测
 
-**【课程】**假设只有一次机会使用 $10^{25}$ FLOPs，不能在目标规模上随便试超参数。解决思路不是只设计“一个模型”，而是设计 **scaling recipe（扩展配方）**：
+**【课程】**假设只有一次机会使用 $`10^{25}`$ FLOPs，不能在目标规模上随便试超参数。解决思路不是只设计“一个模型”，而是设计 **scaling recipe（扩展配方）**：
 
 ```text
 计算预算 → 模型大小、数据量、学习率、batch size 等超参数
@@ -482,21 +473,21 @@ Decode 难以一次并行许多时间步，而且每一步都要读取大量参�
 4. 外推到目标预算；
 5. 再比较和改进整套 recipe。
 
-**Hyperparameter transfer（超参数迁移）**表示小规模的最佳设置能直接用于大规模，或至少按可预测规则变化。若小模型学习率是 $10^{-5}$、稍大模型突然要 $10^{-4}$，没有规律，就很难安全外推。
+**Hyperparameter transfer（超参数迁移）**表示小规模的最佳设置能直接用于大规模，或至少按可预测规则变化。若小模型学习率是 $`10^{-5}`$、稍大模型突然要 $`10^{-4}`$，没有规律，就很难安全外推。
 
 **【视频补充】**老师强调：scaling law 不是自动存在的自然定律，必须通过精心设计稳定、可预测的训练 recipe “把它做出来”。因此 predictability（可预测性）至少与 optimality（单点最优）一样重要。
 
-经典问题是：固定计算预算时，应该增加参数 $N$，还是增加训练 token $D$？课程给出 Chinchilla 风格的粗略经验：
+经典问题是：固定计算预算时，应该增加参数 $`N`$，还是增加训练 token $`D`$？课程给出 Chinchilla 风格的粗略经验：
 
-$$
+```math
 D\approx20N
-$$
+```
 
-若 $N=70$ billion：
+若 $`N=70`$ billion：
 
-$$
+```math
 D\approx20\times70\text{ billion}=1400\text{ billion}=1.4\text{ trillion tokens}
-$$
+```
 
 这只是粗略规则，会随数据和结构改变，也没有纳入部署推理成本。现实中为了让推理模型更小，常会对小模型训练远多于计算最优点的数据。
 
@@ -591,27 +582,27 @@ token IDs：[13225, 11, 130321, 235, 0, 220, 177519, 0]
 ...
 ```
 
-Vocabulary size，记作 $V$，是允许的不同 token ID 数量。
+Vocabulary size，记作 $`V`$，是允许的不同 token ID 数量。
 
-模型不能直接把任意整数当输入。它通常先通过 embedding table（嵌入表），把 token ID 查成一排浮点数。若词表有 $V$ 个 token，每个 token 的 embedding 有 $d$ 个数，那么表中有：
+模型不能直接把任意整数当输入。它通常先通过 embedding table（嵌入表），把 token ID 查成一排浮点数。若词表有 $`V`$ 个 token，每个 token 的 embedding 有 $`d`$ 个数，那么表中有：
 
-$$
+```math
 V\times d
-$$
+```
 
 个参数。
 
-**【补充手算】**若 $V=50{,}000,d=768$：
+**【补充手算】**若 $`V=50{,}000,d=768`$：
 
-$$
+```math
 50{,}000\times768=38{,}400{,}000
-$$
+```
 
 即 3840 万个参数。若其他不变，把词表加倍到 10 万：
 
-$$
+```math
 100{,}000\times768=76{,}800{,}000
-$$
+```
 
 词表大可以让序列变短，却会增大 embedding 和输出层，并让许多罕见 token 得不到充分训练。这就是课程所说的 sparsity（稀疏）：词表位置很多，但每个罕见位置只在很少训练样本中出现。
 
@@ -619,11 +610,11 @@ $$
 
 Tokenizer 至少应满足：
 
-$$
-\operatorname{decode}(\operatorname{encode}(s))=s
-$$
+```math
+\mathrm{decode}(\mathrm{encode}(s))=s
+```
 
-- $s$：任意合法输入字符串；
+- $`s`$：任意合法输入字符串；
 - `encode`：字符串转 token ID；
 - `decode`：token ID 转回字符串；
 - 等号：每个字符、空格、标点都应完全相同。
@@ -640,9 +631,9 @@ $$
 
 **【补充】**bit（比特）是一个只能取 0 或 1 的位置。8 个 bit 组成 1 byte（字节）。8 个二进制位一共有：
 
-$$
+```math
 2^8=256
-$$
+```
 
 种组合，所以一个 byte 可看成 0 到 255 的整数。
 
@@ -679,9 +670,9 @@ Code point 可能远大于 255，不能都塞进一个 byte。UTF-8 是把 Unico
 | Code point 范围 | byte 数 | 二进制模板 | 能装的 payload bits |
 |---|---:|---|---:|
 | U+0000 到 U+007F | 1 | `0xxxxxxx` | 7 |
-| U+0080 到 U+07FF | 2 | `110xxxxx 10xxxxxx` | $5+6=11$ |
-| U+0800 到 U+FFFF | 3 | `1110xxxx 10xxxxxx 10xxxxxx` | $4+6+6=16$ |
-| U+10000 到 U+10FFFF | 4 | `11110xxx 10xxxxxx 10xxxxxx 10xxxxxx` | $3+6+6+6=21$ |
+| U+0080 到 U+07FF | 2 | `110xxxxx 10xxxxxx` | $`5+6=11`$ |
+| U+0800 到 U+FFFF | 3 | `1110xxxx 10xxxxxx 10xxxxxx` | $`4+6+6=16`$ |
+| U+10000 到 U+10FFFF | 4 | `11110xxx 10xxxxxx 10xxxxxx 10xxxxxx` | $`3+6+6+6=21`$ |
 
 #### 手算 `🌍`：U+1F30D
 
@@ -697,7 +688,7 @@ Code point 可能远大于 255，不能都塞进一个 byte。UTF-8 是把 Unico
    000011111001100001101
    ```
 
-3. 按模板的 $3+6+6+6$ 个 payload 位分组：
+3. 按模板的 $`3+6+6+6`$ 个 payload 位分组：
 
    ```text
    000 | 011111 | 001100 | 001101
@@ -734,7 +725,7 @@ U+1F30D → 11110000 10011111 10001100 10001101
 0100111101100000
 ```
 
-按 $4+6+6$ 分组并填模板：
+按 $`4+6+6`$ 分组并填模板：
 
 ```text
 0100 | 111101 | 100000
@@ -766,7 +757,7 @@ U+1F30D → 11110000 10011111 10001100 10001101
 | `你` | 3 |
 | `好` | 3 |
 | `!` | 1 |
-| 合计 | $5+1+1+4+1+1+3+3+1=20$ |
+| 合计 | $`5+1+1+4+1+1+3+3+1=20`$ |
 
 这条路径不要混淆：
 
@@ -788,14 +779,14 @@ token ID 序列
 
 **【课程】**主要观察：
 
-1. **Vocabulary size $V$**：可以使用多少种 token；
-2. **Sequence length $T$**：一段文本会被切成多少 token。
+1. **Vocabulary size $`V`$**：可以使用多少种 token；
+2. **Sequence length $`T`$**：一段文本会被切成多少 token。
 
 通常：
 
-- $V$ 小，基础单位就小，$T$ 容易变大；
-- $V$ 大，常见长片段能变成一个 token，$T$ 容易变小；
-- 但 $V$ 太大，embedding/output 参数更多，稀有 token 学不充分。
+- $`V`$ 小，基础单位就小，$`T`$ 容易变大；
+- $`V`$ 大，常见长片段能变成一个 token，$`T`$ 容易变小；
+- 但 $`V`$ 太大，embedding/output 参数更多，稀有 token 学不充分。
 
 Tokenizer 设计不是单纯追求词表最大或序列最短，而是在二者之间折中。
 
@@ -803,15 +794,15 @@ Tokenizer 设计不是单纯追求词表最大或序列最短，而是在二者�
 
 课程定义：
 
-$$
+```math
 r=\frac{B}{T}
-$$
+```
 
 其中：
 
-- $r$：compression ratio，单位 bytes/token；
-- $B$：原字符串的 UTF-8 byte 数；
-- $T$：token 数。
+- $`r`$：compression ratio，单位 bytes/token；
+- $`B`$：原字符串的 UTF-8 byte 数；
+- $`T`$：token 数。
 
 课程用 `o200k_base` 编码 `"Hello, 🌍! 你好!"`：
 
@@ -822,35 +813,35 @@ T = 8 tokens
 
 代入：
 
-$$
+```math
 r=\frac{20\text{ bytes}}{8\text{ tokens}}=2.5\text{ bytes/token}
-$$
+```
 
 这句话只表示：平均每个 token 承载 2.5 个原始 byte。它不是“文件真的被无损压成原来的 40%”，因为还要存 token ID，而且训练目标是计算效率，不是制作 zip 文件。
 
 ### 7.3 为什么短序列如此重要？
 
-**【课程】**标准 full attention 对长度 $T$ 的主要位置两两交互量是 $T^2$。这里的 $O(T^2)$ 表示：当长度放大 $k$ 倍时，这部分工作大致放大 $k^2$ 倍。
+**【课程】**标准 full attention 对长度 $`T`$ 的主要位置两两交互量是 $`T^2`$。这里的 $`O(T^2)`$ 表示：当长度放大 $`k`$ 倍时，这部分工作大致放大 $`k^2`$ 倍。
 
 课程给出直觉：1000 bytes 经过 tokenizer 后可能约为 250 tokens，即长度缩短 4 倍。
 
 若直接对 1000 个 byte 位置两两计算：
 
-$$
+```math
 1000^2=1{,}000{,}000
-$$
+```
 
 若只对 250 个 token 位置计算：
 
-$$
+```math
 250^2=62{,}500
-$$
+```
 
 两者相除：
 
-$$
+```math
 \frac{1{,}000{,}000}{62{,}500}=16
-$$
+```
 
 因此在这个极简比较中，attention 位置对减少 16 倍，而不是 4 倍。真实总耗时还包括 MLP、embedding、内存访问等，不能直接宣称整个模型恰好快 16 倍。
 
@@ -970,9 +961,9 @@ def decode(ids):
 
 缺点同样明确。每个 token 恰好代表 1 byte：
 
-$$
+```math
 r=\frac{B}{T}=\frac{B}{B}=1\text{ byte/token}
-$$
+```
 
 英语单词 `hello` 需要 5 个 token，汉字 `你` 需要 3 个 token，emoji `🌍` 需要 4 个 token。标准 Transformer 的有限 context 很快被用完，attention 也会变贵。
 
@@ -1063,13 +1054,13 @@ e = 101
 
 token 数：
 
-$$
+```math
 T_0=18
-$$
+```
 
 #### 第 1 轮：找最常见 pair
 
-**【课程原例复算】**18 个 token 之间恰好有 $18-1=17$ 个相邻位置。这里把它们一个不漏地列出；`_` 仍表示空格：
+**【课程原例复算】**18 个 token 之间恰好有 $`18-1=17`$ 个相邻位置。这里把它们一个不漏地列出；`_` 仍表示空格：
 
 | 相邻位置 | 左 token | 右 token | pair |
 |---:|---|---|---|
@@ -1129,9 +1120,9 @@ $$
 
 每次合并把两个 token 变成一个。这里合并 2 处，所以：
 
-$$
+```math
 T_1=18-2=16
-$$
+```
 
 #### 第 2 轮：重新统计，不沿用旧计数
 
@@ -1151,9 +1142,9 @@ $$
 
 长度再次减少 2：
 
-$$
+```math
 T_2=16-2=14
-$$
+```
 
 #### 第 3 轮
 
@@ -1171,23 +1162,23 @@ $$
 
 所以：
 
-$$
+```math
 T_3=14-2=12
-$$
+```
 
 ### 9.3 词表和压缩率怎样变化？
 
 开始有 256 个 byte token，每轮增加 1 个 token。做 3 轮后：
 
-$$
+```math
 V=256+3=259
-$$
+```
 
 暂时不计 special token。原文仍为 18 bytes，现在是 12 tokens：
 
-$$
+```math
 r=\frac{18}{12}=1.5\text{ bytes/token}
-$$
+```
 
 这与视频中显示的 1.5 一致。
 
@@ -1274,7 +1265,7 @@ indices[1:] = [B, C, D]
 counts[(index1, index2)] += 1
 ```
 
-第一次看到 pair 时相当于 $0+1$，以后再看到就在原计数上加 1。
+第一次看到 pair 时相当于 $`0+1`$，以后再看到就在原计数上加 1。
 
 #### `pair = max(counts, key=counts.get)` 到底在比较什么？
 
@@ -1346,7 +1337,7 @@ vocab[256] = vocab[116] + vocab[104]
            = b"th"
 ```
 
-这里绝不是整数 $116+104=220$。
+这里绝不是整数 $`116+104=220`$。
 
 #### `merges` 和 `merge(...)`
 
@@ -1450,9 +1441,9 @@ t h e _ q u i c k _ b r o w n _ f o x
 
 即：
 
-$$
+```math
 19\to18\to17\to16
-$$
+```
 
 最终 16 个 token。前四个 bytes `the ` 被 ID 258 代替，其余没有匹配已学规则的片段仍保持为 byte token。
 
@@ -1481,18 +1472,18 @@ text = all_bytes.decode("utf-8")
 
 形式化地写：
 
-$$
-s=\operatorname{UTF8Decode}\left(
-\operatorname{vocab}[i_1]\Vert
-\operatorname{vocab}[i_2]\Vert\cdots\Vert
-\operatorname{vocab}[i_T]
+```math
+s=\mathrm{UTF8Decode}\left(
+\mathrm{vocab}[i_1]\Vert
+\mathrm{vocab}[i_2]\Vert\cdots\Vert
+\mathrm{vocab}[i_T]
 \right)
-$$
+```
 
-- $s$：恢复出的字符串；
-- $i_1,\ldots,i_T$：共 $T$ 个 token ID；
-- `vocab[i]`：ID $i$ 对应的 bytes；
-- $\Vert$：把 byte 串首尾连接；
+- $`s`$：恢复出的字符串；
+- $`i_1,\ldots,i_T`$：共 $`T`$ 个 token ID；
+- `vocab[i]`：ID $`i`$ 对应的 bytes；
+- $`\Vert`$：把 byte 串首尾连接；
 - `UTF8Decode`：把完整 bytes 解释成 Unicode 字符串。
 
 合并训练从未删除 byte 内容，只是给常见的 byte 串新增短编号，所以能恢复原文。
@@ -1522,9 +1513,9 @@ IDs：[13225, 11, 130321, 235, 0, 220, 177519, 0]
 
 把每个 token 真正携带的 byte 数相加：
 
-$$
+```math
 5+1+4+1+1+1+6+1=20\text{ bytes}
-$$
+```
 
 注意第三个 token 的 4 bytes 是“1 个空格 + emoji 的前 3 bytes”；第四个 token 再提供 emoji 的最后 1 byte。8 个 token 的 byte 长度不相等，但拼接后恰好还原课程最初数出的 20 bytes。
 
@@ -1550,11 +1541,11 @@ Special token（特殊 token）不是普通文本片段，而是模型协议中�
 
 它可以表示一篇文档结束。Tokenizer 必须识别并完整保留它，不能先把它拆成 `<`、`|`、`end` 等普通片段。
 
-若基础 byte 数为 256，训练了 $M$ 次 merge，又有 $S$ 个 special token，粗略词表大小为：
+若基础 byte 数为 256，训练了 $`M`$ 次 merge，又有 $`S`$ 个 special token，粗略词表大小为：
 
-$$
+```math
 V=256+M+S
-$$
+```
 
 具体实现可能保留空洞 ID 或额外 token，因此实际 `n_vocab` 不一定仅由这个简单公式决定。
 
@@ -1575,19 +1566,19 @@ $$
 
 若词表有约 20 万项，merge 数大约也是这个量级。玩具 `encode` 对每条 merge 规则都扫描一次序列。
 
-若暂时把序列长度记为 $T$，merge 数记为 $M$，朴素工作量可粗略看成：
+若暂时把序列长度记为 $`T`$，merge 数记为 $`M`$，朴素工作量可粗略看成：
 
-$$
+```math
 O(MT)
-$$
+```
 
-例如 $M=200{,}000,T=1{,}000$，最坏的扫描量级是：
+例如 $`M=200{,}000,T=1{,}000`$，最坏的扫描量级是：
 
-$$
+```math
 200{,}000\times1{,}000=200{,}000{,}000
-$$
+```
 
-约 2 亿个位置检查，显然太慢。实际实现会维护当前存在的相邻 pair、优先级和位置索引，只处理可能生效的 merge；训练长语料时还会分块并行统计。精确复杂度取决于数据结构，不能把所有实现简单说成同一个 $O(\cdot)$。
+约 2 亿个位置检查，显然太慢。实际实现会维护当前存在的相邻 pair、优先级和位置索引，只处理可能生效的 merge；训练长语料时还会分块并行统计。精确复杂度取决于数据结构，不能把所有实现简单说成同一个 $`O(\cdot)`$。
 
 ---
 
@@ -1818,12 +1809,12 @@ Tokenizer 的规则通常已经固定；更新的是语言模型参数。
 4. 课程怎样纠正“苦涩的教训 = 只要堆规模”的误解？
 5. 列出 CS336 的五个模块，并各用一句话说明目标。
 6. 什么是 executable lecture？Lecture 1 为什么没有普通 PDF？
-7. 写出 tokenizer 的 round-trip 条件，并解释 $s$ 是什么。
+7. 写出 tokenizer 的 round-trip 条件，并解释 $`s`$ 是什么。
 8. `🌍` 的 Unicode code point 是 127757，UTF-8 bytes 是 `[240,159,140,141]`。这两个表示为什么不矛盾？
 9. 为什么一个 byte 有 256 种可能值？
 10. 字符、byte、word 三种 tokenizer 各有什么主要缺点？
 11. 字符串有 30 UTF-8 bytes，编码后有 12 tokens。压缩率是多少？单位是什么？
-12. 若长度从 800 byte token 压到 200 BPE token，只比较 $T^2$ attention 位置对，减少多少倍？
+12. 若长度从 800 byte token 压到 200 BPE token，只比较 $`T^2`$ attention 位置对，减少多少倍？
 13. 若 vocabulary size 从 50,000 增至 100,000，embedding dimension 为 1,024，embedding 参数增加多少？
 14. 在课程例子 `the cat in the hat` 中，第 1 轮为什么选择 `(t,h)`？新 ID 是多少？
 15. 同一例子做 3 轮 merge 后，token 数、vocab size 和压缩率分别是多少？请写计算。
@@ -1834,7 +1825,7 @@ Tokenizer 的规则通常已经固定；更新的是语言模型参数。
 20. 为什么 `o200k_base` 中一个 `🌍` 可以被两个 token 分担，却仍能正确 decode？
 21. 什么是 special token？为什么不能把它当普通文本随意拆开？
 22. 什么是 pre-tokenization？至少说出两个用途。
-23. 若 $M=200{,}000$ 条 merge，长度 $T=1{,}000$，朴素地每条规则扫描整段文本，位置检查量级是多少？
+23. 若 $`M=200{,}000`$ 条 merge，长度 $`T=1{,}000`$，朴素地每条规则扫描整段文本，位置检查量级是多少？
 24. 为什么不同 tokenizer 的 per-token perplexity 不能直接横向比较？
 25. 即使未来取消外置 BPE，课程认为替代方案仍必须具备哪两个性质？
 
@@ -1870,11 +1861,11 @@ Mechanics（机制）和 mindset（思维方式）。具体数据或结构选择
 
 #### 7. Round trip 条件是什么？
 
-$$
-\operatorname{decode}(\operatorname{encode}(s))=s
-$$
+```math
+\mathrm{decode}(\mathrm{encode}(s))=s
+```
 
-$s$ 是任意合法输入字符串；空格、标点和所有字符都必须原样恢复。
+$`s`$ 是任意合法输入字符串；空格、标点和所有字符都必须原样恢复。
 
 #### 8. Code point 和 bytes 为什么不矛盾？
 
@@ -1884,9 +1875,9 @@ $s$ 是任意合法输入字符串；空格、标点和所有字符都必须原�
 
 一个 byte 有 8 个 bit，每个 bit 有 0/1 两种选择：
 
-$$
+```math
 2^8=256
-$$
+```
 
 所以数值范围是 0 到 255，共 256 个值。
 
@@ -1898,29 +1889,29 @@ $$
 
 #### 11. 压缩率是多少？
 
-$$
+```math
 r=\frac{B}{T}=\frac{30}{12}=2.5\text{ bytes/token}
-$$
+```
 
 #### 12. Attention 位置对减少多少倍？
 
 原来：
 
-$$
+```math
 800^2=640{,}000
-$$
+```
 
 后来：
 
-$$
+```math
 200^2=40{,}000
-$$
+```
 
 相除：
 
-$$
+```math
 \frac{640{,}000}{40{,}000}=16
-$$
+```
 
 所以该部分减少 16 倍。长度只减少 4 倍，但平方工作减少 16 倍。
 
@@ -1928,15 +1919,15 @@ $$
 
 词表多了：
 
-$$
+```math
 100{,}000-50{,}000=50{,}000
-$$
+```
 
 每个 token 多 1,024 个参数：
 
-$$
+```math
 50{,}000\times1{,}024=51{,}200{,}000
-$$
+```
 
 增加 5120 万个参数。这里还没有计算输出层可能增加的参数。
 
@@ -1948,21 +1939,21 @@ $$
 
 每一轮都合并两处：
 
-$$
+```math
 18\to16\to14\to12\text{ tokens}
-$$
+```
 
 基础词表 256，每轮新增一个 ID：
 
-$$
+```math
 V=256+3=259
-$$
+```
 
 原文 18 bytes：
 
-$$
+```math
 r=\frac{18}{12}=1.5\text{ bytes/token}
-$$
+```
 
 #### 16. 为什么重新统计？
 
@@ -2000,9 +1991,9 @@ f0 9f 8c + 8d = f0 9f 8c 8d
 
 #### 23. 朴素检查量级是多少？
 
-$$
+```math
 MT=200{,}000\times1{,}000=200{,}000{,}000
-$$
+```
 
 约 2 亿次位置检查，所以生产实现必须只维护当前可能生效的 pair 和位置。
 
@@ -2031,7 +2022,7 @@ $$
 | Decode | Token IDs 还原字符串 |
 | Round trip | 编码再解码后与原输入完全相同 |
 | Vocabulary / vocab | Token ID 到 byte 片段或控制意义的映射 |
-| Vocabulary size $V$ | 词表中可用 token 的数量 |
+| Vocabulary size $`V`$ | 词表中可用 token 的数量 |
 | Bit | 取 0 或 1 的最小二进制位置 |
 | Byte | 8 bits，共 256 种可能值 |
 | Unicode | 为世界文字字符定义码点等信息的标准 |
@@ -2135,6 +2126,6 @@ $$
 
 - 课程原有：从头构建哲学、三类可迁移知识、五模块地图、效率主线、四类 tokenizer 比较、`Hello, 🌍! 你好!`、压缩率、`the cat in the hat` 的 BPE 代码和 3 轮 merge、special token/pre-tokenization/性能要求、tokenizer-free 的两个条件。
 - 视频口头补充：前沿训练成本的推测性表述、scale 下 FLOPs 比例变化、课程 AI 政策、predictability 的强调、推理和 RL 系统背景、多个段落中的工程判断。
-- 本笔记新增：语言模型概率手算、bit/byte 和 UTF-8 位级模板与手算、$6ND$ 的近似来源和失效边界、最小 Python 语法框、embedding 参数量、$T^2$ 的 16 倍手算、BPE 的 17 个相邻位置与 tie-break、`haha haha`、emoji 跨 token 的 byte 级解释、朴素编码复杂度、跨 tokenizer perplexity 警告、常见误区、自测与术语表。
+- 本笔记新增：语言模型概率手算、bit/byte 和 UTF-8 位级模板与手算、$`6ND`$ 的近似来源和失效边界、最小 Python 语法框、embedding 参数量、$`T^2`$ 的 16 倍手算、BPE 的 17 个相邻位置与 tie-break、`haha haha`、emoji 跨 token 的 byte 级解释、朴素编码复杂度、跨 tokenizer perplexity 警告、常见误区、自测与术语表。
 
 如果补充解释与课程后续讲次的更精确推导冲突，应以后续官方讲义为准；本讲中的系统与 scaling 公式只是课程全景预告。

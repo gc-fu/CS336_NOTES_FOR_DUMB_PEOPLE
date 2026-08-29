@@ -69,7 +69,7 @@ DPO 等：直接从成对偏好更新策略
 2. **mask**：0/1 开关。prompt token 常设 0，不计损失；assistant token 设 1，计损失。详见 §5–§6。
 3. SFT 主要模仿示范分布；未覆盖的情境和需要搜索候选的任务，模仿未必足够。详见 §12。
 4. **偏好数据**：同一 prompt 下比较两个 response，记录 chosen 与 rejected。详见 §13。
-5. **Bradley–Terry（BT）模型**：奖励差越大，A 胜过 B 的概率越大，即 \(\sigma(r_A-r_B)\)。详见 §14。
+5. **Bradley–Terry（BT）模型**：奖励差越大，A 胜过 B 的概率越大，即 $`\sigma(r_A-r_B)`$。详见 §14。
 6. RLHF/PPO 五角色：policy 更新；old policy 是本批 rollout 快照；reference 长期约束；reward model 打分；value model 预测回报。详见 §16、§18。
 7. **KL 惩罚**防止新策略为钻奖励漏洞而离参考策略太远。单 token 的 log-ratio 可负，但完整 KL 期望非负。详见 §17。
 8. **advantage** 是实际结果比 value 预期好多少：正值鼓励动作，负值压低动作。详见 §18。
@@ -87,7 +87,7 @@ DPO 等：直接从成对偏好更新策略
 【补充解释】把训练助手想成教一个新客服：
 
 - **prompt（提示）**：用户输入，例如“把 3/4 化成小数”。
-- **response（回答）**：模型完整回复，例如“\(3\div4=0.75\)”。
+- **response（回答）**：模型完整回复，例如“$`3\div4=0.75`$”。
 - **token（词元）**：tokenizer（分词器）把文字切成的整数单位；一个汉字不保证正好一个 token。
 - **logit（未归一化分数）**：模型对下一个 token 的原始分数；softmax 把多个 logits 变成概率。
 - **trajectory（轨迹）**：从 prompt 起的一串状态、动作/token、工具结果和奖励；普通回答可看成简化轨迹。
@@ -110,23 +110,23 @@ DPO 等：直接从成对偏好更新策略
 - **learning rate（学习率）**：每次沿反梯度方向走多大一步。
 - **optimizer（优化器）**：根据梯度更新参数的规则，例如 AdamW。
 
-\[
+```math
 \theta_{\mathrm{new}}=\theta_{\mathrm{old}}-\eta\nabla_\theta L.
-\]
+```
 
-\(\theta\) 是参数，\(L\) 是 loss，\(\nabla_\theta L\) 是梯度，\(\eta\) 是学习率。若参数为 2，梯度为 0.3，学习率为 0.1：
+$`\theta`$ 是参数，$`L`$ 是 loss，$`\nabla_\theta L`$ 是梯度，$`\eta`$ 是学习率。若参数为 2，梯度为 0.3，学习率为 0.1：
 
-\[
+```math
 2-0.1\times0.3=1.97.
-\]
+```
 
 ### 2.3 exp、log、sigmoid、softmax
 
-- \(e\approx2.71828\) 是自然常数，\(e^x\) 是指数函数。
-- \(\ln x\) 是自然对数，是 \(e^x\) 的反函数：\(\ln(e^x)=x\)。
-- \(\ln(ab)=\ln a+\ln b\)，所以 token 概率连乘可改成 log 概率相加。
-- sigmoid：\(\sigma(z)=1/(1+e^{-z})\)，把实数变到 0 和 1 之间。
-- softmax：\(p_i=e^{z_i}/\sum_j e^{z_j}\)，把多个 logits 变成和为 1 的概率。
+- $`e\approx2.71828`$ 是自然常数，$`e^x`$ 是指数函数。
+- $`\ln x`$ 是自然对数，是 $`e^x`$ 的反函数：$`\ln(e^x)=x`$。
+- $`\ln(ab)=\ln a+\ln b`$，所以 token 概率连乘可改成 log 概率相加。
+- sigmoid：$`\sigma(z)=1/(1+e^{-z})`$，把实数变到 0 和 1 之间。
+- softmax：$`p_i=e^{z_i}/\sum_j e^{z_j}`$，把多个 logits 变成和为 1 的概率。
 
 计算器输入 exp(-1.5) 得约 0.2231；再算 1/(1+0.2231) 得 0.8176。§14 会用它。
 
@@ -256,19 +256,19 @@ student model
 
 ### 5.2 因果预测
 
-**causal（因果）**表示位置 \(t\) 只能看左侧。完整序列为
+**causal（因果）**表示位置 $`t`$ 只能看左侧。完整序列为
 
-\[
+```math
 z_1,z_2,\ldots,z_T,
-\]
+```
 
-模型在位置 \(t\) 给真实 token 的概率为
+模型在位置 $`t`$ 给真实 token 的概率为
 
-\[
+```math
 p_\theta(z_t\mid z_{<t}).
-\]
+```
 
-\(\theta\) 是参数，\(T\) 是序列总 token 数，\(z_{<t}\) 是位置 \(t\) 前的 token。
+$`\theta`$ 是参数，$`T`$ 是序列总 token 数，$`z_{<t}`$ 是位置 $`t`$ 前的 token。
 
 ### 5.2.1 teacher forcing 与推理时误差累积
 
@@ -287,12 +287,12 @@ p_\theta(z_t\mid z_{<t}).
 
 定义 mask：
 
-- \(m_t=0\)：该位置不计 loss；
-- \(m_t=1\)：该位置计 loss。
+- $`m_t=0`$：该位置不计 loss；
+- $`m_t=1`$：该位置计 loss。
 
 | token | user 标记 | 2+3 | assistant 标记 | 5 | end |
 |---|---:|---:|---:|---:|---:|
-| mask \(m_t\) | 0 | 0 | 0 | 1 | 1 |
+| mask $`m_t`$ | 0 | 0 | 0 | 1 | 1 |
 
 prompt 仍输入模型、作为回答条件，只是不要求模型模仿用户 token。
 
@@ -304,27 +304,27 @@ prompt 仍输入模型、作为回答条件，只是不要求模型模仿用户 
 
 ### 6.1 单 token 负对数
 
-\[
+```math
 \ell=-\ln p.
-\]
+```
 
-- \(p=1\)：loss \(=0\)。
-- \(p=0.5\)：loss \(=0.6931\)。
-- \(p=0.01\)：loss \(=4.6052\)。
+- $`p=1`$：loss $`=0`$。
+- $`p=0.5`$：loss $`=0.6931`$。
+- $`p=0.01`$：loss $`=4.6052`$。
 
 概率越小，正确 token 越意外，惩罚越大。
 
 ### 6.2 masked cross-entropy
 
-\[
+```math
 L_{\mathrm{SFT}}
 =-\frac{\sum_{t=1}^{T}m_t\ln p_\theta(z_t\mid z_{<t})}
 {\sum_{t=1}^{T}m_t}.
-\]
+```
 
-- \(T\)：序列 token 数；
-- \(m_t\in\{0,1\}\)：mask；
-- \(p_\theta\)：模型给真实 token 的概率；
+- $`T`$：序列 token 数；
+- $`m_t\in\{0,1\}`$：mask；
+- $`p_\theta`$：模型给真实 token 的概率；
 - 分子：被训练 token 的负 log 概率之和；
 - 分母：被训练 token 数。
 
@@ -334,25 +334,25 @@ L_{\mathrm{SFT}}
 
 两个 assistant token 的正确概率是 0.5 和 0.25：
 
-1. \(-\ln0.5=0.6931\)；
-2. \(-\ln0.25=1.3863\)；
+1. $`-\ln0.5=0.6931`$；
+2. $`-\ln0.25=1.3863`$；
 3. 和为 2.0794；
-4. 除以 2 得 \(1.0397\)。
+4. 除以 2 得 $`1.0397`$。
 
-若错把 3 个 prompt token 放进分母，会得 \(2.0794/5=0.4159\)。数更小，却只是口径错。
+若错把 3 个 prompt token 放进分母，会得 $`2.0794/5=0.4159`$。数更小，却只是口径错。
 
 ### 6.4 token-average 与 response-average
 
 batch 中 A 长 2 token，B 长 8 token：
 
-- token-average：A 占 \(2/10=20\%\)，B 占 \(8/10=80\%\)；
+- token-average：A 占 $`2/10=20\%`$，B 占 $`8/10=80\%`$；
 - response-average：先各自平均，A、B 各占 50%。
 
 所以“平均 loss”必须说明分母。
 
 ### 6.5 shape
 
-若 batch size \(B=2\)，填充长度 \(T=5\)，词表 \(V=100\)：
+若 batch size $`B=2`$，填充长度 $`T=5`$，词表 $`V=100`$：
 
 - input IDs：[2,5]；
 - logits：[2,5,100]；
@@ -494,38 +494,38 @@ for batch in dataloader:
 
 ### 12.1 imitation：只学数据里出现的答案
 
-【课程内容，PDF p.32】**imitation（模仿）**试图让模型分布 \(\hat p(y\mid x)\) 接近示范分布 \(p^*(y\mid x)\)：
+【课程内容，PDF p.32】**imitation（模仿）**试图让模型分布 $`\hat p(y\mid x)`$ 接近示范分布 $`p^*(y\mid x)`$：
 
-\[
+```math
 \hat p(y\mid x)\approx p^*(y\mid x).
-\]
+```
 
-\(x\) 是 prompt，\(y\) 是 response。若示范只给一种正确解法，SFT 会提高那种解法概率，却没有直接比较所有其他候选。
+$`x`$ 是 prompt，$`y`$ 是 response。若示范只给一种正确解法，SFT 会提高那种解法概率，却没有直接比较所有其他候选。
 
 ### 12.2 optimization：在自己生成的答案中追求高奖励
 
 【课程内容，PDF p.32–34】奖励优化的抽象目标：
 
-\[
+```math
 \max_{\pi}\ \mathbb E_{y\sim\pi(\cdot\mid x)}[R(x,y)].
-\]
+```
 
-- \(\pi\)：策略，即模型给 response 的概率分布；
-- \(y\sim\pi\)：从该模型采样回答；
-- \(R(x,y)\)：回答的奖励；
-- \(\mathbb E\)：按生成概率做加权平均。
+- $`\pi`$：策略，即模型给 response 的概率分布；
+- $`y\sim\pi`$：从该模型采样回答；
+- $`R(x,y)`$：回答的奖励；
+- $`\mathbb E`$：按生成概率做加权平均。
 
 若模型只会生成 A、B，概率为 0.7、0.3，奖励为 1、3，则期望奖励
 
-\[
+```math
 0.7\times1+0.3\times3=1.6.
-\]
+```
 
 若更新后概率变 0.4、0.6，则
 
-\[
+```math
 0.4\times1+0.6\times3=2.2.
-\]
+```
 
 ### 12.3 generate–verify gap
 
@@ -548,15 +548,15 @@ response B: 很长但含事实错误
 label: A preferred over B
 ~~~
 
-记 \(y_w\) 为 winner/chosen，\(y_l\) 为 loser/rejected。偏好样本是 \((x,y_w,y_l)\)，不是“给每个答案一个绝对真分数”。
+记 $`y_w`$ 为 winner/chosen，$`y_l`$ 为 loser/rejected。偏好样本是 $`(x,y_w,y_l)`$，不是“给每个答案一个绝对真分数”。
 
 ### 13.2 从排序到 pair
 
 若标注员把四个回答排成 A>B>C>D，可以拆成 6 对：
 
-\[
+```math
 \binom{4}{2}=\frac{4\times3}{2}=6.
-\]
+```
 
 即 A-B、A-C、A-D、B-C、B-D、C-D。但这些 pair 来自同一排序者和同一 prompt，不是 6 个完全独立观察；统计不确定性不能假装它们彼此独立。
 
@@ -577,43 +577,43 @@ BT loss 通常先按 pair 算，再在 batch 的 pair 上平均；不是按两�
 
 ### 14.1 sigmoid 把差值变成胜率
 
-【课程内容，PDF p.49–52】reward model 给一对 \((x,y)\) 一个标量（单个数）\(r_\phi(x,y)\)。\(\phi\) 是奖励模型参数。
+【课程内容，PDF p.49–52】reward model 给一对 $`(x,y)`$ 一个标量（单个数）$`r_\phi(x,y)`$。$`\phi`$ 是奖励模型参数。
 
-\[
+```math
 P(y_w\succ y_l\mid x)
 =\sigma(r_w-r_l)
 =\frac{1}{1+e^{-(r_w-r_l)}}.
-\]
+```
 
-只有差 \(r_w-r_l\) 影响概率：两分数都加 100，胜率不变。因此 reward 的零点本身没有绝对意义。
+只有差 $`r_w-r_l`$ 影响概率：两分数都加 100，胜率不变。因此 reward 的零点本身没有绝对意义。
 
 ### 14.2 完整数字例
 
-设 \(r_w=2.0\)，\(r_l=0.5\)：
+设 $`r_w=2.0`$，$`r_l=0.5`$：
 
-1. 差值 \(d=2.0-0.5=1.5\)；
-2. \(e^{-1.5}\approx0.2231\)；
-3. \(1+0.2231=1.2231\)；
-4. 胜率 \(1/1.2231\approx0.8176\)；
-5. 正确标签的负 log loss：\(-\ln0.8176\approx0.2014\)。
+1. 差值 $`d=2.0-0.5=1.5`$；
+2. $`e^{-1.5}\approx0.2231`$；
+3. $`1+0.2231=1.2231`$；
+4. 胜率 $`1/1.2231\approx0.8176`$；
+5. 正确标签的负 log loss：$`-\ln0.8176\approx0.2014`$。
 
-若二者相等，差为 0，\(\sigma(0)=1/(1+1)=0.5\)，loss 为 \(-\ln0.5=0.6931\)。
+若二者相等，差为 0，$`\sigma(0)=1/(1+1)=0.5`$，loss 为 $`-\ln0.5=0.6931`$。
 
 ### 14.3 batch loss
 
-\[
+```math
 L_{\mathrm{RM}}
 =-\frac{1}{M}\sum_{i=1}^{M}
 \ln\sigma\!\left(r_\phi(x_i,y_{w,i})-r_\phi(x_i,y_{l,i})\right).
-\]
+```
 
-- \(M\)：pair 数；
+- $`M`$：pair 数；
 - 每项单位是一个 pair；
 - 括号里是无单位的 reward 差；
 - sigmoid 输出概率；
-- loss 对 \(M\) 个 pair 平均。
+- loss 对 $`M`$ 个 pair 平均。
 
-如果一个 batch 有两对，loss 分别 0.2、0.8，则 batch loss 为 \((0.2+0.8)/2=0.5\)。
+如果一个 batch 有两对，loss 分别 0.2、0.8，则 batch loss 为 $`(0.2+0.8)/2=0.5`$。
 
 ### 14.4 BT 模型假设和盲点
 
@@ -633,15 +633,15 @@ BT 公式本身只写二选一。若允许 tie（平局），数据契约必须�
 
 | PDF | 图中对象与数字 | 可推出 | 不可推出/来源边界 |
 |---:|---|---|---|
-| p.39 | Outlier/ScaleAI **单个平台样本**；年龄 \(n=914\)：18–24 为6%、25–34为25%、35–44为34%、45–54为23%、55–64为10%、65–74为2%；教育 \(n=911\)：本科44%、硕士/专业32%等 | 描述该平台受访数据劳动者的年龄/教育构成 | 不能把单平台样本当全球 RLHF 标注员/数据劳动者，更不能把它误当用户调查；图源标 Oxford Economics，课程未给完整抽样权重 |
+| p.39 | Outlier/ScaleAI **单个平台样本**；年龄 $`n=914`$：18–24 为6%、25–34为25%、35–44为34%、45–54为23%、55–64为10%、65–74为2%；教育 $`n=911`$：本科44%、硕士/专业32%等 | 描述该平台受访数据劳动者的年龄/教育构成 | 不能把单平台样本当全球 RLHF 标注员/数据劳动者，更不能把它误当用户调查；图源标 Oxford Economics，课程未给完整抽样权重 |
 | p.40 | 课程截图转述一篇 Business Insider 报道：Handshake AI 项目至少 \$50/h、约3000–4000 freelancers；右图不同专家类别中点约 \$50–\$120/h | 专家标注报酬跨度很大 | 这是[原报道链接](https://www.businessinsider.com/ai-data-labeling-annotators-pay-subject-experts-generalists-gig-workers-2025-12)的二手新闻材料，不是审计过的平台工资总表或因果研究 |
 | p.43 | 标注者人口统计表与 OpinionQA 群体分数；红框展示不同宗教群体的模型匹配数值不同 | 标注/目标人群选择可能影响行为 | 不能由表证明“人口统计单独导致全部模型差异”；一手论文：[Santurkar et al. 2023](https://proceedings.mlr.press/v202/santurkar23a.html) |
-| p.44 | assertiveness/complexity 热图；格内数是 **crowdsourced annotations 与 expert annotations 的错误检出率差**。例如 factuality 在 assertiveness++ 条件为 \(-22.3\%\)，complexity-- 为 \(-19.8\%\) | 负值表示在该 style 条件下，众包标注比专家**少检出**这种错误；style 会改变众包—专家差距 | `Baseline` 是一种 style 条件行/列，不是所有格都拿来相减的数值基准；负值也不表示回答更正确。一手论文：[Human Feedback Is Not Gold Standard](https://openreview.net/forum?id=7W3GLNImfS) |
-| p.45 | AlpacaFarm 系统级 simulated win-rate 对 human win-rate：Spearman \(0.98\)、\(R^2=0.87\)；成本—agreement 图 | 在这组**系统点**上排序相关很高 | 不能推出逐样本 judge 98% 准；Spearman 是排序相关，\(R^2\) 是该拟合解释的系统间方差比例；一手论文：[AlpacaFarm](https://openreview.net/forum?id=4hturzLcKX) |
+| p.44 | assertiveness/complexity 热图；格内数是 **crowdsourced annotations 与 expert annotations 的错误检出率差**。例如 factuality 在 assertiveness++ 条件为 $`-22.3\%`$，complexity-- 为 $`-19.8\%`$ | 负值表示在该 style 条件下，众包标注比专家**少检出**这种错误；style 会改变众包—专家差距 | `Baseline` 是一种 style 条件行/列，不是所有格都拿来相减的数值基准；负值也不表示回答更正确。一手论文：[Human Feedback Is Not Gold Standard](https://openreview.net/forum?id=7W3GLNImfS) |
+| p.45 | AlpacaFarm 系统级 simulated win-rate 对 human win-rate：Spearman $`0.98`$、$`R^2=0.87`$；成本—agreement 图 | 在这组**系统点**上排序相关很高 | 不能推出逐样本 judge 98% 准；Spearman 是排序相关，$`R^2`$ 是该拟合解释的系统间方差比例；一手论文：[AlpacaFarm](https://openreview.net/forum?id=4hturzLcKX) |
 | p.46–47 | UltraFeedback、Zephyr、Tulu3 与 Constitutional AI 的生成—批评—修订/偏好链 | 模型反馈可扩反馈规模 | judge 偏差、提示与自我风格仍会复制；不能当成人类真值 |
-| p.48 | 同一例子 SFT(before) 59 tokens、RLHF(after) 243 tokens，输出相似但后者更长；另有 length-reward 散点 | RLHF 可能主要改变长度/细节 | 单例不证明所有 RLHF 都放大 4.12 倍；\(243/59\approx4.1186\) 只属于该样例；一手论文：[Singhal et al.](https://openreview.net/forum?id=G8LaO1P0xv) |
+| p.48 | 同一例子 SFT(before) 59 tokens、RLHF(after) 243 tokens，输出相似但后者更长；另有 length-reward 散点 | RLHF 可能主要改变长度/细节 | 单例不证明所有 RLHF 都放大 4.12 倍；$`243/59\approx4.1186`$ 只属于该样例；一手论文：[Singhal et al.](https://openreview.net/forum?id=G8LaO1P0xv) |
 
-**Spearman correlation（斯皮尔曼等级相关）**比较两个排序是否一致；1 表示完全同序。**\(R^2\)（决定系数）**描述给定回归在这组点上解释的变异比例。两者都不是“每个 pair 判对概率”。
+**Spearman correlation（斯皮尔曼等级相关）**比较两个排序是否一致；1 表示完全同序。**$`R^2`$（决定系数）**描述给定回归在这组点上解释的变异比例。两者都不是“每个 pair 判对概率”。
 
 ### 15.2 专家何时必要
 
@@ -655,13 +655,13 @@ BT 公式本身只写二选一。若允许 tie（平局），数据契约必须�
 
 ### 15.4 长度 hacking 小例
 
-若真实质量 \(q\in\{0,1\}\)，错误评分器却用
+若真实质量 $`q\in\{0,1\}`$，错误评分器却用
 
-\[
+```math
 \hat r=q+0.01\times\text{token数},
-\]
+```
 
-正确 20-token 答案得 \(1+0.2=1.2\)，错误 200-token 答案得 \(0+2=2\)。优化 \(\hat r\) 会选错误长答案，这就是 reward hacking 的一个玩具反例。
+正确 20-token 答案得 $`1+0.2=1.2`$，错误 200-token 答案得 $`0+2=2`$。优化 $`\hat r`$ 会选错误长答案，这就是 reward hacking 的一个玩具反例。
 
 <a id="l15-rlhf-ppo"></a>
 
@@ -689,11 +689,11 @@ PPO 更新 policy 与 value
 
 | 角色 | 人话 | 是否更新 |
 |---|---|---|
-| policy \(\pi_\theta\) | 当前正在学的生成模型 | 更新 |
-| old policy \(\pi_{\mathrm{old}}\) | 产生当前 rollout 的 policy 快照；放在 PPO ratio 分母 | 本批 update 中冻结 |
-| reference \(\pi_{\mathrm{ref}}\) | 冻结的起点，常由 SFT 模型复制 | 通常冻结 |
-| reward \(r_\phi\) | 给完整回答或部分轨迹打分 | PPO 阶段通常冻结 |
-| value \(V_\psi\) | 预测从当前位置起会得多少回报 | 更新 |
+| policy $`\pi_\theta`$ | 当前正在学的生成模型 | 更新 |
+| old policy $`\pi_{\mathrm{old}}`$ | 产生当前 rollout 的 policy 快照；放在 PPO ratio 分母 | 本批 update 中冻结 |
+| reference $`\pi_{\mathrm{ref}}`$ | 冻结的起点，常由 SFT 模型复制 | 通常冻结 |
+| reward $`r_\phi`$ | 给完整回答或部分轨迹打分 | PPO 阶段通常冻结 |
+| value $`V_\psi`$ | 预测从当前位置起会得多少回报 | 更新 |
 
 old policy 与 reference 不能混：
 
@@ -706,16 +706,16 @@ reward 是评分信号；value 是对未来回报的预测基线，也不能混�
 
 课程 p.51 的核心可简写为
 
-\[
+```math
 \mathbb E\left[
 r_\phi(x,y)
 -\beta\log\frac{\pi_\theta(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}
 \right],
-\]
+```
 
 另可混入预训练/SFT 项以减轻能力退化。
 
-- \(\beta>0\)：KL 约束强度；
+- $`\beta>0`$：KL 约束强度；
 - log-ratio 大：新策略比参考更偏爱该回答，代价更大；
 - 这是一条 response 级简写；实现常把 log-ratio 分解到 token。
 
@@ -723,26 +723,26 @@ r_\phi(x,y)
 
 ### 17.1 KL 的完整定义
 
-\[
+```math
 D_{\mathrm{KL}}(p\|q)
 =\sum_i p_i\ln\frac{p_i}{q_i}.
-\]
+```
 
-\(p\) 是新策略分布，\(q\) 是参考分布，\(i\) 枚举所有可能 token。它无单位，并满足 \(D_{\mathrm{KL}}\ge0\)，等号在两分布相同时成立。
+$`p`$ 是新策略分布，$`q`$ 是参考分布，$`i`$ 枚举所有可能 token。它无单位，并满足 $`D_{\mathrm{KL}}\ge0`$，等号在两分布相同时成立。
 
 ### 17.2 两 token 手算
 
-令 \(p=(0.75,0.25)\)，\(q=(0.5,0.5)\)：
+令 $`p=(0.75,0.25)`$，$`q=(0.5,0.5)`$：
 
-\[
+```math
 0.75\ln(1.5)+0.25\ln(0.5)
-\]
+```
 
-\[
+```math
 =0.75\times0.4055+0.25\times(-0.6931)
 =0.3041-0.1733
 =0.1308.
-\]
+```
 
 第二项为负，但加权总和为正。**单个 sampled token 的 log-ratio 可以负；不要把它误叫完整 KL。**
 
@@ -750,18 +750,18 @@ D_{\mathrm{KL}}(p\|q)
 
 自回归模型中
 
-\[
+```math
 \log\pi(y\mid x)=\sum_{t=1}^{T_y}\log\pi(y_t\mid x,y_{<t}).
-\]
+```
 
-若三个生成 token 的 policy/reference log-ratio 分别 0.2、-0.1、0.3，序列 log-ratio 是 \(0.2-0.1+0.3=0.4\)。若 \(\beta=0.05\)，该采样轨迹的 KL 风格代价为 \(0.05\times0.4=0.02\)。
+若三个生成 token 的 policy/reference log-ratio 分别 0.2、-0.1、0.3，序列 log-ratio 是 $`0.2-0.1+0.3=0.4`$。若 $`\beta=0.05`$，该采样轨迹的 KL 风格代价为 $`0.05\times0.4=0.02`$。
 
-若报告“每 token 平均”，则 \(0.4/3\approx0.1333\)，平均代价是 \(0.05\times0.1333\approx0.00667\)。sum 与 mean 都可能成为实现口径，但不能用一种训练、用另一种解释数值。response 越长，sum 往往累积更多；mean 会先除有效生成 token 数。prompt/padding 是否排除也必须声明。
+若报告“每 token 平均”，则 $`0.4/3\approx0.1333`$，平均代价是 $`0.05\times0.1333\approx0.00667`$。sum 与 mean 都可能成为实现口径，但不能用一种训练、用另一种解释数值。response 越长，sum 往往累积更多；mean 会先除有效生成 token 数。prompt/padding 是否排除也必须声明。
 
-### 17.4 \(\beta\) 的权衡
+### 17.4 $`\beta`$ 的权衡
 
-- \(\beta\) 太小：policy 容易跑远、钻 reward 漏洞；
-- \(\beta\) 太大：几乎被 reference 锁住，奖励难提升；
+- $`\beta`$ 太小：policy 容易跑远、钻 reward 漏洞；
+- $`\beta`$ 太大：几乎被 reference 锁住，奖励难提升；
 - 最佳值依模型、reward 尺度、数据和训练阶段而变，不是通用常数。
 
 ## 18. PPO 前置：policy gradient、return、value、advantage
@@ -781,35 +781,35 @@ D_{\mathrm{KL}}(p\|q)
 
 【补充解释】若某 token 导致比预期更好的结果，就增加其 log probability；更差则降低。抽象项：
 
-\[
+```math
 A_t\nabla_\theta\log\pi_\theta(a_t\mid s_t).
-\]
+```
 
-\(s_t\) 是状态，\(a_t\) 是 token 动作，\(A_t\) 是 advantage。它表达方向，不是说直接把概率加 \(A_t\)。
+$`s_t`$ 是状态，$`a_t`$ 是 token 动作，$`A_t`$ 是 advantage。它表达方向，不是说直接把概率加 $`A_t`$。
 
 原始 policy-gradient estimator 可能**高方差**：同一 prompt 重采几次，刚好抽到的好/坏回答不同，梯度差很大。另一个问题是 **off-policy reuse（离策略复用）**：数据由 old policy 采样，current 已改变，却还想复用这批数据。importance ratio（重要性比率）
 
-\[
+```math
 r_t=\frac{\pi_\theta(a_t|s_t)}{\pi_{\rm old}(a_t|s_t)}
-\]
+```
 
-把“old 多常见、current 多常见”的差别纳入权重。例如 old=0.2、current=0.3，ratio \(=1.5\)。它允许有限复用，不保证策略差很远时仍稳定；极端 ratio 会放大噪声。
+把“old 多常见、current 多常见”的差别纳入权重。例如 old=0.2、current=0.3，ratio $`=1.5`$。它允许有限复用，不保证策略差很远时仍稳定；极端 ratio 会放大噪声。
 
 ### 18.3 return 与 value
 
 **return（回报）**是从当前时刻往后奖励之和。若结尾 reward 为 3，每 token KL 代价依次 0.1、0.2，则从开头的回报可简化为
 
-\[
+```math
 3-0.1-0.2=2.7.
-\]
+```
 
-value \(V(s_t)\) 预测这个回报。若真实 return 为 3.0，value 预测 2.2，最简单 advantage：
+value $`V(s_t)`$ 预测这个回报。若真实 return 为 3.0，value 预测 2.2，最简单 advantage：
 
-\[
+```math
 A_t=3.0-2.2=0.8.
-\]
+```
 
-结果比预期好 0.8，应鼓励；若 return 为 1.7，则 \(A_t=1.7-2.2=-0.5\)，应压低。
+结果比预期好 0.8，应鼓励；若 return 为 1.7，则 $`A_t=1.7-2.2=-0.5`$，应压低。
 
 ### 18.4 为什么需要 baseline
 
@@ -823,11 +823,7 @@ A_t=3.0-2.2=0.8.
 
 1. **Policy gradient**：方向正确但样本方差高，且 old rollout 复用需要 importance ratio。
 2. **TRPO（Trust Region Policy Optimization）**：在 old policy 附近把目标作局部/一阶近似，最大化 ratio-weighted advantage，同时约束
-   \[
-   \widehat{\mathbb E}_t[
-   D_{\rm KL}(\pi_{\rm old}(\cdot|s_t)\|\pi_\theta(\cdot|s_t))]
-   \le\delta.
-   \]
+   $`\widehat{\mathbb E}_t[ D_{\rm KL}(\pi_{\rm old}(\cdot|s_t)\|\pi_\theta(\cdot|s_t))] \le\delta.`$
    这是 **old/current trust-region KL**，限制单次更新。
 3. **PPO**：用 ratio clipping 做更容易实现的近似简化，不再求解同样的显式受约束优化问题。
 
@@ -842,19 +838,19 @@ A_t=3.0-2.2=0.8.
 
 式中：
 
-- \(t\) 枚举当前采样 rollout 中的 state/action 位置；在语言模型里通常是生成 token 位置；
-- \(\widehat{\mathbb E}_t\) 不是“已知真实世界期望”，而是把这批采样位置上的数相加，再除以位置数的 **empirical mean（经验平均）**；
-- \(\delta>0\) 是允许的最大平均 KL budget（预算），无单位。
+- $`t`$ 枚举当前采样 rollout 中的 state/action 位置；在语言模型里通常是生成 token 位置；
+- $`\widehat{\mathbb E}_t`$ 不是“已知真实世界期望”，而是把这批采样位置上的数相加，再除以位置数的 **empirical mean（经验平均）**；
+- $`\delta>0`$ 是允许的最大平均 KL budget（预算），无单位。
 
 小例：三个采样位置的 old/current KL 是 0.006、0.010、0.008：
 
-\[
+```math
 \widehat{\mathbb E}_t[D_{KL}]
 =\frac{0.006+0.010+0.008}{3}
 =\frac{0.024}{3}=0.008.
-\]
+```
 
-若 \(\delta=0.01\)，则 \(0.008\le0.01\)，这批经验平均满足预算。它不保证每个位置都小于 0.01，也不保证未采样位置满足约束。
+若 $`\delta=0.01`$，则 $`0.008\le0.01`$，这批经验平均满足预算。它不保证每个位置都小于 0.01，也不保证未采样位置满足约束。
 
 ## 19. PPO ratio 与 clipping：四种情况全手算
 
@@ -862,50 +858,50 @@ A_t=3.0-2.2=0.8.
 
 PPO 在一批 rollout 上保存 old policy 概率，再更新 current policy。对 token：
 
-\[
+```math
 r_t(\theta)
 =\frac{\pi_\theta(a_t\mid s_t)}
 {\pi_{\theta_{\mathrm{old}}}(a_t\mid s_t)}.
-\]
+```
 
-- \(r_t=1\)：概率没变；
-- \(r_t=1.3\)：新概率是旧概率 1.3 倍；
-- \(r_t=0.7\)：降到 0.7 倍。
+- $`r_t=1`$：概率没变；
+- $`r_t=1.3`$：新概率是旧概率 1.3 倍；
+- $`r_t=0.7`$：降到 0.7 倍。
 
-若旧概率 0.2、新概率 0.26，则 ratio \(=0.26/0.2=1.3\)。
+若旧概率 0.2、新概率 0.26，则 ratio $`=0.26/0.2=1.3`$。
 
 ### 19.2 clipped objective
 
 【课程内容，PDF p.53】
 
-\[
+```math
 L^{\mathrm{clip}}_t
 =\min\left(
 r_tA_t,
-\operatorname{clip}(r_t,1-\epsilon,1+\epsilon)A_t
+\mathrm{clip}(r_t,1-\epsilon,1+\epsilon)A_t
 \right).
-\]
+```
 
-\(\epsilon\) 是允许变化带宽。若 \(\epsilon=0.2\)，clip 把 ratio 限到 [0.8,1.2] 后再乘 advantage。优化时希望这个 surrogate objective（代理目标）变大。
+$`\epsilon`$ 是允许变化带宽。若 $`\epsilon=0.2`$，clip 把 ratio 限到 [0.8,1.2] 后再乘 advantage。优化时希望这个 surrogate objective（代理目标）变大。
 
 代码通常最小化 loss，因此：
 
-\[
-\text{policy\_loss}=-\operatorname{mean}(L_t^{\rm clip}).
-\]
+```math
+\text{policy\_loss}=-\mathrm{mean}(L_t^{\rm clip}).
+```
 
-若两个有效 token 的 \(L^{clip}\) 为 2.4 和 \(-1.6\)，mean \(=(2.4-1.6)/2=0.4\)，policy loss \(=-0.4\)。optimizer 让 \(-0.4\) 更小，等价让 objective 0.4 更大。
+若两个有效 token 的 $`L^{clip}`$ 为 2.4 和 $`-1.6`$，mean $`=(2.4-1.6)/2=0.4`$，policy loss $`=-0.4`$。optimizer 让 $`-0.4`$ 更小，等价让 objective 0.4 更大。
 
 ### 19.3 四格手算
 
-| \(A_t\) | \(r_t\) | 原项 \(rA\) | clip 后项 | min | 含义 |
+| $`A_t`$ | $`r_t`$ | 原项 $`rA`$ | clip 后项 | min | 含义 |
 |---:|---:|---:|---:|---:|---|
-| 2 | 1.3 | 2.6 | \(1.2\times2=2.4\) | 2.4 | 好动作涨太多，封顶 |
-| -2 | 1.3 | -2.6 | \(1.2\times-2=-2.4\) | -2.6 | 坏动作还涨，不能获益 |
-| -2 | 0.7 | -1.4 | \(0.8\times-2=-1.6\) | -1.6 | 坏动作降太多，封顶 |
-| 2 | 0.7 | 1.4 | \(0.8\times2=1.6\) | 1.4 | 好动作反降，不能获益 |
+| 2 | 1.3 | 2.6 | $`1.2\times2=2.4`$ | 2.4 | 好动作涨太多，封顶 |
+| -2 | 1.3 | -2.6 | $`1.2\times-2=-2.4`$ | -2.6 | 坏动作还涨，不能获益 |
+| -2 | 0.7 | -1.4 | $`0.8\times-2=-1.6`$ | -1.6 | 坏动作降太多，封顶 |
+| 2 | 0.7 | 1.4 | $`0.8\times2=1.6`$ | 1.4 | 好动作反降，不能获益 |
 
-为什么负数时容易看错？因为 \(-2.6<-2.4\)，min 选更负的 -2.6。clip 不是简单“先把 ratio 截断，再永远用截断值”。
+为什么负数时容易看错？因为 $`-2.6<-2.4`$，min 选更负的 -2.6。clip 不是简单“先把 ratio 截断，再永远用截断值”。
 
 ### 19.4 clip 不等于 KL
 
@@ -947,7 +943,7 @@ PPO 可能同时持有或运行 policy、reference、reward、value，并需要 
 
 以下是结构伪代码；`sample`、`reward_model`、`gae`、mask 和 optimizer 都是占位：
 
-读代码前先认三项：`no_grad()` 表示块内只算数、不记录参数梯度；`masked_mse` 是只在有效 token 上算均方误差；\(c_v\ge0\) 是 value loss 的非负权重。代码后再逐项展开。
+读代码前先认三项：`no_grad()` 表示块内只算数、不记录参数梯度；`masked_mse` 是只在有效 token 上算均方误差；$`c_v\ge0`$ 是 value loss 的非负权重。代码后再逐项展开。
 
 ~~~python
 responses, old_logp = sample(policy, prompts)       # old rollout
@@ -973,8 +969,8 @@ reference KL 可放进 token reward 或 loss，具体实现要声明。old/refer
 伪代码词典：
 
 - `no_grad()`：在这个块里只做数值计算，不建立供反向传播使用的梯度图；reference/reward 的参数不会被这一步更新。
-- `masked_mse(pred,target)`：只在 mask=1 的有效 token 上算 squared error \((pred-target)^2\)，再除以有效 token 数。
-- \(c_v\ge0\)：value loss 的非负权重；\(c_v=0\) 表示这行总 loss 不训练 value，值越大表示更重视 value 拟合。
+- `masked_mse(pred,target)`：只在 mask=1 的有效 token 上算 squared error $`(pred-target)^2`$，再除以有效 token 数。
+- $`c_v\ge0`$：value loss 的非负权重；$`c_v=0`$ 表示这行总 loss 不训练 value，值越大表示更重视 value 拟合。
 - `...`：为缩短骨架而省略的真实参数，不是可直接运行的 Python。
 
 <a id="l15-dpo"></a>
@@ -1007,15 +1003,15 @@ prompt + [GOOD]
 
 ### 21.1 Best-of-N
 
-【课程内容，PDF p.54–55】对同一 prompt 从 policy 采样 \(N\) 个回答，再由 reward model/verifier 选最高分。
+【课程内容，PDF p.54–55】对同一 prompt 从 policy 采样 $`N`$ 个回答，再由 reward model/verifier 选最高分。
 
-若每个独立样本答对概率 \(p=0.3\)，至少一个答对的概率为
+若每个独立样本答对概率 $`p=0.3`$，至少一个答对的概率为
 
-\[
+```math
 1-(1-p)^N.
-\]
+```
 
-当 \(N=4\)：单个答错概率为 0.7；四个全错为 \(0.7^4=0.2401\)；至少一个正确为 \(1-0.2401=0.7599\)。
+当 $`N=4`$：单个答错概率为 0.7；四个全错为 $`0.7^4=0.2401`$；至少一个正确为 $`1-0.2401=0.7599`$。
 
 只有 verifier 能认出正确答案时，75.99% 才可能变成最终成功率。独立假设也可能不成立：同一模型的错误常相关。
 
@@ -1050,134 +1046,134 @@ prompt + [GOOD]
 
 DPO 使用固定离线数据：
 
-\[
+```math
 \mathcal D=\{(x_i,y_{w,i},y_{l,i})\}_{i=1}^{M}.
-\]
+```
 
-- \(M\)：完整离线 dataset 的 pair 总数；
-- \(x_i\)：prompt；
-- \(y_{w,i}\)：chosen/winner；
-- \(y_{l,i}\)：rejected/loser；
-- 完整 empirical objective 是 \(M\) 个 **pair losses 的 mean**，不是按两条回答的 token 数平均：
+- $`M`$：完整离线 dataset 的 pair 总数；
+- $`x_i`$：prompt；
+- $`y_{w,i}`$：chosen/winner；
+- $`y_{l,i}`$：rejected/loser；
+- 完整 empirical objective 是 $`M`$ 个 **pair losses 的 mean**，不是按两条回答的 token 数平均：
 
-\[
+```math
 L_{\mathcal D}=\frac1M\sum_{i=1}^{M}\ell_i.
-\]
+```
 
-训练时不会每步都装下全部 \(M\) 对。若当前 mini-batch 有 \(m\) 对，该 step 计算 \(m^{-1}\sum_{j=1}^{m}\ell_j\)；经过 shuffle/多个 steps 才覆盖完整 dataset。不能把完整数据量 \(M\) 与当前 mini-batch size \(m\) 写成同一个分母。
+训练时不会每步都装下全部 $`M`$ 对。若当前 mini-batch 有 $`m`$ 对，该 step 计算 $`m^{-1}\sum_{j=1}^{m}\ell_j`$；经过 shuffle/多个 steps 才覆盖完整 dataset。不能把完整数据量 $`M`$ 与当前 mini-batch size $`m`$ 写成同一个分母。
 
-数据通常由某个 behavior policy/多模型候选和标注协议产生。若当前 policy 跑到离线数据支持范围外，DPO 没有新在线标签纠正它。**support（支持集）**是数据分布给非零概率的区域；下面出现的 log-ratio 还要求 chosen/rejected 在 reference 下概率 \(>0\)，否则 \(\log0\) 不有限。
+数据通常由某个 behavior policy/多模型候选和标注协议产生。若当前 policy 跑到离线数据支持范围外，DPO 没有新在线标签纠正它。**support（支持集）**是数据分布给非零概率的区域；下面出现的 log-ratio 还要求 chosen/rejected 在 reference 下概率 $`>0`$，否则 $`\log0`$ 不有限。
 
 有限 logits 的数学 softmax 对词表每项给严格正概率；但计算机有限精度中，先算很小的 `exp(logit)` 或把大量 token 概率相乘，可能被舍入成 0。这叫 **underflow（下溢）**：真实正小数小到存储格式表示不了。防守方法是直接用稳定 `log_softmax` 得每 token log-prob，再对 response token 求和，不先把 sequence probability 乘出来再取 log。
 
 ### 22.2 从目标开始
 
-【课程内容，PDF p.56–58】对固定 prompt \(x\)，考虑
+【课程内容，PDF p.56–58】对固定 prompt $`x`$，考虑
 
-\[
+```math
 \max_{\pi}
 \sum_y \pi(y\mid x)
 \left[
 r(x,y)-\beta\ln\frac{\pi(y\mid x)}
 {\pi_{\mathrm{ref}}(y\mid x)}
 \right],
-\]
+```
 
-并要求 \(\sum_y\pi(y\mid x)=1\)。
+并要求 $`\sum_y\pi(y\mid x)=1`$。
 
-- \(\pi\)：待优化 policy；
-- \(\pi_{\mathrm{ref}}\)：冻结 reference；
-- \(r\)：reward；
-- \(\beta>0\)：参考约束强度；
-- \(y\)：所有可能 response。
+- $`\pi`$：待优化 policy；
+- $`\pi_{\mathrm{ref}}`$：冻结 reference；
+- $`r`$：reward；
+- $`\beta>0`$：参考约束强度；
+- $`y`$：所有可能 response。
 
 ### 22.3 加入概率和为 1 的约束
 
-**Lagrange multiplier（拉格朗日乘子）**是在目标中加一项来强制约束。令 \(\pi_y=\pi(y\mid x)\)：
+**Lagrange multiplier（拉格朗日乘子）**是在目标中加一项来强制约束。令 $`\pi_y=\pi(y\mid x)`$：
 
-\[
+```math
 \mathcal J
 =\sum_y \pi_y
 \left[
 r_y-\beta\ln\frac{\pi_y}{\pi_{\mathrm{ref},y}}
 \right]
 +\lambda\left(\sum_y\pi_y-1\right).
-\]
+```
 
 所需求导规则是
 
-\[
+```math
 \frac{d}{du}[u\ln u]=\ln u+1.
-\]
+```
 
 所以
 
-\[
+```math
 \frac{\partial\mathcal J}{\partial\pi_y}
 =r_y-\beta\left(
 \ln\frac{\pi_y}{\pi_{\mathrm{ref},y}}+1
 \right)+\lambda.
-\]
+```
 
 内部最优点坡度为 0：
 
-\[
+```math
 r_y-\beta\ln\frac{\pi_y}{\pi_{\mathrm{ref},y}}-\beta+\lambda=0.
-\]
+```
 
 移项：
 
-\[
+```math
 \ln\frac{\pi_y}{\pi_{\mathrm{ref},y}}
 =\frac{r_y}{\beta}+\frac{\lambda-\beta}{\beta}.
-\]
+```
 
-右边第二项对所有 \(y\) 相同，把它并入归一化常数 \(Z(x)\)：
+右边第二项对所有 $`y`$ 相同，把它并入归一化常数 $`Z(x)`$：
 
-\[
+```math
 \pi_r(y\mid x)
 =\frac{1}{Z(x)}
 \pi_{\mathrm{ref}}(y\mid x)
 \exp\left(\frac{r(x,y)}{\beta}\right),
-\]
+```
 
-\[
+```math
 Z(x)=\sum_y\pi_{\mathrm{ref}}(y\mid x)e^{r(x,y)/\beta}.
-\]
+```
 
-\(Z\) 让所有 response 概率和为 1。
+$`Z`$ 让所有 response 概率和为 1。
 
 ### 22.4 反解 reward
 
 取 log：
 
-\[
+```math
 \ln\frac{\pi_r(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}
 =\frac{r(x,y)}{\beta}-\ln Z(x).
-\]
+```
 
 因此
 
-\[
+```math
 r(x,y)
 =\beta\ln\frac{\pi_r(y\mid x)}
 {\pi_{\mathrm{ref}}(y\mid x)}
 +\beta\ln Z(x).
-\]
+```
 
-同一 prompt 的 chosen 与 rejected 共享 \(\beta\ln Z(x)\)，相减后消失：
+同一 prompt 的 chosen 与 rejected 共享 $`\beta\ln Z(x)`$，相减后消失：
 
-\[
+```math
 r_w-r_l
 =\beta\left[
 \ln\frac{\pi(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}
 -\ln\frac{\pi(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}
 \right].
-\]
+```
 
 ### 22.5 代回 BT
 
-\[
+```math
 L_{\mathrm{DPO}}
 =-\mathbb E
 \ln\sigma\left(
@@ -1190,94 +1186,92 @@ L_{\mathrm{DPO}}
 {\pi_{\mathrm{ref}}(y_l\mid x)}
 \right]
 \right).
-\]
+```
 
 DPO 鼓励 policy **相对 reference** 更偏爱 chosen。它的推导依赖固定 reference、KL 正则目标和 BT/logistic 偏好模型；不证明真实人类偏好完全服从这些假设。
 
 ### 22.6 nonparametric assumption 与有限网络边界
 
-PDF/视频推导先假设 \(\pi\) 是 **nonparametric（非参数化）**的：对每个 response 概率都能自由选择，可表达任意合法分布，因此 KL 正则目标能闭式解出
-\(\pi_r\propto\pi_{\rm ref}\exp(r/\beta)\)。
+PDF/视频推导先假设 $`\pi`$ 是 **nonparametric（非参数化）**的：对每个 response 概率都能自由选择，可表达任意合法分布，因此 KL 正则目标能闭式解出
+$`\pi_r\propto\pi_{\rm ref}\exp(r/\beta)`$。
 
-真实 Transformer 是有限参数网络：许多 response 概率由共享参数耦合，只能近似这个闭式分布；optimizer 也未必找到全局最优。故“DPO loss 可算”不等于“有限模型严格达到推导中的 \(\pi_r\)”。
+真实 Transformer 是有限参数网络：许多 response 概率由共享参数耦合，只能近似这个闭式分布；optimizer 也未必找到全局最优。故“DPO loss 可算”不等于“有限模型严格达到推导中的 $`\pi_r`$”。
 
 ## 23. DPO 数字例与长度问题
 
 ### 23.1 四个概率逐项算
 
-| | chosen \(y_w\) | rejected \(y_l\) |
+| | chosen $`y_w`$ | rejected $`y_l`$ |
 |---|---:|---:|
 | reference 概率 | 0.4 | 0.2 |
 | policy 概率 | 0.5 | 0.1 |
 
 chosen log-ratio：
 
-\[
+```math
 \ln(0.5/0.4)=\ln1.25=0.223143551.
-\]
+```
 
 rejected log-ratio：
 
-\[
+```math
 \ln(0.1/0.2)=\ln0.5=-0.693147181.
-\]
+```
 
 margin：
 
-\[
+```math
 0.223143551-(-0.693147181)=0.916290732.
-\]
+```
 
-设 \(\beta=0.5\)，DPO logit 为 \(0.5\times0.916290732=0.458145366\)。于是
+设 $`\beta=0.5`$，DPO logit 为 $`0.5\times0.916290732=0.458145366`$。于是
 
-\[
+```math
 \sigma(0.458145366)=0.612574113,\qquad
 -\ln0.612574113=0.490085343.
-\]
+```
 
-若 policy=reference，两个 log-ratio 都为 0，loss 为 \(-\ln0.5=0.6931\)。\(0.490085343<0.6931\)，所以本例 policy 相对 reference 的 chosen/rejected 排序更符合标签。
+若 policy=reference，两个 log-ratio 都为 0，loss 为 $`-\ln0.5=0.6931`$。$`0.490085343<0.6931`$，所以本例 policy 相对 reference 的 chosen/rejected 排序更符合标签。
 
 ### 23.2 response 概率是 token 条件概率乘积
 
 chosen 有两个 token，条件概率 0.5、0.4：
 
-\[
+```math
 \pi(y_w\mid x)=0.5\times0.4=0.2,
-\]
+```
 
-\[
+```math
 \ln\pi(y_w\mid x)=\ln0.5+\ln0.4
 \approx-0.6931-0.9163=-1.6094.
-\]
+```
 
 序列越长，log-probability 通常加得越负，所以一些 DPO 变体讨论长度归一化；但归一化会改变目标，不是无代价修复。
 
 ### 23.3 p.58 梯度权重：排错 pair 更新更大
 
-令 DPO margin/logit 为 \(z\)，loss \(-\log\sigma(z)\) 对 margin 的权重大小含 \(\sigma(-z)\)。直觉：
+令 DPO margin/logit 为 $`z`$，loss $`-\log\sigma(z)`$ 对 margin 的权重大小含 $`\sigma(-z)`$。直觉：
 
-- 已排错：\(z=-2\)，\(\sigma(-z)=\sigma(2)=0.8808\)，更新权重大；
-- 已排对且很自信：\(z=+2\)，\(\sigma(-2)=0.1192\)，更新权重小。
+- 已排错：$`z=-2`$，$`\sigma(-z)=\sigma(2)=0.8808`$，更新权重大；
+- 已排对且很自信：$`z=+2`$，$`\sigma(-2)=0.1192`$，更新权重小。
 
 两者梯度方向都提高 chosen relative log-prob、降低 rejected relative log-prob；差别是当前排得越错，修正越大。这是 PDF p.58 “higher weight when reward estimate is wrong”的含义，不是每个 pair 等权。
 
-### 23.4 \(\beta\) 两种看法必须调和
+### 23.4 $`\beta`$ 两种看法必须调和
 
-\(\beta\) 不是 optimizer learning rate。
+$`\beta`$ 不是 optimizer learning rate。
 
 1. 在 KL-regularized RL 目标
-   \[
-   \mathbb E[r]-\beta D_{\rm KL}(\pi\|\pi_{\rm ref})
-   \]
-   中，\(\beta\) 越大，reference 约束越强；闭式最优里的 \(e^{r/\beta}\) 越平，最优 policy 越靠 reference。
-2. 若**固定当前 policy/reference log-ratios 不变**，只观察 DPO logit \(z=\beta\Delta\)，增大 \(\beta\) 会把这个既定 margin 乘大。
-3. 但真实训练比较不同 \(\beta\) 时，所得最优 policy 也会变化；不能把第2点的“固定 margin 局部观察”冒充第1点的完整优化实验。
+   $`\mathbb E[r]-\beta D_{\rm KL}(\pi\|\pi_{\rm ref})`$
+   中，$`\beta`$ 越大，reference 约束越强；闭式最优里的 $`e^{r/\beta}`$ 越平，最优 policy 越靠 reference。
+2. 若**固定当前 policy/reference log-ratios 不变**，只观察 DPO logit $`z=\beta\Delta`$，增大 $`\beta`$ 会把这个既定 margin 乘大。
+3. 但真实训练比较不同 $`\beta`$ 时，所得最优 policy 也会变化；不能把第2点的“固定 margin 局部观察”冒充第1点的完整优化实验。
 
 learning rate 只控制参数一步走多大，不定义最终 KL 目标。
 
 ### 23.5 DPO 骨架伪代码
 
-读代码前先认三个名字：`dataloader` 每次从完整 \(M\)-pair 数据集交出一个 \(m\)-pair mini-batch；`no_grad()` 让冻结的 reference 只算数、不记录梯度；`logsigmoid(u)` 稳定计算 \(\log\sigma(u)\)。
+读代码前先认三个名字：`dataloader` 每次从完整 $`M`$-pair 数据集交出一个 $`m`$-pair mini-batch；`no_grad()` 让冻结的 reference 只算数、不记录梯度；`logsigmoid(u)` 稳定计算 $`\log\sigma(u)`$。
 
 ~~~python
 for pairs in dataloader:                 # x, chosen, rejected
@@ -1298,10 +1292,10 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 这里：
 
-- `dataloader`：把完整 \(M\)-pair dataset 打乱并逐次交出当前 \(m\)-pair mini-batch 的迭代器；
+- `dataloader`：把完整 $`M`$-pair dataset 打乱并逐次交出当前 $`m`$-pair mini-batch 的迭代器；
 - `no_grad()`：reference 只算 log-prob，不建立它的梯度图；
-- `logsigmoid(u)`：数值稳定地直接算 \(\log\sigma(u)\)，避免先算一个极接近 0 的 \(\sigma(u)\) 再取 log；
-- `.mean()`：本 step 除以当前 \(m\)，不是声称当前内存里有全部 \(M\)。完整 empirical objective 的 \(1/M\) 由遍历数据得到。
+- `logsigmoid(u)`：数值稳定地直接算 $`\log\sigma(u)`$，避免先算一个极接近 0 的 $`\sigma(u)`$ 再取 log；
+- `.mean()`：本 step 除以当前 $`m`$，不是声称当前内存里有全部 $`M`$。完整 empirical objective 的 $`1/M`$ 由遍历数据得到。
 
 ## 24. DPO 变体与经验结论边界
 
@@ -1313,8 +1307,8 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 总 log-probability 都是 -20：
 
-- 长度 10：每 token 平均 \(-20/10=-2\)；
-- 长度 20：每 token 平均 \(-20/20=-1\)。
+- 长度 10：每 token 平均 $`-20/10=-2`$；
+- 长度 20：每 token 平均 $`-20/20=-1`$。
 
 按总和和按平均会给不同排序。长度归一化减少 token 数效应，也可能引入新偏好，必须实测。
 
@@ -1407,7 +1401,7 @@ for pairs in dataloader:                 # x, chosen, rejected
 2. 固定评估集，训练 SFT baseline。
 3. 做数据源 ablation，不只堆总量。
 4. reward model 做 held-out pair accuracy、长度分层与人工审查。
-5. 用短训练和多个 \(\beta\) 做 sweep（超参数扫描）。
+5. 用短训练和多个 $`\beta`$ 做 sweep（超参数扫描）。
 6. 保存多个 checkpoint，按真实评估而非 reward 峰值选择。
 7. 扩大前复核成本、隐私和安全。
 
@@ -1417,7 +1411,7 @@ for pairs in dataloader:                 # x, chosen, rejected
 2. **“post-training 就是 RLHF。”** 还包括 SFT、安全、DPO、评估等。
 3. **“SFT 样本越多越好。”** 重复、错误、单一数据会放大偏差。
 4. **“prompt mask=0，所以模型看不到 prompt。”** mask 只控制 loss；prompt 仍是条件。
-5. **“mask 掉 prompt 就不用右移 label。”** 因果模型仍用位置 \(t\) 预测 \(t+1\)。
+5. **“mask 掉 prompt 就不用右移 label。”** 因果模型仍用位置 $`t`$ 预测 $`t+1`$。
 6. **“平均 loss 可直接比较。”** token/response/batch 分母可能不同。
 7. **“长答案表示能力强。”** 可能只是风格或 judge 偏差。
 8. **“SFT 绝不能教知识。”** 结论过强，取决于模型和数据。
@@ -1433,11 +1427,11 @@ for pairs in dataloader:                 # x, chosen, rejected
 18. **“PPO 永远先截 ratio 再乘 A。”** objective 取原项和截断项的 min。
 19. **“clip 保证模型绝不大改。”** 它只约束代理目标中的 sampled ratio。
 20. **“PPO 只涉及一个模型。”** 还有 reference、reward、value。
-21. **“Best-of-N 成功率一定是 \(1-(1-p)^N\)。”** 需独立且 verifier 能选对。
+21. **“Best-of-N 成功率一定是 $`1-(1-p)^N`$。”** 需独立且 verifier 能选对。
 22. **“后训练 rejection sampling 必然精确保持目标分布。”** 它常只是筛高分数据。
 23. **“原始 DPO 不需要 reference。”** 原始目标显式用 reference log-ratio。
 24. **“DPO 完全等同 PPO。”** 假设、数据和流程不同。
-25. **“DPO \(\beta\) 就是学习率。”** 一个调参考约束，一个调参数步长。
+25. **“DPO $`\beta`$ 就是学习率。”** 一个调参考约束，一个调参数步长。
 26. **“response 概率是 token 概率平均。”** 它是条件概率乘积，log 后求和。
 27. **“长度归一化总能修偏差。”** 它会改变目标。
 28. **“reward 一直升就一直变好。”** 可能 overoptimize。
@@ -1453,17 +1447,17 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 | 名称 | 公式 | 人话 |
 |---|---|---|
-| SFT | \(L=-\sum_t m_t\ln p_t/\sum_t m_t\) | 有效 assistant token 的平均负 log 概率 |
-| BT | \(P(w\succ l)=\sigma(r_w-r_l)\) | reward 差变成胜率 |
-| RM loss | \(-\ln\sigma(r_w-r_l)\) | chosen 胜率低则 loss 高 |
-| KL | \(\sum_i p_i\ln(p_i/q_i)\) | 新分布相对参考分布的平均差 |
-| 期望奖励 | \(\sum_y\pi_yR_y\) | 按生成概率加权奖励 |
-| advantage | \(A_t=G_t-V(s_t)\) | 实际回报比预测好多少 |
-| PPO ratio | \(r_t=\pi_\theta(a_t|s_t)/\pi_{\mathrm{old}}(a_t|s_t)\) | 新旧 token 概率倍数 |
-| PPO clip | \(\min(r_tA_t,\operatorname{clip}(r_t,1-\epsilon,1+\epsilon)A_t)\) | 限制有利方向大步 |
-| KL 最优策略 | \(\pi_r=\pi_{\mathrm{ref}}e^{r/\beta}/Z\) | reference 被 reward 指数倾斜 |
-| DPO margin | \(\beta[\ln(\pi_w/\pi_{\mathrm{ref},w})-\ln(\pi_l/\pi_{\mathrm{ref},l})]\) | 相对 reference 更偏 chosen 的程度 |
-| Best-of-N | \(1-(1-p)^N\) | 独立候选至少一个成功 |
+| SFT | $`L=-\sum_t m_t\ln p_t/\sum_t m_t`$ | 有效 assistant token 的平均负 log 概率 |
+| BT | $`P(w\succ l)=\sigma(r_w-r_l)`$ | reward 差变成胜率 |
+| RM loss | $`-\ln\sigma(r_w-r_l)`$ | chosen 胜率低则 loss 高 |
+| KL | $`\sum_i p_i\ln(p_i/q_i)`$ | 新分布相对参考分布的平均差 |
+| 期望奖励 | $`\sum_y\pi_yR_y`$ | 按生成概率加权奖励 |
+| advantage | $`A_t=G_t-V(s_t)`$ | 实际回报比预测好多少 |
+| PPO ratio | $`r_t=\pi_\theta(a_t\mid s_t)/\pi_{\mathrm{old}}(a_t\mid s_t)`$ | 新旧 token 概率倍数 |
+| PPO clip | $`\min(r_tA_t,\mathrm{clip}(r_t,1-\epsilon,1+\epsilon)A_t)`$ | 限制有利方向大步 |
+| KL 最优策略 | $`\pi_r=\pi_{\mathrm{ref}}e^{r/\beta}/Z`$ | reference 被 reward 指数倾斜 |
+| DPO margin | $`\beta[\ln(\pi_w/\pi_{\mathrm{ref},w})-\ln(\pi_l/\pi_{\mathrm{ref},l})]`$ | 相对 reference 更偏 chosen 的程度 |
+| Best-of-N | $`1-(1-p)^N`$ | 独立候选至少一个成功 |
 
 <a id="l15-questions"></a>
 
@@ -1481,7 +1475,7 @@ for pairs in dataloader:                 # x, chosen, rejected
 6. 【手算】两个 assistant token 概率 0.5、0.25，算 masked token-average SFT loss。
 7. 【错误诊断】第6题若有3个 prompt token，有人把 loss 和除以5，得到0.4159。错在哪里？
 8. 【手算】两条 response 长2和8 token。token-average 时各占多少权重？response-average 呢？
-9. 【shape】\(B=3,T=7,V=50\)，写 input IDs、logits、label、mask shape。
+9. 【shape】$`B=3,T=7,V=50`$，写 input IDs、logits、label、mask shape。
 10. 【判断解释】为什么 logits 与 labels 要右移一位？再用两枚回答 token 说明 teacher forcing 在训练第2枚 token 时喂什么、推理第2枚 token 时喂什么，以及第一枚推错后为何可能误差累积。
 11. 【错误诊断】一个 batch 的 assistant mask 全为0，直接除 mask.sum() 会发生什么？如何防守？
 12. 【手算】两张卡有效 token 分别2和8，local mean loss 分别1和3。正确 global token mean 是多少？简单平均 local mean 又是多少？
@@ -1506,8 +1500,8 @@ for pairs in dataloader:                 # x, chosen, rejected
 28. 【设计】偏好 rubric 至少写出四个比较维度和一种平局协议。
 29. 【分类】pair-average、response-average、token-average 的分母分别是什么？
 30. 【错误诊断】把 chosen/rejected 写反，会怎样推动 reward model 与 DPO？
-31. 【手算】BT 中 \(r_w=r_l\)，chosen 胜率和 loss 各是多少？
-32. 【手算】\(r_w=2,r_l=0.5\)，用 \(e^{-1.5}=0.2231\) 算胜率与 loss。
+31. 【手算】BT 中 $`r_w=r_l`$，chosen 胜率和 loss 各是多少？
+32. 【手算】$`r_w=2,r_l=0.5`$，用 $`e^{-1.5}=0.2231`$ 算胜率与 loss。
 33. 【推导】把第32题两 reward 都加100，证明胜率不变。
 34. 【手算】两个 pair 的 RM loss 为0.2、0.8，batch pair-average 是多少？
 35. 【判断解释】BT reward 10 能否解释成 reward 1 的“十倍质量”？
@@ -1515,27 +1509,27 @@ for pairs in dataloader:                 # x, chosen, rejected
 ### C. 反馈、RLHF、KL 与 PPO（36–58）
 
 36. 【判断解释】A>B、B>C、C>A 的循环偏好说明 BT 单轴假设有什么限制？
-37. 【手算】评分器 \(\hat r=q+0.01L\)。正确20-token回答 \(q=1\) 与错误200-token回答 \(q=0\) 各得多少？
+37. 【手算】评分器 $`\hat r=q+0.01L`$。正确20-token回答 $`q=1`$ 与错误200-token回答 $`q=0`$ 各得多少？
 38. 【设计】标注数据应报告哪四类劳动/代表性信息？
 39. 【判断解释】AI feedback 能扩规模，为什么仍不能代替独立人类验证？
 40. 【分类】policy、old policy、reference、reward、value 五个角色分别做什么？本批 update 谁更新？
 41. 【判断解释】old policy 与 reference 为什么不是同一个概念？
 42. 【判断解释】reward 与 value 为什么不是同一个模型角色？
-43. 【手算】\(p=(0.75,0.25),q=(0.5,0.5)\)，完整计算 \(D_{\mathrm{KL}}(p\|q)\)。
+43. 【手算】$`p=(0.75,0.25),q=(0.5,0.5)`$，完整计算 $`D_{\mathrm{KL}}(p\|q)`$。
 44. 【判断解释】第43题第二项为负，为什么不能说 KL 为负？
 45. 【手算】三个 token log-ratio 为0.2、-0.1、0.3，算 sequence sum 和每-token mean。
-46. 【手算】第45题 \(\beta=0.05\)，按 sum 和按 mean 的代价各是多少？
+46. 【手算】第45题 $`\beta=0.05`$，按 sum 和按 mean 的代价各是多少？
 47. 【手算】终点 reward=3，两个 token KL 代价0.1、0.2，简化 return 是多少？
 48. 【手算】真实 return=3、value=2.2，advantage 是多少？return=1.7时呢？
 49. 【判断解释】绝对 reward 8 不一定比 reward 3 的 advantage 大，为什么？
 50. 【手算】old probability=0.2，new probability=0.26，PPO ratio 是多少？
-51. 【手算】\(\epsilon=0.2,A=2,r=1.3\)，算 PPO 两项和 min。
-52. 【手算】\(\epsilon=0.2,A=-2,r=1.3\)，算两项和 min。
-53. 【手算】\(\epsilon=0.2,A=-2,r=0.7\)，算两项和 min。
-54. 【手算】\(\epsilon=0.2,A=2,r=0.7\)，算两项和 min。
-55. 【手算】\(\epsilon=0.1\) 时 clip 区间是什么？ratio=1.25会被截成多少？
+51. 【手算】$`\epsilon=0.2,A=2,r=1.3`$，算 PPO 两项和 min。
+52. 【手算】$`\epsilon=0.2,A=-2,r=1.3`$，算两项和 min。
+53. 【手算】$`\epsilon=0.2,A=-2,r=0.7`$，算两项和 min。
+54. 【手算】$`\epsilon=0.2,A=2,r=0.7`$，算两项和 min。
+55. 【手算】$`\epsilon=0.1`$ 时 clip 区间是什么？ratio=1.25会被截成多少？
 56. 【错误诊断】为什么“永远先 clip ratio，再乘 advantage”不是 PPO 公式？
-57. 【分类+手算】TRPO trust-region KL、PPO clip 与 RLHF reference KL 分别比较/约束什么？TRPO 中 \(\widehat{\mathbb E}_t\)、\(t\)、\(\delta\) 各是什么？KL 为 0.006、0.010、0.008，\(\delta=0.01\) 时是否满足经验平均预算？
+57. 【分类+手算】TRPO trust-region KL、PPO clip 与 RLHF reference KL 分别比较/约束什么？TRPO 中 $`\widehat{\mathbb E}_t`$、$`t`$、$`\delta`$ 各是什么？KL 为 0.006、0.010、0.008，$`\delta=0.01`$ 时是否满足经验平均预算？
 58. 【排序】把 rollout、reward/reference/value 计算、advantage、PPO update、刷新 rollout 按先后排序。
 
 ### D. Best-of-N、DPO 与替代路线（59–70）
@@ -1545,13 +1539,13 @@ for pairs in dataloader:                 # x, chosen, rejected
 61. 【手算】100 prompts，每个生成8条、保留2条：共生成多少、最多留下多少？
 62. 【判断解释】expert iteration 中模型从不生成正确候选，筛选器能否凭空补出？
 63. 【分类】RLVR 在本讲是完整主讲还是下一讲预告？另写 control-token pair 的两条训练序列和推理前缀；为什么都没有完整目标保证？
-64. 【推导】从 \(\pi_r=\pi_{\rm ref}e^{r/\beta}/Z\) 反解 reward，并说明 chosen-rejected 相减时什么消失。
-65. 【手算】reference chosen/rejected=0.4/0.2，policy=0.5/0.1，\(\beta=0.5\)，算两个 log-ratio、margin、DPO logit、概率和 loss。
+64. 【推导】从 $`\pi_r=\pi_{\rm ref}e^{r/\beta}/Z`$ 反解 reward，并说明 chosen-rejected 相减时什么消失。
+65. 【手算】reference chosen/rejected=0.4/0.2，policy=0.5/0.1，$`\beta=0.5`$，算两个 log-ratio、margin、DPO logit、概率和 loss。
 66. 【手算】policy=reference 时，DPO margin、概率、loss 各是多少？
 67. 【手算】两-token response 条件概率0.5、0.4，算 sequence probability 与 log-probability。
 68. 【判断解释】为什么长 response 的 log-probability 总和通常更负？长度归一化为何不是免费修复？
-69. 【分类】DPO \(\beta\) 与 optimizer learning rate 分别控制什么？为什么“固定 margin 看 logit”与“比较不同 \(\beta\) 的最优 policy”不可混？
-70. 【判断解释】DPO 推导依赖哪些关键假设、support 条件与平均单位？完整 dataset 有 \(M\) 对、当前 mini-batch 有 \(m\) 对时，两种 mean 各除什么？为何不能说它与 PPO 在所有设置完全等价？
+69. 【分类】DPO $`\beta`$ 与 optimizer learning rate 分别控制什么？为什么“固定 margin 看 logit”与“比较不同 $`\beta`$ 的最优 policy”不可混？
+70. 【判断解释】DPO 推导依赖哪些关键假设、support 条件与平均单位？完整 dataset 有 $`M`$ 对、当前 mini-batch 有 $`m`$ 对时，两种 mean 各除什么？为何不能说它与 PPO 在所有设置完全等价？
 
 ### E. 失败诊断与综合设计（71–80）
 
@@ -1574,29 +1568,29 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 1. 用户问题=prompt；完整助手回答=response；一个词元=token；工具观察全过程=trajectory；一次并行的8条样本=batch。
 
-2. 更新式是 \(2-0.1\times0.3\)。先算 \(0.1\times0.3=0.03\)，再算 \(2-0.03=1.97\)。
+2. 更新式是 $`2-0.1\times0.3`$。先算 $`0.1\times0.3=0.03`$，再算 $`2-0.03=1.97`$。
 
-3. \(p=1\)：\(-\ln1=0\)。\(p=0.5\)：\(-\ln0.5=0.6931\)。\(p=0.25\)：\(-\ln0.25=1.3863\)。
+3. $`p=1`$：$`-\ln1=0`$。$`p=0.5`$：$`-\ln0.5=0.6931`$。$`p=0.25`$：$`-\ln0.25=1.3863`$。
 
-4. 一份合格 mask 是 \(0,0,0,1,1\)。三个0对应 user标记、问题、assistant标记；两个1对应答案与 end。若项目选择不训练 end，最后也可为0，但协议必须声明。
+4. 一份合格 mask 是 $`0,0,0,1,1`$。三个0对应 user标记、问题、assistant标记；两个1对应答案与 end。若项目选择不训练 end，最后也可为0，但协议必须声明。
 
 5. 不是。prompt token 仍进入 forward，影响 assistant 概率；mask=0 只让该位置的预测错误不进入 SFT loss。
 
-6. 两项 loss 为0.6931、1.3863；和为2.0794；有效 token 数2；所以 \(2.0794/2=1.0397\)。
+6. 两项 loss 为0.6931、1.3863；和为2.0794；有效 token 数2；所以 $`2.0794/2=1.0397`$。
 
-7. 分母应是 \(\sum m_t=2\)，即有效 assistant token 数，不是整条序列5个 token。0.4159 是用错误分母稀释出的数。
+7. 分母应是 $`\sum m_t=2`$，即有效 assistant token 数，不是整条序列5个 token。0.4159 是用错误分母稀释出的数。
 
-8. token-average：A \(2/(2+8)=20\%\)，B \(8/10=80\%\)。response-average：先各自平均，两条各 \(1/2=50\%\)。
+8. token-average：A $`2/(2+8)=20\%`$，B $`8/10=80\%`$。response-average：先各自平均，两条各 $`1/2=50\%`$。
 
 9. input IDs [3,7]；logits [3,7,50]；label [3,7]；mask [3,7]。
 
-10. 因果模型在读到前缀位置 \(t\) 后预测下一枚 \(t+1\)。若不右移，会把当前位置输入与当前位置 label 错位成“看见答案再预测自己”。设 gold 回答是 token1=`4`、token2=`。`：训练预测 token2 时喂的是 prompt+**gold `4`**；推理预测 token2 时喂的是 prompt+**模型自己生成的 token1**。若第一步错成 `5`，第二步就在 prompt+`5` 这个不同前缀上继续，错误可能累积；这就是 teacher forcing 的 exposure mismatch 边界。
+10. 因果模型在读到前缀位置 $`t`$ 后预测下一枚 $`t+1`$。若不右移，会把当前位置输入与当前位置 label 错位成“看见答案再预测自己”。设 gold 回答是 token1=`4`、token2=`。`：训练预测 token2 时喂的是 prompt+**gold `4`**；推理预测 token2 时喂的是 prompt+**模型自己生成的 token1**。若第一步错成 `5`，第二步就在 prompt+`5` 这个不同前缀上继续，错误可能累积；这就是 teacher forcing 的 exposure mismatch 边界。
 
 11. 分母为0，会得到除零、NaN 或异常。应在数据构造时保证至少一个 assistant token，并在训练中断言 mask.sum()>0；无有效标签的样本应丢弃或单独处理。
 
-12. 总 loss 和是 \(2\times1+8\times3=26\)，总 token 10，所以正确 global mean \(=26/10=2.6\)。简单平均 local means 得 \((1+3)/2=2\)，错误地让2-token卡与8-token卡等权。
+12. 总 loss 和是 $`2\times1+8\times3=26`$，总 token 10，所以正确 global mean $`=26/10=2.6`$。简单平均 local means 得 $`(1+3)/2=2`$，错误地让2-token卡与8-token卡等权。
 
-13. \(4\times8=32\) 条。每条 response 长度和 mask 可不同，所以32条不能确定 assistant token 总数。
+13. $`4\times8=32`$ 条。每条 response 长度和 mask 可不同，所以32条不能确定 assistant token 总数。
 
 14. 用户要求是 prompt；调用天气工具与计算是 actions；20°C 是 observation；68°F 是 final response。
 
@@ -1618,13 +1612,13 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 22. Run A：base→同一SFT；Run B：base→mid-training→同一SFT。固定模型、SFT、评估和尽量相同总计算，并重复 seed；差值才较能归于 mid-training。
 
-23. 起点：\(0.7\times1+0.3\times3=0.7+0.9=1.6\)。更新后：\(0.4\times1+0.6\times3=0.4+1.8=2.2\)。
+23. 起点：$`0.7\times1+0.3\times3=0.7+0.9=1.6`$。更新后：$`0.4\times1+0.6\times3=0.4+1.8=2.2`$。
 
 24. imitation 直接用数据中的示范 response；reward optimization 评估并推动当前 policy 采样的 response。
 
 25. 候选可用测试或规则逐一筛，往往比一次构造答案容易。但 verifier 可能漏边界或被投机利用，通过检查不等于完整满足意图。
 
-26. \(\binom52=5\times4/2=10\) 对。
+26. $`\binom52=5\times4/2=10`$ 对。
 
 27. 不是。它们共享同一 prompt、候选、排序者，误差相关；不能当10个独立人的判断。
 
@@ -1634,13 +1628,13 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 30. 奖励模型会把 rejected 分数推高、chosen 推低；DPO 会让 policy 相对 reference 更偏 rejected。方向完全反了。
 
-31. 差为0，\(\sigma(0)=1/(1+1)=0.5\)；loss \(=-\ln0.5=0.6931\)。
+31. 差为0，$`\sigma(0)=1/(1+1)=0.5`$；loss $`=-\ln0.5=0.6931`$。
 
-32. 差 \(=2-0.5=1.5\)。胜率 \(=1/(1+0.2231)=1/1.2231\approx0.8176\)。loss \(=-\ln0.8176\approx0.2014\)。
+32. 差 $`=2-0.5=1.5`$。胜率 $`=1/(1+0.2231)=1/1.2231\approx0.8176`$。loss $`=-\ln0.8176\approx0.2014`$。
 
-33. 新差 \((2+100)-(0.5+100)=102-100.5=1.5\)，与原差相同，所以 sigmoid 胜率仍0.8176。
+33. 新差 $`(2+100)-(0.5+100)=102-100.5=1.5`$，与原差相同，所以 sigmoid 胜率仍0.8176。
 
-34. \((0.2+0.8)/2=0.5\)。
+34. $`(0.2+0.8)/2=0.5`$。
 
 35. 不能。reward 无物理单位，BT 只看差；缩放、平移和训练协议都会改变数值意义。
 
@@ -1648,7 +1642,7 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 36. 单个标量难以稳定表示循环、多轴和人群依赖的偏好；BT 是有用近似，不是真实偏好定律。
 
-37. 正确短答：\(1+0.01\times20=1.2\)。错误长答：\(0+0.01\times200=2.0\)。错误回答反而赢，展示长度 hacking。
+37. 正确短答：$`1+0.01\times20=1.2`$。错误长答：$`0+0.01\times200=2.0`$。错误回答反而赢，展示长度 hacking。
 
 38. 例：标注员群体/语言与地区、报酬和时间预算、培训与资格、分歧/平局/复核、心理风险。任四项。
 
@@ -1662,56 +1656,56 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 43. 计算如下：
 
-\[
+```math
 0.75\ln(0.75/0.5)+0.25\ln(0.25/0.5)
-\]
+```
 
-\[
+```math
 =0.75\ln1.5+0.25\ln0.5
 =0.75(0.4055)+0.25(-0.6931)
-\]
+```
 
-\[
+```math
 =0.3041-0.1733=0.1308.
-\]
+```
 
-44. 第二个 token 上 \(p<q\)，所以 log-ratio 为负；KL 是所有 token 按 \(p_i\) 加权后的和，完整和0.1308仍非负。
+44. 第二个 token 上 $`p<q`$，所以 log-ratio 为负；KL 是所有 token 按 $`p_i`$ 加权后的和，完整和0.1308仍非负。
 
-45. sum \(=0.2-0.1+0.3=0.4\)。mean \(=0.4/3=0.1333\)。
+45. sum $`=0.2-0.1+0.3=0.4`$。mean $`=0.4/3=0.1333`$。
 
-46. sum 口径：\(0.05\times0.4=0.02\)。mean 口径：\(0.05\times0.1333\approx0.00667\)。二者不可混报。
+46. sum 口径：$`0.05\times0.4=0.02`$。mean 口径：$`0.05\times0.1333\approx0.00667`$。二者不可混报。
 
-47. \(3-0.1-0.2=2.7\)。
+47. $`3-0.1-0.2=2.7`$。
 
-48. 第一种 \(3-2.2=0.8\)；第二种 \(1.7-2.2=-0.5\)。
+48. 第一种 $`3-2.2=0.8`$；第二种 $`1.7-2.2=-0.5`$。
 
 49. advantage 看“比该状态预期好多少”。8相对7.5只好0.5；3相对1好2，所以绝对 reward 小的反而 advantage 大。
 
-50. \(0.26/0.2=1.3\)。
+50. $`0.26/0.2=1.3`$。
 
-51. 原项 \(1.3\times2=2.6\)；clip 后 \(1.2\times2=2.4\)；min=2.4。
+51. 原项 $`1.3\times2=2.6`$；clip 后 $`1.2\times2=2.4`$；min=2.4。
 
-52. 原项 \(1.3\times(-2)=-2.6\)；clip 后 \(1.2\times(-2)=-2.4\)；min=-2.6。
+52. 原项 $`1.3\times(-2)=-2.6`$；clip 后 $`1.2\times(-2)=-2.4`$；min=-2.6。
 
-53. 原项 \(0.7\times(-2)=-1.4\)；clip 后 \(0.8\times(-2)=-1.6\)；min=-1.6。
+53. 原项 $`0.7\times(-2)=-1.4`$；clip 后 $`0.8\times(-2)=-1.6`$；min=-1.6。
 
-54. 原项 \(0.7\times2=1.4\)；clip 后 \(0.8\times2=1.6\)；min=1.4。
+54. 原项 $`0.7\times2=1.4`$；clip 后 $`0.8\times2=1.6`$；min=1.4。
 
-55. 区间 \([1-0.1,1+0.1]=[0.9,1.1]\)。1.25 截为1.1；最终仍需与未截项取 min。
+55. 区间 $`[1-0.1,1+0.1]=[0.9,1.1]`$。1.25 截为1.1；最终仍需与未截项取 min。
 
-56. PPO 是 \(\min(rA,\operatorname{clip}(r)A)\)。负 \(A\) 会翻转大小关系；若永远只用 clip 项，会错误奖励某些不利大改。
+56. PPO 是 $`\min(rA,\mathrm{clip}(r)A)`$。负 $`A`$ 会翻转大小关系；若永远只用 clip 项，会错误奖励某些不利大改。
 
-57. TRPO trust-region KL 比较 old/current 的整分布，并把本次更新限制在 old 附近；PPO clip 则截住这批 sampled action 的 current/old probability ratio，是较易实现的局部近似；RLHF reference KL 比较 current 与长期冻结 reference，限制多轮训练后的累计漂移。前两者围绕“本次 update 相对 old”，后者围绕“长期相对 reference”。\(t\) 是采样 rollout 的位置，\(\widehat{\mathbb E}_t\) 是这些位置的经验平均，\(\delta>0\) 是最大平均 KL 预算。手算：\((0.006+0.010+0.008)/3=0.024/3=0.008\le0.01\)，所以该批经验平均满足预算；不表示每个未采样位置都满足。
+57. TRPO trust-region KL 比较 old/current 的整分布，并把本次更新限制在 old 附近；PPO clip 则截住这批 sampled action 的 current/old probability ratio，是较易实现的局部近似；RLHF reference KL 比较 current 与长期冻结 reference，限制多轮训练后的累计漂移。前两者围绕“本次 update 相对 old”，后者围绕“长期相对 reference”。$`t`$ 是采样 rollout 的位置，$`\widehat{\mathbb E}_t`$ 是这些位置的经验平均，$`\delta>0`$ 是最大平均 KL 预算。手算：$`(0.006+0.010+0.008)/3=0.024/3=0.008\le0.01`$，所以该批经验平均满足预算；不表示每个未采样位置都满足。
 
 58. rollout → reward/reference/value 计算 → advantage → PPO update → 用新 policy 刷新 rollout。
 
 ### D. Best-of-N、DPO 与替代路线答案（59–70）
 
-59. 全错概率 \(=(1-0.3)^4=0.7^4=0.2401\)；至少一中 \(=1-0.2401=0.7599\)。
+59. 全错概率 $`=(1-0.3)^4=0.7^4=0.2401`$；至少一中 $`=1-0.2401=0.7599`$。
 
 60. 它假设四次独立、同成功率，而且 verifier 能选中正确候选。真实同模型错误相关，评分器也会错。
 
-61. 生成 \(100\times8=800\) 条；保留最多 \(100\times2=200\) 条。
+61. 生成 $`100\times8=800`$ 条；保留最多 $`100\times2=200`$ 条。
 
 62. 不能。筛选只能从已生成候选中选；需改善探索、teacher、prompt 或 verifier。
 
@@ -1719,29 +1713,29 @@ for pairs in dataloader:                 # x, chosen, rejected
 
 64. 取 log：
 
-\[
+```math
 \ln\pi_r=\ln\pi_{\rm ref}+r/\beta-\ln Z.
-\]
+```
 
 移项：
 
-\[
+```math
 r=\beta\ln(\pi_r/\pi_{\rm ref})+\beta\ln Z.
-\]
+```
 
-同一 prompt 下 \(Z(x)\) 相同，所以 \(r_w-r_l\) 中两个 \(\beta\ln Z\) 抵消。
+同一 prompt 下 $`Z(x)`$ 相同，所以 $`r_w-r_l`$ 中两个 $`\beta\ln Z`$ 抵消。
 
-65. chosen：\(\ln(0.5/0.4)=0.223143551\)。rejected：\(\ln(0.1/0.2)=-0.693147181\)。margin \(=0.223143551-(-0.693147181)=0.916290732\)。logit \(=0.5\times0.916290732=0.458145366\)。概率 \(\sigma(0.458145366)=0.612574113\)。loss \(=-\ln0.612574113=0.490085343\)。
+65. chosen：$`\ln(0.5/0.4)=0.223143551`$。rejected：$`\ln(0.1/0.2)=-0.693147181`$。margin $`=0.223143551-(-0.693147181)=0.916290732`$。logit $`=0.5\times0.916290732=0.458145366`$。概率 $`\sigma(0.458145366)=0.612574113`$。loss $`=-\ln0.612574113=0.490085343`$。
 
-66. 两个 log-ratio 都0，margin=0，\(\sigma(0)=0.5\)，loss=0.6931。
+66. 两个 log-ratio 都0，margin=0，$`\sigma(0)=0.5`$，loss=0.6931。
 
-67. probability \(=0.5\times0.4=0.2\)。log \(=\ln0.5+\ln0.4=-0.6931-0.9163=-1.6094\)。
+67. probability $`=0.5\times0.4=0.2`$。log $`=\ln0.5+\ln0.4=-0.6931-0.9163=-1.6094`$。
 
 68. 每个条件概率不大于1，其 log 通常非正；token 越多，和会继续变负。除以长度改变了目标，可能偏向另一种长度，不能保证解决真实偏好。
 
-69. KL 目标中 \(\beta\) 越大，最终最优 policy 通常越受 reference 约束；固定当前 margin 时，DPO logit 又是 \(\beta\times margin\)。但改 \(\beta\) 后训练得到的 margin 也会变，不能冻结它来推断完整最优解。learning rate 只控制 optimizer 单步参数变化。
+69. KL 目标中 $`\beta`$ 越大，最终最优 policy 通常越受 reference 约束；固定当前 margin 时，DPO logit 又是 $`\beta\times margin`$。但改 $`\beta`$ 后训练得到的 margin 也会变，不能冻结它来推断完整最优解。learning rate 只控制 optimizer 单步参数变化。
 
-70. 依赖固定 reference、KL 正则化目标、BT/logistic 偏好模型、nonparametric 闭式解假设和给定 offline pairs；chosen/rejected 在 reference 下须有正、可计算的 log-prob，有限网络只能近似。完整 empirical objective 对全部 \(M\) 对除以 \(M\)；一个训练 step 的 `.mean()` 只对当前 \(m\) 对除以 \(m\)。真实偏好、在线采样与 PPO dynamics 不必满足这些假设，因此不能称完全等价。
+70. 依赖固定 reference、KL 正则化目标、BT/logistic 偏好模型、nonparametric 闭式解假设和给定 offline pairs；chosen/rejected 在 reference 下须有正、可计算的 log-prob，有限网络只能近似。完整 empirical objective 对全部 $`M`$ 对除以 $`M`$；一个训练 step 的 `.mean()` 只对当前 $`m`$ 对除以 $`m`$。真实偏好、在线采样与 PPO dynamics 不必满足这些假设，因此不能称完全等价。
 
 ### E. 失败诊断与综合设计答案（71–80）
 
@@ -1749,7 +1743,7 @@ r=\beta\ln(\pi_r/\pi_{\rm ref})+\beta\ln Z.
 
 72. 可能 mode collapse。对同 prompt 多次采样，统计独特回答、重复片段、语义簇和任务成功率；还应跨 prompt 看模板重复。
 
-73. \(60/100=0.60=60\%\)。声明80%但长期只对60%，模型过度自信、未校准。
+73. $`60/100=0.60=60\%`$。声明80%但长期只对60%，模型过度自信、未校准。
 
 74. 不是固定税率，也不是必然。对 base、SFT、偏好模型用同协议测能力、安全、帮助、长度、校准和成本，报告差值与不确定性。
 
@@ -1761,16 +1755,16 @@ r=\beta\ln(\pi_r/\pi_{\rm ref})+\beta\ln Z.
 
 78. token-average：
 
-\[
+```math
 \frac{2\times1+8\times3}{2+8}
 =\frac{26}{10}=2.6.
-\]
+```
 
 response-average：
 
-\[
+```math
 (1+3)/2=2.
-\]
+```
 
 79. 观察到的现象名是 **reward overoptimization（奖励过度优化）**：proxy 上升而人工质量下降。reward hacking 只是可能机制；只有发现模型利用评分漏洞的证据时才这样诊断。防守例：独立人工盲审；长度分层/分布外测试；多个 checkpoint 早停；独立评估器；加 KL 约束。任三项。
 
@@ -1783,7 +1777,7 @@ response-average：
    5. 保存 SFT baseline；
    6. 同 prompt 采多个 response；
    7. 用答案 verifier 与人类 rubric 产生 pair，BT/DPO 按 pair 平均；
-   8. 若 DPO，锁定 reference 与 \(\beta\)；若 PPO，记录五角色及 token/sequence 分母；
+   8. 若 DPO，锁定 reference 与 $`\beta`$；若 PPO，记录五角色及 token/sequence 分母；
    9. 保存多 checkpoint；
    10. 在未参与训练的题上测正确性、长度、安全、校准、多样性和成本；
    11. 人工审查高 reward 失败；
@@ -2024,10 +2018,10 @@ response-average：
 
 ### 32.1 公式页视觉核对结果
 
-- PDF p.51：确认 reward 减 \(\beta\) 乘 policy/reference log-ratio，并另含可选 pretraining 项；没有把 old policy 当 reference。
-- PDF p.52：确认 BT loss 使用 \(r(x,y_w)-r(x,y_l)\)，chosen 在前；并区分 token KL 与 value function。
+- PDF p.51：确认 reward 减 $`\beta`$ 乘 policy/reference log-ratio，并另含可选 pretraining 项；没有把 old policy 当 reference。
+- PDF p.52：确认 BT loss 使用 $`r(x,y_w)-r(x,y_l)`$，chosen 在前；并区分 token KL 与 value function。
 - PDF p.53：确认 PPO surrogate 是原项与 clipped 项取 min；因此 §19 对正、负 advantage 分四格计算。
-- PDF p.56：确认最优策略为 \(\pi_{\rm ref}\exp(r/\beta)/Z\)，反解 reward 后有同 prompt 的 \(\beta\log Z(x)\)。
+- PDF p.56：确认最优策略为 $`\pi_{\rm ref}\exp(r/\beta)/Z`$，反解 reward 后有同 prompt 的 $`\beta\log Z(x)`$。
 - PDF p.57：确认 DPO 是 chosen relative log-ratio 减 rejected relative log-ratio，方向未反。
 - PDF p.58：确认 gradient 权重随当前 preference margin 改变，不能解释成所有 pair 等权。
 - PDF p.60：确认展示多种具体目标/长度处理，不是“长度归一化必胜”的定律。
@@ -2139,16 +2133,16 @@ chosen必须在前；reference与old分开；KL sum/mean写清；PPO正负A分�
 
 ### 34.2 你现在应能独立完成
 
-- 给 chat transcript 写 assistant-only mask，并用 \(\sum m_t\) 作分母；
+- 给 chat transcript 写 assistant-only mask，并用 $`\sum m_t`$ 作分母；
 - 区分 prompt、response、token、trajectory、pair 和 batch；
 - 手算 SFT cross-entropy，解释 token-average 与 response-average；
 - 用四格表同时诊断 violation 和 false refusal；
 - 从 reward 差手算 BT 胜率/loss，保持 chosen-rejected 方向；
 - 区分 policy、old、reference、reward、value 五角色；
 - 复算 KL 的负单项、非负总期望、sequence sum 和 token mean；
-- 对 \(A>0/A<0\)、\(r>1/r<1\) 四种 PPO clip 逐格计算；
-- 从 KL 正则目标推到 \(\pi_r\)，再推到 DPO loss；
-- 复算 §23 DPO 数字，并解释 \(\beta\) 不是 learning rate；
+- 对 $`A>0/A<0`$、$`r>1/r<1`$ 四种 PPO clip 逐格计算；
+- 从 KL 正则目标推到 $`\pi_r`$，再推到 DPO loss；
+- 复算 §23 DPO 数字，并解释 $`\beta`$ 不是 learning rate；
 - 写出 Best-of-N 公式的独立性/verifier 条件；
 - 发现长度 hacking、overoptimization、mode collapse、失准和分布偏移；
 - 用 §26 数据卡与 §34 决策树设计可审计 post-training 实验。
