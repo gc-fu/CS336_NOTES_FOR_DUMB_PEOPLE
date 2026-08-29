@@ -49,7 +49,7 @@
 - 用 pypdf 提取文字用于搜索，但公式以渲染图为准。
 - 57/57 页都用 pypdfium2 渲染普通页与高分辨率页；6 张 contact sheets 用于逐页总览。
 - 全部含图、公式或表的页面都查看了高分辨率图，重点复读 p6–20、p22–26、p30–41、p43–55。
-- 特别核验：p19 是 $n^{-1/4}$；p24 是饱和的重复数据公式；p38 是 critical-batch 精确曲线；p43 是联合 law；p45–53 是 Kaplan/Chinchilla 指数与争议；p54 是 tokens-per-parameter 列表。
+- 特别核验：p19 是 $`n^{-1/4}`$；p24 是饱和的重复数据公式；p38 是 critical-batch 精确曲线；p43 是联合 law；p45–53 是 Kaplan/Chinchilla 指数与争议；p54 是 tokens-per-parameter 列表。
 
 **字幕：**
 
@@ -86,46 +86,34 @@ Scaling law 的价值不是“算命”，而是让昂贵决策有实验依据�
 1. **Scaling law** 是资源与损失之间在特定实验范围内观察到的经验规律，不是宇宙定律。（见 §3）
 2. 常见形式：
 
-   $$
-   L(n)=L_\infty+A n^{-\alpha}.
-   $$
+   $`L(n)=L_\infty+A n^{-\alpha}.`$
 
-   $L_\infty$ 是不可约损失，$A$ 是尺度，$\alpha>0$ 控制改善速度。（见 §5.1）
-3. 减掉 $L_\infty$ 后取对数（见 §5.3）：
+   $`L_\infty`$ 是不可约损失，$`A`$ 是尺度，$`\alpha>0`$ 控制改善速度。（见 §5.1）
+3. 减掉 $`L_\infty`$ 后取对数（见 §5.3）：
 
-   $$
-   \log(L-L_\infty)=\log A-\alpha\log n.
-   $$
+   $`\log(L-L_\infty)=\log A-\alpha\log n.`$
 
-   所以 log-log 图上斜率是 $-\alpha$；原坐标仍是弯曲的。
-4. 若 $\alpha=0.5$，资源增 4 倍，额外损失乘 $4^{-0.5}=1/2$。（见 §5.2）
-5. 样本均值满足 $\operatorname{MSE}=\sigma^2/n$；这是能从方差相加推出来的真正 $1/n$ 例子。（见 §6）
-6. 二维分箱启发：边长 $n^{-1/4}$，箱数约 $\sqrt n$，每箱约 $\sqrt n$ 个样本，方差项约 $1/\sqrt n$；还必须加 bias/smoothness 项。（见 §7）
-7. 重复数据有递减价值；有效数据不是“看了 $R$ 遍就乘 $R$”。（见 §9）
+   所以 log-log 图上斜率是 $`-\alpha`$；原坐标仍是弯曲的。
+4. 若 $`\alpha=0.5`$，资源增 4 倍，额外损失乘 $`4^{-0.5}=1/2`$。（见 §5.2）
+5. 样本均值满足 $`\mathrm{MSE}=\sigma^2/n`$；这是能从方差相加推出来的真正 $`1/n`$ 例子。（见 §6）
+6. 二维分箱启发：边长 $`n^{-1/4}`$，箱数约 $`\sqrt n`$，每箱约 $`\sqrt n`$ 个样本，方差项约 $`1/\sqrt n`$；还必须加 bias/smoothness 项。（见 §7）
+7. 重复数据有递减价值；有效数据不是“看了 $`R`$ 遍就乘 $`R`$”。（见 §9）
 8. Critical batch（临界批量）是 batch 继续增大时开始明显回报递减的尺度；课程精确曲线为（见 §11）：
 
-   $$
-   \frac{S}{S_{\min}}-1=\left(\frac{E}{E_{\min}}-1\right)^{-1},
-   \qquad B_{\text{crit}}=\frac{E_{\min}}{S_{\min}}.
-   $$
+   $`\frac{S}{S_{\min}}-1=\left(\frac{E}{E_{\min}}-1\right)^{-1}, \qquad B_{\text{crit}}=\frac{E_{\min}}{S_{\min}}.`$
 
 9. 联合 law 用统一符号写作（见 §13）：
 
-   $$
-   L(N,D)=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta}.
-   $$
+   $`L(N,D)=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta}.`$
 
-10. 对 dense Transformer 训练，粗略 $C\approx6ND$；固定 $C$ 时（见 §13.2–§13.3）：
+10. 对 dense Transformer 训练，粗略 $`C\approx6ND`$；固定 $`C`$ 时（见 §13.2–§13.3）：
 
-    $$
-    N_{\text{opt}}\propto C^{\beta/(\alpha+\beta)},\qquad
-    D_{\text{opt}}\propto C^{\alpha/(\alpha+\beta)}.
-    $$
+    $`N_{\text{opt}}\propto C^{\beta/(\alpha+\beta)},\qquad D_{\text{opt}}\propto C^{\alpha/(\alpha+\beta)}.`$
 
-11. Kaplan 课件口径约 $N\propto C^{0.73},D\propto C^{0.27}$；Chinchilla 前两种方法约各 $C^{0.5}$。差异受到 parameter count、warmup、batch、compute range 等影响。（见 §14–§16）
+11. Kaplan 课件口径约 $`N\propto C^{0.73},D\propto C^{0.27}`$；Chinchilla 前两种方法约各 $`C^{0.5}`$。差异受到 parameter count、warmup、batch、compute range 等影响。（见 §14–§16）
 12. Chinchilla 的“约 20 tokens/parameter”是训练 compute-optimal 的历史经验，不是 inference（推理，即训练完后用模型回答/生成）场景的黄金比例。（见 §14.3、§17.4）
 13. “Overtrained”要加引号：更多 tokens 可能超过训练算力最优，但并不等于传统 overfitting（训练 loss 继续改善、validation/test loss 却变差）。Validation loss 是在不用于参数更新的验证集上计算的损失。（见 §17.3）
-14. IsoFLOP：固定 FLOPs，扫不同 $N,D$，找碗底；容易执行，但仍会被数据质量、超参不公平和扫描范围影响。（见 §15.2、§18）
+14. IsoFLOP：固定 FLOPs，扫不同 $`N,D`$，找碗底；容易执行，但仍会被数据质量、超参不公平和扫描范围影响。（见 §15.2、§18）
 15. 预测 pretraining loss 不等于预测 accuracy、推理能力或每个 downstream task。（见 §10.5）
 
 ---
@@ -136,27 +124,27 @@ Scaling law 的价值不是“算命”，而是让昂贵决策有实验依据�
 
 **Exponent（指数）**告诉我们一个数要乘几次：
 
-$$
+```math
 2^3=2\times2\times2=8.
-$$
+```
 
 负指数表示“取倒数”：
 
-$$
+```math
 n^{-1}=\frac1n,\qquad n^{-1/2}=\frac1{\sqrt n}.
-$$
+```
 
-$\sqrt n$（平方根）是“哪个正数乘自己得到 $n$”。例如 $\sqrt{16}=4$，因为 $4\times4=16$。
+$`\sqrt n`$（平方根）是“哪个正数乘自己得到 $`n`$”。例如 $`\sqrt{16}=4`$，因为 $`4\times4=16`$。
 
 ### 2.2 log 是什么
 
-**Logarithm（对数）**是指数的反问题。本文未写底数时，$\log$ 可理解为任一固定底；斜率推导对底数选择不敏感。手算表常用 $\log_{10}$：
+**Logarithm（对数）**是指数的反问题。本文未写底数时，$`\log`$ 可理解为任一固定底；斜率推导对底数选择不敏感。手算表常用 $`\log_{10}`$：
 
-$$
+```math
 \log_{10}(1000)=3,
-$$
+```
 
-因为 $10^3=1000$。自然对数写 $\ln$，底数是 $e\approx2.718$。计算器中：
+因为 $`10^3=1000`$。自然对数写 $`\ln`$，底数是 $`e\approx2.718`$。计算器中：
 
 ```text
 输入 log10(1000) → 3
@@ -166,26 +154,26 @@ $$
 
 两条会用到的规则：
 
-$$
+```math
 \log(ab)=\log a+\log b,
 \qquad
 \log(a^r)=r\log a.
-$$
+```
 
 ### 2.3 斜率、截距、单调与渐近线
 
-直线 $y=b+mx$ 中：
+直线 $`y=b+mx`$ 中：
 
-- $m$ 是 **slope（斜率）**：$x$ 增 1，$y$ 变多少。
-- $b$ 是 **intercept（截距）**：$x=0$ 时的 $y$。
-- **Monotonic（单调）下降**：$x$ 越大，$y$ 从不升高。
+- $`m`$ 是 **slope（斜率）**：$`x`$ 增 1，$`y`$ 变多少。
+- $`b`$ 是 **intercept（截距）**：$`x=0`$ 时的 $`y`$。
+- **Monotonic（单调）下降**：$`x`$ 越大，$`y`$ 从不升高。
 - **Asymptote（渐近线）**：曲线越来越接近但有限资源下未必到达的线。
 
-例如点 $(1,5)$ 到 $(3,1)$：
+例如点 $`(1,5)`$ 到 $`(3,1)`$：
 
-$$
+```math
 m=\frac{1-5}{3-1}=\frac{-4}{2}=-2.
-$$
+```
 
 ### 2.4 loss、accuracy 与 residual
 
@@ -193,18 +181,18 @@ $$
 
 **Residual（残差）**不是 Transformer 的 residual connection；这里指：
 
-$$
+```math
 \text{residual}=\text{实测值}-\text{曲线预测值}.
-$$
+```
 
-预测 2.4、实测 2.5，则 residual 为 $2.5-2.4=0.1$。
+预测 2.4、实测 2.5，则 residual 为 $`2.5-2.4=0.1`$。
 
 ### 2.5 单位：parameter、token、FLOP
 
 - **Parameter（参数）**：训练会更新的一个数。
 - **Tokenizer（分词器）**：把原始文本按固定规则切成 token IDs 的程序；token ID 是词表中某个 token 的整数编号。**Token** 是切分后给模型处理的一个单位，不必等于一个单词。
 - **FLOP**（floating-point operation）：一次浮点加、减、乘或除；**FLOPs**常被口语混用为总次数；**FLOP/s**才是每秒速度。
-- $1\text{K}=10^3$、$1\text{M}=10^6$、$1\text{B}=10^9$、$1\text{T}=10^{12}$。这里 B 是 billion，不是 byte。
+- $`1\text{K}=10^3`$、$`1\text{M}=10^6`$、$`1\text{B}=10^9`$、$`1\text{T}=10^{12}`$。这里 B 是 billion，不是 byte。
 
 ---
 
@@ -223,10 +211,10 @@ Scaling law（缩放定律）是一个简单预测规则：当训练资源有规
 - **Interpolation（插值）**：在已经测过的范围中间预测。
 - **Extrapolation（外推）**：预测测量范围之外。
 
-例：已测 $n=1,2,4,8$ 亿 tokens。
+例：已测 $`n=1,2,4,8`$ 亿 tokens。
 
-- 预测 $n=3$ 亿是插值。
-- 预测 $n=80$ 亿是外推。
+- 预测 $`n=3`$ 亿是插值。
+- 预测 $`n=80`$ 亿是外推。
 
 外推更有价值也更危险：公式在小范围拟合得好，不保证跨 10 倍、100 倍资源仍成立。视频 [04:32](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=272s) 把历史工作的共同目标描述为用曲线预测尚未训练的大模型。
 
@@ -250,13 +238,13 @@ Scaling law（缩放定律）是一个简单预测规则：当训练资源有规
 
 **Sample complexity（样本复杂度）**：达到目标误差需要多少训练样本。
 
-若误差 $e(n)=1/\sqrt n$，要求 $e\le0.1$：
+若误差 $`e(n)=1/\sqrt n`$，要求 $`e\le0.1`$：
 
-$$
+```math
 \frac1{\sqrt n}\le0.1
 \Rightarrow \sqrt n\ge10
 \Rightarrow n\ge100.
-$$
+```
 
 这就是从 scaling law 反推资源。
 
@@ -282,132 +270,132 @@ $$
 
 常见数据缩放式：
 
-$$
+```math
 L(n)=L_\infty+A n^{-\alpha}.
-$$
+```
 
-- $n$：训练样本或 tokens 数量。
-- $L(n)$：用 $n$ 数据训练后的 loss。
-- $L_\infty$：假想无限数据时仍剩下的 **irreducible loss（不可约损失）**。
-- $A>0$：纵向尺度；同一 $\alpha$ 下，$A$ 大则曲线整体更高。
-- $\alpha>0$：power-law exponent（幂律指数）；越大表示资源翻倍时下降得越快。
+- $`n`$：训练样本或 tokens 数量。
+- $`L(n)`$：用 $`n`$ 数据训练后的 loss。
+- $`L_\infty`$：假想无限数据时仍剩下的 **irreducible loss（不可约损失）**。
+- $`A>0`$：纵向尺度；同一 $`\alpha`$ 下，$`A`$ 大则曲线整体更高。
+- $`\alpha>0`$：power-law exponent（幂律指数）；越大表示资源翻倍时下降得越快。
 
-它是 **power law（幂律）**，因为资源 $n$ 被提升到一个固定次方。
+它是 **power law（幂律）**，因为资源 $`n`$ 被提升到一个固定次方。
 
 ### 5.2 资源翻倍时究竟乘多少
 
-只看可改善部分 $\Delta L=L-L_\infty=A n^{-\alpha}$。资源从 $n$ 变 $rn$：
+只看可改善部分 $`\Delta L=L-L_\infty=A n^{-\alpha}`$。资源从 $`n`$ 变 $`rn`$：
 
-$$
+```math
 \frac{\Delta L(rn)}{\Delta L(n)}
 =\frac{A(rn)^{-\alpha}}{An^{-\alpha}}
 =r^{-\alpha}.
-$$
+```
 
-$A$ 和 $n^{-\alpha}$ 都约掉了，所以只剩资源倍数 $r$ 与指数 $\alpha$。
+$`A`$ 和 $`n^{-\alpha}`$ 都约掉了，所以只剩资源倍数 $`r`$ 与指数 $`\alpha`$。
 
-取 $\alpha=0.5$、$A=8$、$L_\infty=1$，从 $n=1$ 开始：
+取 $`\alpha=0.5`$、$`A=8`$、$`L_\infty=1`$，从 $`n=1`$ 开始：
 
-| $n$ 增长倍数 | $n^{-0.5}=1/\sqrt n$ | 额外 loss $8/\sqrt n$ | 总 loss |
+| $`n`$ 增长倍数 | $`n^{-0.5}=1/\sqrt n`$ | 额外 loss $`8/\sqrt n`$ | 总 loss |
 |---:|---:|---:|---:|
 | 1 | 1 | 8 | 9 |
-| 2 | $1/\sqrt2\approx0.707$ | $5.656$ | $6.656$ |
-| 4 | $1/2$ | 4 | 5 |
-| 10 | $1/\sqrt{10}\approx0.316$ | $2.530$ | $3.530$ |
+| 2 | $`1/\sqrt2\approx0.707`$ | $`5.656`$ | $`6.656`$ |
+| 4 | $`1/2`$ | 4 | 5 |
+| 10 | $`1/\sqrt{10}\approx0.316`$ | $`2.530`$ | $`3.530`$ |
 
-注意：资源 4 倍只让“超过 $L_\infty$ 的部分”减半，不是让总 loss 减半。
+注意：资源 4 倍只让“超过 $`L_\infty`$ 的部分”减半，不是让总 loss 减半。
 
 **课程中的真实小指数例。**PDF p15 从 Kaplan 图中写出：
 
-$$
+```math
 L(D)=\left(\frac{D}{5.4\times10^{13}}\right)^{-0.095}.
-$$
+```
 
-$5.4\times10^{13}$ 是让横轴无量纲的参考 token 数；$-0.095$ 很浅，所以数据要增很多才明显下降。只比较额外项倍率：
+$`5.4\times10^{13}`$ 是让横轴无量纲的参考 token 数；$`-0.095`$ 很浅，所以数据要增很多才明显下降。只比较额外项倍率：
 
-| $D$ 倍数 $r$ | $r^{-0.095}$ | 约剩多少 |
+| $`D`$ 倍数 $`r`$ | $`r^{-0.095}`$ | 约剩多少 |
 |---:|---:|---:|
-| 2 | $2^{-0.095}$ | 0.936 |
-| 4 | $4^{-0.095}$ | 0.877 |
-| 10 | $10^{-0.095}$ | 0.803 |
+| 2 | $`2^{-0.095}`$ | 0.936 |
+| 4 | $`4^{-0.095}`$ | 0.877 |
+| 10 | $`10^{-0.095}`$ | 0.803 |
 
-也就是数据翻 10 倍，该拟合项只下降约 $1-0.803=19.7\%$。PDF p18 同时展示约 0.13、0.30、0.095 等不同经验斜率，说明 exponent 会随任务与实验口径变化。
+也就是数据翻 10 倍，该拟合项只下降约 $`1-0.803=19.7\%`$。PDF p18 同时展示约 0.13、0.30、0.095 等不同经验斜率，说明 exponent 会随任务与实验口径变化。
 
 ### 5.3 为什么 log-log 图是一条直线
 
 从：
 
-$$
+```math
 L-L_\infty=A n^{-\alpha}
-$$
+```
 
 两边取 log：
 
-$$
+```math
 \log(L-L_\infty)
 =\log(A n^{-\alpha})
 =\log A+\log(n^{-\alpha})
 =\log A-\alpha\log n.
-$$
+```
 
-令 $y=\log(L-L_\infty)$，$x=\log n$：
+令 $`y=\log(L-L_\infty)`$，$`x=\log n`$：
 
-$$
+```math
 y=\log A+(-\alpha)x.
-$$
+```
 
-这正是“截距 $\log A$、斜率 $-\alpha$”的直线。视频 [15:18](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=918s) 称其为 scale-free/power-law relation。
+这正是“截距 $`\log A`$、斜率 $`-\alpha`$”的直线。视频 [15:18](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=918s) 称其为 scale-free/power-law relation。
 
-**防坑：**log-log 图直，不代表原坐标图直。原图是向 $L_\infty$ 弯曲的曲线。
+**防坑：**log-log 图直，不代表原坐标图直。原图是向 $`L_\infty`$ 弯曲的曲线。
 
 ### 5.4 least squares 与残差
 
 **Least squares（最小二乘）**：选择参数，使 residual 的平方和最小：
 
-$$
+```math
 \text{SSE}=\sum_i (L_i-\widehat L_i)^2.
-$$
+```
 
-若三点 residual 为 $0.1,-0.2,0.1$：
+若三点 residual 为 $`0.1,-0.2,0.1`$：
 
-$$
+```math
 \text{SSE}=0.1^2+(-0.2)^2+0.1^2=0.01+0.04+0.01=0.06.
-$$
+```
 
-只报告高 $R^2$ 不够：残差若随规模系统性变正或变负，说明函数形状可能错。
+只报告高 $`R^2`$ 不够：残差若随规模系统性变正或变负，说明函数形状可能错。
 
-$R^2$（决定系数）粗略衡量曲线解释了多少观测波动，越接近 1 通常表示区间内拟合越紧；它不检验区间外外推是否正确。
+$`R^2`$（决定系数）粗略衡量曲线解释了多少观测波动，越接近 1 通常表示区间内拟合越紧；它不检验区间外外推是否正确。
 
 ---
 
-## 6. 均值估计：一个真的能推出来的 $1/n$ law
+## 6. 均值估计：一个真的能推出来的 $`1/n`$ law
 
 ### 6.1 parametric 是什么意思
 
-**Parametric（参数化统计模型）**：未知对象能用固定有限个数描述。估计总体均值 $\mu$ 只需估一个数，所以是最简单的 parametric 问题。
+**Parametric（参数化统计模型）**：未知对象能用固定有限个数描述。估计总体均值 $`\mu`$ 只需估一个数，所以是最简单的 parametric 问题。
 
-假设有样本 $X_1,\ldots,X_n$。**独立（independent）**的意思是：知道 $X_i$ 取了什么值，不会改变另一个 $X_j$ 的概率分布。这里还假设每个样本都来自同一总体，因此：
+假设有样本 $`X_1,\ldots,X_n`$。**独立（independent）**的意思是：知道 $`X_i`$ 取了什么值，不会改变另一个 $`X_j`$ 的概率分布。这里还假设每个样本都来自同一总体，因此：
 
-$$
+```math
 \mathbb E[X_i]=\mu,
 \qquad
-\operatorname{Var}(X_i)=\sigma^2.
-$$
+\mathrm{Var}(X_i)=\sigma^2.
+```
 
-$\mathbb E[X]$ 是把同一随机过程重复很多次后 $X$ 的长期平均。**Variance（方差）**的定义是：
+$`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平均。**Variance（方差）**的定义是：
 
-$$
-\operatorname{Var}(X)
+```math
+\mathrm{Var}(X)
 =\mathbb E\left[(X-\mathbb E[X])^2\right].
-$$
+```
 
-先算“结果离长期平均多远”，再平方、再取长期平均。$\sigma^2$ 是方差；$\sigma=\sqrt{\sigma^2}$ 是 standard deviation（标准差）。
+先算“结果离长期平均多远”，再平方、再取长期平均。$`\sigma^2`$ 是方差；$`\sigma=\sqrt{\sigma^2}`$ 是 standard deviation（标准差）。
 
 样本均值：
 
-$$
+```math
 \bar X=\frac{X_1+\cdots+X_n}{n}.
-$$
+```
 
 视频 [16:07](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=967s) 从这个问题开始连接 Machine Learning 101。
 
@@ -415,7 +403,7 @@ $$
 
 **Unbiased（无偏）**表示平均预测正好等于真值：
 
-$$
+```math
 \begin{aligned}
 \mathbb E[\bar X]
 &=\mathbb E\left[\frac{X_1+\cdots+X_n}{n}\right]\\
@@ -424,109 +412,109 @@ $$
 &=\frac1n(n\mu)\\
 &=\mu.
 \end{aligned}
-$$
+```
 
-第二行用了期望的线性：总和的长期平均等于各项长期平均之和；这一步本身不要求独立。无偏不是说每次 $\bar X$ 都刚好等于 $\mu$，而是重复整次实验后的平均不偏高也不偏低。
+第二行用了期望的线性：总和的长期平均等于各项长期平均之和；这一步本身不要求独立。无偏不是说每次 $`\bar X`$ 都刚好等于 $`\mu`$，而是重复整次实验后的平均不偏高也不偏低。
 
 ### 6.3 为什么独立时 covariance 交叉项为 0
 
 两个随机量的 **covariance（协方差）**定义为：
 
-$$
-\operatorname{Cov}(X,Y)
+```math
+\mathrm{Cov}(X,Y)
 =\mathbb E\left[(X-\mathbb E[X])(Y-\mathbb E[Y])\right].
-$$
+```
 
-它衡量两个量是否一起偏高或一起偏低。若 $X_i,X_j$ 独立，则两个中心化后的乘积期望可以拆开：
+它衡量两个量是否一起偏高或一起偏低。若 $`X_i,X_j`$ 独立，则两个中心化后的乘积期望可以拆开：
 
-$$
+```math
 \begin{aligned}
-\operatorname{Cov}(X_i,X_j)
+\mathrm{Cov}(X_i,X_j)
 &=\mathbb E[(X_i-\mu)(X_j-\mu)]\\
 &=\mathbb E[X_i-\mu]\;\mathbb E[X_j-\mu]\\
 &=(\mu-\mu)(\mu-\mu)\\
 &=0.
 \end{aligned}
-$$
+```
 
 因此总和的方差公式：
 
-$$
-\operatorname{Var}\left(\sum_{i=1}^nX_i\right)
-=\sum_{i=1}^n\operatorname{Var}(X_i)
-+2\sum_{i<j}\operatorname{Cov}(X_i,X_j)
-$$
+```math
+\mathrm{Var}\left(\sum_{i=1}^nX_i\right)
+=\sum_{i=1}^n\mathrm{Var}(X_i)
++2\sum_{i<j}\mathrm{Cov}(X_i,X_j)
+```
 
-在独立假设下，所有 $i\ne j$ 的 covariance 都为 0，只剩：
+在独立假设下，所有 $`i\ne j`$ 的 covariance 都为 0，只剩：
 
-$$
-\operatorname{Var}\left(\sum_{i=1}^nX_i\right)
-=\sum_{i=1}^n\operatorname{Var}(X_i)
+```math
+\mathrm{Var}\left(\sum_{i=1}^nX_i\right)
+=\sum_{i=1}^n\mathrm{Var}(X_i)
 =n\sigma^2.
-$$
+```
 
-若样本相关，交叉项不一定为 0，下面的 $\sigma^2/n$ 就不能直接套。
+若样本相关，交叉项不一定为 0，下面的 $`\sigma^2/n`$ 就不能直接套。
 
-### 6.4 方差为什么变成 $\sigma^2/n$
+### 6.4 方差为什么变成 $`\sigma^2/n`$
 
-常数 $c$ 乘随机变量时，方差乘 $c^2$：
+常数 $`c`$ 乘随机变量时，方差乘 $`c^2`$：
 
-$$
-\operatorname{Var}(cX)=c^2\operatorname{Var}(X).
-$$
+```math
+\mathrm{Var}(cX)=c^2\mathrm{Var}(X).
+```
 
 所以：
 
-$$
+```math
 \begin{aligned}
-\operatorname{Var}(\bar X)
-&=\operatorname{Var}\left(\frac1n\sum_iX_i\right)\\
-&=\frac1{n^2}\operatorname{Var}\left(\sum_iX_i\right)\\
-&=\frac1{n^2}\sum_i\operatorname{Var}(X_i)\\
+\mathrm{Var}(\bar X)
+&=\mathrm{Var}\left(\frac1n\sum_iX_i\right)\\
+&=\frac1{n^2}\mathrm{Var}\left(\sum_iX_i\right)\\
+&=\frac1{n^2}\sum_i\mathrm{Var}(X_i)\\
 &=\frac1{n^2}(n\sigma^2)\\
 &=\frac{\sigma^2}{n}.
 \end{aligned}
-$$
+```
 
-**MSE（mean squared error，均方误差）**是估计值与真值之差的平方的期望。因为刚刚证明 $\mathbb E[\bar X]=\mu$，所以：
+**MSE（mean squared error，均方误差）**是估计值与真值之差的平方的期望。因为刚刚证明 $`\mathbb E[\bar X]=\mu`$，所以：
 
-$$
+```math
 \begin{aligned}
-\operatorname{MSE}
+\mathrm{MSE}
 &=\mathbb E[(\bar X-\mu)^2]\\
 &=\mathbb E[(\bar X-\mathbb E[\bar X])^2]\\
-&=\operatorname{Var}(\bar X)\\
+&=\mathrm{Var}(\bar X)\\
 &=\frac{\sigma^2}{n}.
 \end{aligned}
-$$
+```
 
-**SE（standard error，标准误差）**是估计量 $\bar X$ 自身的标准差，不是 MSE：
+**SE（standard error，标准误差）**是估计量 $`\bar X`$ 自身的标准差，不是 MSE：
 
-$$
-\operatorname{SE}(\bar X)
-=\sqrt{\operatorname{Var}(\bar X)}
+```math
+\mathrm{SE}(\bar X)
+=\sqrt{\mathrm{Var}(\bar X)}
 =\sqrt{\frac{\sigma^2}{n}}
 =\frac\sigma{\sqrt n}.
-$$
+```
 
-### 6.5 $n=4$ 与 $n=16$ 手算
+### 6.5 $`n=4`$ 与 $`n=16`$ 手算
 
-令 $\sigma=2$，则 $\sigma^2=4$：
+令 $`\sigma=2`$，则 $`\sigma^2=4`$：
 
-| $n$ | variance/MSE $=4/n$ | 标准误差 $=\sqrt{4/n}$ |
+| $`n`$ | variance/MSE $`=4/n`$ | 标准误差 $`=\sqrt{4/n}`$ |
 |---:|---:|---:|
-| 4 | $4/4=1$ | $\sqrt1=1$ |
-| 16 | $4/16=0.25$ | $\sqrt{0.25}=0.5$ |
+| 4 | $`4/4=1`$ | $`\sqrt1=1`$ |
+| 16 | $`4/16=0.25`$ | $`\sqrt{0.25}=0.5`$ |
 
 数据增 4 倍，MSE 除以 4；标准误差只除以 2。不要混淆二者。
 
 取 log：
 
-$$
-\log\operatorname{MSE}=\log\sigma^2-\log n,
-$$
+```math
+\log\mathrm{MSE}=\log\sigma^2-\log n,
+```
 
-斜率是 $-1$。视频 [17:21](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1041s) 用它解释 scaling law 的一个统计来源；神经网络数据曲线的指数通常小得多，不能直接套 $-1$。
+斜率是 $`-1`$。视频 [17:21](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1041s) 用它解释 scaling law 的一个统计来源；神经网络数据曲线的指数通常小得多，不能直接套 $`-1`$。
 
 ---
 
@@ -534,45 +522,37 @@ $$
 
 ### 7.1 nonparametric 不是“没有参数”
 
-**Nonparametric（非参数）**不是零参数，而是模型复杂度可随数据增加。这里的 regression（回归）是从输入位置预测一个数值函数。要估计任意平滑二维函数 $f(x_1,x_2)$，我们可以把平面切成小箱，每箱估一个均值；箱越多，要估的局部值越多。
+**Nonparametric（非参数）**不是零参数，而是模型复杂度可随数据增加。这里的 regression（回归）是从输入位置预测一个数值函数。要估计任意平滑二维函数 $`f(x_1,x_2)`$，我们可以把平面切成小箱，每箱估一个均值；箱越多，要估的局部值越多。
 
 视频 [18:25](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1105s) 从均值转到 arbitrary smooth function。
 
 ### 7.2 PDF p19 的二维分箱推导
 
-**【课程】【PDF 19；已查看高清原页】**设总样本数为 $n$。下面的 $h$ **只表示这个二维例子里每个正方形箱的边长**，不是最后的误差率。课件给定：
+**【课程】【PDF 19；已查看高清原页】**设总样本数为 $`n`$。下面的 $`h`$ **只表示这个二维例子里每个正方形箱的边长**，不是最后的误差率。课件给定：
 
-$$
+```math
 h=n^{-1/4}.
-$$
+```
 
 一步一步数：
 
 1. 一条边能放：
 
-   $$
-   \frac1h=\frac1{n^{-1/4}}=n^{1/4}
-   $$
+   $`\frac1h=\frac1{n^{-1/4}}=n^{1/4}`$
 
    个箱。
 2. 二维总箱数：
 
-   $$
-   n^{1/4}\times n^{1/4}=n^{1/2}=\sqrt n.
-   $$
+   $`n^{1/4}\times n^{1/4}=n^{1/2}=\sqrt n.`$
 
-3. $n$ 个样本平均分到 $\sqrt n$ 个箱，每箱约：
+3. $`n`$ 个样本平均分到 $`\sqrt n`$ 个箱，每箱约：
 
-   $$
-   \frac n{\sqrt n}=\sqrt n
-   $$
+   $`\frac n{\sqrt n}=\sqrt n`$
 
    个样本。
-4. 假设观测噪声 variance 是不随 $n$ 增长的常数量级。每箱有约 $\sqrt n$ 个独立样本，所以沿用 §6 的“均值 variance = 单样本 variance / 样本数”，每箱均值的 **variance 型误差**量级约为：
+4. 假设观测噪声 variance 是不随 $`n`$ 增长的常数量级。每箱有约 $`\sqrt n`$ 个独立样本，所以沿用 §6 的“均值 variance = 单样本 variance / 样本数”，每箱均值的 **variance 型误差**量级约为：
 
-   $$
-   \frac1{\sqrt n}.
-   $$
+   $`\frac1{\sqrt n}.`$
 
 请把两个幂分开记：
 
@@ -583,16 +563,16 @@ $$
 
 仅从“有多少箱、每箱多少样本”能推出方差项；**不能仅靠数箱子推出完整误差**，因为同箱内函数并不完全相等，还存在下一节的 smoothness/bias 项。
 
-### 7.3 用 $n=10,000$ 复算
+### 7.3 用 $`n=10,000`$ 复算
 
-$$
+```math
 n^{1/4}=10,
 \qquad h=1/10.
-$$
+```
 
-- 每边 10 箱；总箱数 $10\times10=100=\sqrt{10,000}$。
-- 每箱约 $10,000/100=100=\sqrt{10,000}$ 个样本。
-- 每箱均值方差量级约 $1/100=0.01=1/\sqrt{10,000}$。这里的 0.01 是 variance 型误差，不是边长；边长是 0.1。
+- 每边 10 箱；总箱数 $`10\times10=100=\sqrt{10,000}`$。
+- 每箱约 $`10,000/100=100=\sqrt{10,000}`$ 个样本。
+- 每箱均值方差量级约 $`1/100=0.01=1/\sqrt{10,000}`$。这里的 0.01 是 variance 型误差，不是边长；边长是 0.1。
 
 ### 7.4 bias/smoothness 不能丢
 
@@ -602,27 +582,27 @@ $$
 误差 ≈ variance 项 + smoothness/bias 项
 ```
 
-课件 p19 的 $1/\sqrt n+$ smoothness 是教学启发，不是所有二维回归的万能精确公式。
+课件 p19 的 $`1/\sqrt n+`$ smoothness 是教学启发，不是所有二维回归的万能精确公式。
 
-**【补充解释】一个可能的平衡直觉。**如果额外假设函数足够平滑，使 squared-bias 项约为 $h^2$，二维每箱样本数约为 $nh^2$，variance 项约为 $1/(nh^2)$。让两种错误同量级：
+**【补充解释】一个可能的平衡直觉。**如果额外假设函数足够平滑，使 squared-bias 项约为 $`h^2`$，二维每箱样本数约为 $`nh^2`$，variance 项约为 $`1/(nh^2)`$。让两种错误同量级：
 
-$$
+```math
 h^2=\frac1{nh^2}
 \Rightarrow nh^4=1
 \Rightarrow h=n^{-1/4}.
-$$
+```
 
-这时两项都是 $h^2=n^{-1/2}$。这个推导依赖“squared bias 约 $h^2$”等 smoothness 假设；换平滑度、估计器或 loss，幂次可能改变。
+这时两项都是 $`h^2=n^{-1/2}`$。这个推导依赖“squared bias 约 $`h^2`$”等 smoothness 假设；换平滑度、估计器或 loss，幂次可能改变。
 
 ### 7.5 d 维与 intrinsic dimension 的边界
 
-PDF p19 进一步写了一个简化的 $d$ 维 **误差率** $n^{-1/d}$；它不是在说 $d$ 维箱边长等于 $n^{-1/d}$。代入 $d=2$：
+PDF p19 进一步写了一个简化的 $`d`$ 维 **误差率** $`n^{-1/d}`$；它不是在说 $`d`$ 维箱边长等于 $`n^{-1/d}`$。代入 $`d=2`$：
 
-$$
+```math
 n^{-1/d}=n^{-1/2}=\frac1{\sqrt n},
-$$
+```
 
-恰好回到上面二维例子的 variance 型误差。这个 $d$ 维写法是课件的直觉化简式，依赖分箱方式、smoothness、loss 与噪声等条件；没有这些条件，不能从箱数推出一个普遍定理。严谨 nonparametric rate 往往还显式包含 smoothness 阶数。
+恰好回到上面二维例子的 variance 型误差。这个 $`d`$ 维写法是课件的直觉化简式，依赖分箱方式、smoothness、loss 与噪声等条件；没有这些条件，不能从箱数推出一个普遍定理。严谨 nonparametric rate 往往还显式包含 smoothness 阶数。
 
 **Intrinsic dimension（内在维度）**：数据真正变化所需的自由方向数，可能小于原始向量坐标数。视频 [20:13](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1213s) 明确说相关解释依赖难以可靠估计的 intrinsic dimension；所以“从指数反推出语言维度”只能当不严密直觉，不是定理。
 
@@ -644,14 +624,14 @@ $$
 
 在：
 
-$$
+```math
 \log(L-L_\infty)=\log A-\alpha\log D
-$$
+```
 
 中：
 
-- 改变 **offset（上下位置）**主要对应 $A$ 变。
-- 改变 **slope（斜率）**对应 $\alpha$ 变。
+- 改变 **offset（上下位置）**主要对应 $`A`$ 变。
+- 改变 **slope（斜率）**对应 $`\alpha`$ 变。
 
 PDF p22 引用的特定研究观察到数据分布变化主要移动 offset、斜率较稳定。视频 [22:45](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1365s) 也用这个口径讲解。但这只是特定任务、模型与数据范围的观察，不是“所有数据清洗都只改截距”的定律。若过滤改变样本难度、覆盖面或进入另一 regime，指数也可能变。
 
@@ -672,9 +652,9 @@ PDF p22 引用的特定研究观察到数据分布变化主要移动 offset、�
 
 假设小规模 loss：A=2.0，B=2.1，于是 A 暂时更好。若：
 
-$$
+```math
 L_A=1+4D^{-0.2},\qquad L_B=1+6D^{-0.3},
-$$
+```
 
 B 虽然初始 offset 更高，却下降更快，规模足够大时可能反超。实际曲线还会受 tokenizer、目标域、数据质量和模型容量影响。因此视频 [25:15](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1515s) 明确警告：小模型的最佳 mixture 不保证也是大模型最佳 mixture。
 
@@ -690,47 +670,43 @@ B 虽然初始 offset 更高，却下降更快，规模足够大时可能反超�
 
 **【课程】【PDF 24；高清核验】**课件给出：
 
-$$
+```math
 D'=U_D+U_D R_D^*\left(1-e^{-R_D/R_D^*}\right).
-$$
+```
 
-- $D'$：effective data，单位 tokens。
-- $U_D$：unique data，单位 tokens。
-- $R_D$：**首个 epoch 之后的额外重复次数**，无量纲；论文定义单 epoch 时 $R_D=0$，因此总 epochs 数是 $R_D+1$。
-- $R_D^*$：控制何时饱和的无量纲常数。
-- $e\approx2.718$，$e^{-x}=1/e^x$。
+- $`D'`$：effective data，单位 tokens。
+- $`U_D`$：unique data，单位 tokens。
+- $`R_D`$：**首个 epoch 之后的额外重复次数**，无量纲；论文定义单 epoch 时 $`R_D=0`$，因此总 epochs 数是 $`R_D+1`$。
+- $`R_D^*`$：控制何时饱和的无量纲常数。
+- $`e\approx2.718`$，$`e^{-x}=1/e^x`$。
 
-括号没有单位，所以 $U_D\times$括号仍是 tokens，维度正确。
+括号没有单位，所以 $`U_D\times`$括号仍是 tokens，维度正确。
 
 ### 9.2 三个极限
 
-1. **不额外重复 $R_D=0$：**
+1. **不额外重复 $`R_D=0`$：**
 
-   $$
-   D'=U_D+U_DR_D^*(1-e^0)=U_D.
-   $$
+   $`D'=U_D+U_DR_D^*(1-e^0)=U_D.`$
 
-2. **有限重复：**会增加 $D'$，但小于把每遍都当全新数据。
-3. **重复很多 $R_D\to\infty$：**$e^{-R_D/R_D^*}\to0$，所以：
+2. **有限重复：**会增加 $`D'`$，但小于把每遍都当全新数据。
+3. **重复很多 $`R_D\to\infty`$：**$`e^{-R_D/R_D^*}\to0`$，所以：
 
-   $$
-   D'\to U_D(1+R_D^*).
-   $$
+   $`D'\to U_D(1+R_D^*).`$
 
    有效数据饱和，不会无限增长。
 
 ### 9.3 数字例
 
-设 $U_D=100$ tokens、$R_D^*=2$：
+设 $`U_D=100`$ tokens、$`R_D^*=2`$：
 
-| $R_D$ | 代入 | $D'$ |
+| $`R_D`$ | 代入 | $`D'`$ |
 |---:|---|---:|
-| 0（总计 1 epoch） | $100+200(1-e^0)$ | 100 |
-| 1（总计 2 epochs） | $100+200(1-e^{-0.5})$ | $178.69$ |
-| 2（总计 3 epochs） | $100+200(1-e^{-1})$ | $226.42$ |
-| 很大 | $100+200(1-0)$ | 300 |
+| 0（总计 1 epoch） | $`100+200(1-e^0)`$ | 100 |
+| 1（总计 2 epochs） | $`100+200(1-e^{-0.5})`$ | $`178.69`$ |
+| 2（总计 3 epochs） | $`100+200(1-e^{-1})`$ | $`226.42`$ |
+| 很大 | $`100+200(1-0)`$ | 300 |
 
-计算器输入 `exp(-0.5)` 得约 0.6065。注意 $R_D=1$ 表示“首遍之后再重复一次”，也就是总共 2 epochs；这次重复带来的有效新增只有 78.69，而不是把 100 个 tokens 全算成全新。论文附录也用“5 epochs 对应 $R_D=4$”明确了这个口径。
+计算器输入 `exp(-0.5)` 得约 0.6065。注意 $`R_D=1`$ 表示“首遍之后再重复一次”，也就是总共 2 epochs；这次重复带来的有效新增只有 78.69，而不是把 100 个 tokens 全算成全新。论文附录也用“5 epochs 对应 $`R_D=4`$”明确了这个口径。
 
 Muennighoff 等的原始实验在数据受限 regime 中观察到少量重复的损失变化很小，但更多重复最终收益趋近零；这是该公式的实证背景，不应跨数据集直接复用常数。[原论文](https://arxiv.org/abs/2305.16264)
 
@@ -774,11 +750,11 @@ PDF p33 显示从 1 层到 2 层差异很大，更多层在该实验的某些参
 
 PDF p35 左图横轴包含 embedding parameters，右图不含；右图不同层数更接近共同趋势。原因不是 embedding “没用”，而是不同类型参数的边际价值可能不同。
 
-例：词表 $V=50,000$、宽度 $h=1,000$，embedding 有：
+例：词表 $`V=50,000`$、宽度 $`h=1,000`$，embedding 有：
 
-$$
+```math
 Vh=50,000\times1,000=50,000,000
-$$
+```
 
 个参数。小模型主体若也只有 50M，是否计入 embedding 会让横坐标翻倍；大模型主体 5B 时影响只约 1%。这会让低 compute 区的拟合指数明显变化。
 
@@ -790,8 +766,8 @@ $$
 
 例如 8 个各 100M 的 experts，top-2：
 
-- experts total parameters：$8\times100\text{M}=800\text{M}$。
-- 每 token active expert parameters：$2\times100\text{M}=200\text{M}$。
+- experts total parameters：$`8\times100\text{M}=800\text{M}`$。
+- 每 token active expert parameters：$`2\times100\text{M}=200\text{M}`$。
 
 PDF p36 的图分别以 total 和 active parameters 为横轴，并加入 sparsity；说明“一个参数”在 dense 与 MoE 中并非同一种 compute 价值。视频 [39:09](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=2349s) 开始解释这一点。
 
@@ -817,18 +793,16 @@ PDF p36 的图分别以 total 和 active parameters 为横轴，并加入 sparsi
 
 **【课程】【PDF 37–39】【视频补充】[42:22](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=2542s)**
 
-- $B$：global batch size，一步中全设备合计处理的 examples 或 tokens。
-- $S$：training steps，参数更新次数。
-- $E$：examples processed，总共处理的样本数。
+- $`B`$：global batch size，一步中全设备合计处理的 examples 或 tokens。
+- $`S`$：training steps，参数更新次数。
+- $`E`$：examples processed，总共处理的样本数。
 - 三者关系：
 
-  $$
-  E=S\times B.
-  $$
+  $`E=S\times B.`$
 
-若每步 32 examples、走 100 steps，则 $E=32\times100=3200$ examples。语言模型也常把 $B$ 用 tokens/step 表示；必须写清单位。
+若每步 32 examples、走 100 steps，则 $`E=32\times100=3200`$ examples。语言模型也常把 $`B`$ 用 tokens/step 表示；必须写清单位。
 
-> **§11 当前符号卡：**$B$=batch、$S$=steps、$E$=processed examples；$B_{crit}$=临界 batch、$S_{min}$=最少 steps 极限、$E_{min}$=最少 examples 极限。这里的 $E$ **不是** §13 的 irreducible loss。
+> **§11 当前符号卡：**$`B`$=batch、$`S`$=steps、$`E`$=processed examples；$`B_{crit}`$=临界 batch、$`S_{min}`$=最少 steps 极限、$`E_{min}`$=最少 examples 极限。这里的 $`E`$ **不是** §13 的 irreducible loss。
 
 ### 11.2 noise-limited 与 bias-limited 直觉
 
@@ -842,43 +816,43 @@ Batch 很大后，gradient 已较准确，继续放更多相似样本不能让�
 
 PDF p38 给：
 
-$$
+```math
 \frac{S}{S_{\min}}-1
 =\left(\frac{E}{E_{\min}}-1\right)^{-1}.
-$$
+```
 
-- $S_{\min}$：batch 极大时仍不能再减少的最少 steps。
-- $E_{\min}$：batch 很小时最省样本的最少 examples。
-- 右边 $x^{-1}=1/x$。
+- $`S_{\min}`$：batch 极大时仍不能再减少的最少 steps。
+- $`E_{\min}`$：batch 很小时最省样本的最少 examples。
+- 右边 $`x^{-1}=1/x`$。
 
 等价地，两边相乘：
 
-$$
+```math
 \left(\frac{S}{S_{\min}}-1\right)
 \left(\frac{E}{E_{\min}}-1\right)=1.
-$$
+```
 
 临界 batch：
 
-$$
+```math
 B_{\text{crit}}=\frac{E_{\min}}{S_{\min}}.
-$$
+```
 
 单位检查：examples 除以 steps = examples/step，正是 batch 的单位。
 
-现在从这条曲线**推出**任意指定 batch 对应的 $S,E$，而不是直接背答案。定义三个没有单位的比值：
+现在从这条曲线**推出**任意指定 batch 对应的 $`S,E`$，而不是直接背答案。定义三个没有单位的比值：
 
-$$
+```math
 s=\frac{S}{S_{min}},
 \qquad
 e=\frac{E}{E_{min}},
 \qquad
 b=\frac{B}{B_{crit}}.
-$$
+```
 
-先用 $B=E/S$ 与 $B_{crit}=E_{min}/S_{min}$：
+先用 $`B=E/S`$ 与 $`B_{crit}=E_{min}/S_{min}`$：
 
-$$
+```math
 \begin{aligned}
 b
 &=\frac{B}{B_{crit}}\\
@@ -886,85 +860,85 @@ b
 &=\frac{E}{E_{min}}\frac{S_{min}}S\\
 &=\frac es.
 \end{aligned}
-$$
+```
 
 因此：
 
-$$
+```math
 e=bs.
-$$
+```
 
-原双曲线变为 $(s-1)(e-1)=1$。把 $e=bs$ 代进去：
+原双曲线变为 $`(s-1)(e-1)=1`$。把 $`e=bs`$ 代进去：
 
-$$
+```math
 (s-1)(bs-1)=1.
-$$
+```
 
 逐项展开左边：
 
-$$
+```math
 bs^2-s-bs+1=1.
-$$
+```
 
 两边减 1，再把中间两项合并：
 
-$$
+```math
 bs^2-(b+1)s=0.
-$$
+```
 
-提出共同因子 $s$：
+提出共同因子 $`s`$：
 
-$$
+```math
 s\bigl(bs-(b+1)\bigr)=0.
-$$
+```
 
-$S,S_{min}$ 都是正数，所以 $s=S/S_{min}>0$，不能取 $s=0$。因此第二个因子必须为 0：
+$`S,S_{min}`$ 都是正数，所以 $`s=S/S_{min}>0`$，不能取 $`s=0`$。因此第二个因子必须为 0：
 
-$$
+```math
 bs=b+1
 \Rightarrow
 s=\frac{b+1}{b}=1+\frac1b.
-$$
+```
 
-最后代回 $e=bs$：
+最后代回 $`e=bs`$：
 
-$$
+```math
 e=b\left(1+\frac1b\right)=1+b.
-$$
+```
 
 所以完整结果是：
 
-$$
+```math
 \boxed{\frac{S}{S_{min}}=1+\frac1b},
 \qquad
 \boxed{\frac{E}{E_{min}}=1+b}.
-$$
+```
 
 ### 11.4 从曲线推出三个 batch
 
 把 §11.3 刚推出来的结果代入三个 batch：
 
-取 $S_{\min}=100$ steps、$E_{\min}=1000$ examples，所以 $B_{\text{crit}}=1000/100=10$ examples/step：
+取 $`S_{\min}=100`$ steps、$`E_{\min}=1000`$ examples，所以 $`B_{\text{crit}}=1000/100=10`$ examples/step：
 
-| $B$ | $b=B/10$ | $S=100(1+1/b)$ | $E=1000(1+b)$ | 检查 $E/S$ |
+| $`B`$ | $`b=B/10`$ | $`S=100(1+1/b)`$ | $`E=1000(1+b)`$ | 检查 $`E/S`$ |
 |---:|---:|---:|---:|---:|
-| 5 | 0.5 | $100(1+2)=300$ | $1000(1.5)=1500$ | $1500/300=5$ |
-| 10 | 1 | $100(2)=200$ | $1000(2)=2000$ | $2000/200=10$ |
-| 20 | 2 | $100(1.5)=150$ | $1000(3)=3000$ | $3000/150=20$ |
+| 5 | 0.5 | $`100(1+2)=300`$ | $`1000(1.5)=1500`$ | $`1500/300=5`$ |
+| 10 | 1 | $`100(2)=200`$ | $`1000(2)=2000`$ | $`2000/200=10`$ |
+| 20 | 2 | $`100(1.5)=150`$ | $`1000(3)=3000`$ | $`3000/150=20`$ |
 
 再验证精确曲线：
 
-- $B=5$：$(300/100-1)(1500/1000-1)=2\times0.5=1$。
-- $B=10$：$(2-1)(2-1)=1$。
-- $B=20$：$(1.5-1)(3-1)=0.5\times2=1$。
+- $`B=5`$：$`(300/100-1)(1500/1000-1)=2\times0.5=1`$。
+- $`B=10`$：$`(2-1)(2-1)=1`$。
+- $`B=20`$：$`(1.5-1)(3-1)=0.5\times2=1`$。
 
 ### 11.5 临界点为什么是“两边约 2 倍”
 
-当 $B=B_{\text{crit}}$，$b=1$：
+当 $`B=B_{\text{crit}}`$，$`b=1`$：
 
-$$
+```math
 S=2S_{\min},\qquad E=2E_{\min}.
-$$
+```
 
 它在 time efficiency（少 steps）与 sample/compute efficiency（少 examples）之间平衡。不是说此 batch “最快且最省样本”同时达到各自绝对最优，而是两种代价都在各自极限的 2 倍。
 
@@ -996,35 +970,35 @@ muP：尝试把不同 width 的更新尺度对齐
 
 ### 13.1 统一符号
 
-**【课程】【PDF 42–44】【视频补充】[56:44](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=3404s)** 为避免课件不同论文把 $n,m$ 互换，本文统一写：
+**【课程】【PDF 42–44】【视频补充】[56:44](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=3404s)** 为避免课件不同论文把 $`n,m`$ 互换，本文统一写：
 
-$$
+```math
 L(N,D)=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta}.
-$$
+```
 
-- $N$：model parameters。
-- $D$：training tokens。
-- $E$：irreducible loss；这里不再用 $L_\infty$，含义相同。
-- $A,B$：两项的尺度常数。
-- $\alpha,\beta>0$：model 与 data exponent。
+- $`N`$：model parameters。
+- $`D`$：training tokens。
+- $`E`$：irreducible loss；这里不再用 $`L_\infty`$，含义相同。
+- $`A,B`$：两项的尺度常数。
+- $`\alpha,\beta>0`$：model 与 data exponent。
 
-> **§13 当前符号卡：**$N$=参数量，$D$=训练 tokens，$C$=训练 FLOPs，$L$=loss，$E$=irreducible loss，$A/B$=两项系数，$\alpha/\beta$=model/data exponent。它们与 §11 的 batch 符号是两套局部记号。
+> **§13 当前符号卡：**$`N`$=参数量，$`D`$=训练 tokens，$`C`$=训练 FLOPs，$`L`$=loss，$`E`$=irreducible loss，$`A/B`$=两项系数，$`\alpha/\beta`$=model/data exponent。它们与 §11 的 batch 符号是两套局部记号。
 
 Rosenfeld 的课件简写是 `Error = n^{-α}+m^{-β}+C`；Kaplan p43 的组合形式更复杂。本文用上式教学，因为符号和 Chinchilla 后续一致；不是说两篇论文原式逐字相同。[Rosenfeld 原论文](https://arxiv.org/abs/1909.12673)
 
-**符号复用警告：**§11 的 $B$ 是 batch size、$E$ 是 examples；从本节起，$B$ 是 data-loss 项的系数、$E$ 是 irreducible loss。判断它们要看单位与所在公式。
+**符号复用警告：**§11 的 $`B`$ 是 batch size、$`E`$ 是 examples；从本节起，$`B`$ 是 data-loss 项的系数、$`E`$ 是 irreducible loss。判断它们要看单位与所在公式。
 
-PDF p43 对 Kaplan 形式按其自己的 $m,n$ 记号原样写作：
+PDF p43 对 Kaplan 形式按其自己的 $`m,n`$ 记号原样写作：
 
-$$
+```math
 \text{Error}=\left[m^{-\alpha}+n^{-1}\right]^\beta.
-$$
+```
 
-这里不能未经论文定义就把课件的 $m,n$ 直接换成本笔记的 $N,D$；课程想强调的是 Kaplan 也把 model/data 饱和行为放进一个联合函数，而不是它与 Rosenfeld 的加法式逐项相同。
+这里不能未经论文定义就把课件的 $`m,n`$ 直接换成本笔记的 $`N,D`$；课程想强调的是 Kaplan 也把 model/data 饱和行为放进一个联合函数，而不是它与 Rosenfeld 的加法式逐项相同。
 
-### 13.2 为什么训练 compute 粗略是 $C\approx6ND$
+### 13.2 为什么训练 compute 粗略是 $`C\approx6ND`$
 
-适用对象是 **dense Transformer training**：每 token 大致激活全部 $N$ 个非 embedding 主体参数。先把训练的数据流说清：
+适用对象是 **dense Transformer training**：每 token 大致激活全部 $`N`$ 个非 embedding 主体参数。先把训练的数据流说清：
 
 - **Forward（前向）**：输入 tokens 依次经过各层，产生预测并算出 loss。
 - **Activation（激活/中间值）**：forward 中某层输出、会交给下一层的数字。
@@ -1035,141 +1009,139 @@ $$
 现在才开始算 FLOPs。**Multiply-add（乘加）**是一次乘法后把结果加到累加器，按“一乘 + 一加 = 2 FLOPs”计：
 
 1. forward 中参数矩阵乘每个参数约参与一次 multiply-add。
-2. 一个 multiply-add 约按 2 FLOPs（一次乘、一次加）计，因此 forward 约 $2ND$。
-3. backward 要算 activation gradient 与 weight gradient，粗略约 forward 的 2 倍，即 $4ND$。
+2. 一个 multiply-add 约按 2 FLOPs（一次乘、一次加）计，因此 forward 约 $`2ND`$。
+3. backward 要算 activation gradient 与 weight gradient，粗略约 forward 的 2 倍，即 $`4ND`$。
 4. 合计：
 
-   $$
-   C\approx2ND+4ND=6ND.
-   $$
+   $`C\approx2ND+4ND=6ND.`$
 
 这不是 inference 公式；它忽略/合并 attention 的序列平方项、embedding/output、loss、optimizer、重计算、稀疏 MoE、通信与数据移动。参数矩阵乘不主导时会失真。
 
-### 13.3 用代入法推 $N_{\text{opt}}$ 与 $D_{\text{opt}}$
+### 13.3 用代入法推 $`N_{\text{opt}}`$ 与 $`D_{\text{opt}}`$
 
-固定训练 compute $C$：
+固定训练 compute $`C`$：
 
-$$
+```math
 D=\frac{C}{6N}.
-$$
+```
 
 代回可改善 loss：
 
-$$
+```math
 f(N)=A N^{-\alpha}+B\left(\frac{C}{6N}\right)^{-\beta}
 =A N^{-\alpha}+B\left(\frac{6N}{C}\right)^\beta.
-$$
+```
 
-第一项随 $N$ 增大而降，第二项因为 $D$ 被挤小而升，所以有平衡点。
+第一项随 $`N`$ 增大而降，第二项因为 $`D`$ 被挤小而升，所以有平衡点。
 
-用导数找最低点。这里唯一需要的求导规则是：若 $k,r$ 都是不随 $N$ 变化的常数，
+用导数找最低点。这里唯一需要的求导规则是：若 $`k,r`$ 都是不随 $`N`$ 变化的常数，
 
-$$
+```math
 \frac{d}{dN}\left(kN^r\right)=krN^{r-1}.
-$$
+```
 
-人话理解：导数是数轴上曲线在当前位置的坡度。内部最低点左侧还在下坡，坡度为负；右侧已经上坡，坡度为正；两者交界处坡度为 0。这里 $N>0$ 且两项一降一升，所以在我们讨论的内部平衡点令导数为 0。若实验最优点落在扫描边界，就不能用“内部坡度为 0”代替扩宽扫描。
+人话理解：导数是数轴上曲线在当前位置的坡度。内部最低点左侧还在下坡，坡度为负；右侧已经上坡，坡度为正；两者交界处坡度为 0。这里 $`N>0`$ 且两项一降一升，所以在我们讨论的内部平衡点令导数为 0。若实验最优点落在扫描边界，就不能用“内部坡度为 0”代替扩宽扫描。
 
-把第二项先写成 $B(6/C)^\beta N^\beta$，再逐项套规则：
+把第二项先写成 $`B(6/C)^\beta N^\beta`$，再逐项套规则：
 
-$$
+```math
 \frac{df}{dN}
 =-\alpha A N^{-\alpha-1}
 +\beta B\left(\frac6C\right)^\beta N^{\beta-1}.
-$$
+```
 
 最低点斜率为 0：
 
-$$
+```math
 \alpha A N^{-\alpha-1}
 =\beta B\left(\frac6C\right)^\beta N^{\beta-1}.
-$$
+```
 
-两边乘 $N^{\alpha+1}$：
+两边乘 $`N^{\alpha+1}`$：
 
-$$
+```math
 \alpha A
 =\beta B\left(\frac6C\right)^\beta N^{\alpha+\beta}.
-$$
+```
 
 整理：
 
-$$
+```math
 N^{\alpha+\beta}
 =\frac{\alpha A}{\beta B}\left(\frac C6\right)^\beta.
-$$
+```
 
-为了把左边的 $\alpha+\beta$ 次方去掉，两边同时开 $\alpha+\beta$ 次方，也就是整体取 $1/(\alpha+\beta)$ 次方：
+为了把左边的 $`\alpha+\beta`$ 次方去掉，两边同时开 $`\alpha+\beta`$ 次方，也就是整体取 $`1/(\alpha+\beta)`$ 次方：
 
-$$
+```math
 N
 =\left(\frac{\alpha A}{\beta B}\right)^{1/(\alpha+\beta)}
 \left(\frac C6\right)^{\beta/(\alpha+\beta)}.
-$$
+```
 
-前面的 $A,B,\alpha,\beta,6$ 都不随 $C$ 变，所以谈随 compute 的比例时：
+前面的 $`A,B,\alpha,\beta,6`$ 都不随 $`C`$ 变，所以谈随 compute 的比例时：
 
-$$
+```math
 \boxed{N_{\text{opt}}\propto C^{\beta/(\alpha+\beta)}}.
-$$
+```
 
-再由 $D=C/(6N)$，把不随 $C$ 变化的 $1/6$ 收进比例常数：
+再由 $`D=C/(6N)`$，把不随 $`C`$ 变化的 $`1/6`$ 收进比例常数：
 
-$$
+```math
 D\propto\frac CN
 \propto\frac{C^1}{C^{\beta/(\alpha+\beta)}}
 =C^{1-\beta/(\alpha+\beta)}.
-$$
+```
 
-把指数中的 1 写成 $(\alpha+\beta)/(\alpha+\beta)$：
+把指数中的 1 写成 $`(\alpha+\beta)/(\alpha+\beta)`$：
 
-$$
+```math
 1-\frac\beta{\alpha+\beta}
 =\frac{\alpha+\beta-\beta}{\alpha+\beta}
 =\frac\alpha{\alpha+\beta}.
-$$
+```
 
 因此：
 
-$$
+```math
 \boxed{D_{\text{opt}}\propto C^{\alpha/(\alpha+\beta)}}.
-$$
+```
 
-两个 exponent 相加为 1，保证 $ND\propto C$。
+两个 exponent 相加为 1，保证 $`ND\propto C`$。
 
-### 13.4 $\alpha=\beta=0.5$ 的整数例
+### 13.4 $`\alpha=\beta=0.5`$ 的整数例
 
-为方便手算，用归一化单位令 $C/6=ND$，且 $A=B=1$。
+为方便手算，用归一化单位令 $`C/6=ND`$，且 $`A=B=1`$。
 
-初始 budget：$ND=100$。先不靠“对称所以最小”这句话，实际扫五个候选。不可约常数 $E$ 对每行都相同，不影响谁最低，所以只算额外 loss：
+初始 budget：$`ND=100`$。先不靠“对称所以最小”这句话，实际扫五个候选。不可约常数 $`E`$ 对每行都相同，不影响谁最低，所以只算额外 loss：
 
-$$
+```math
 f(N,D)=\frac1{\sqrt N}+\frac1{\sqrt D}.
-$$
+```
 
-| $N$ | $D=100/N$ | model 项 | data 项 | $f$ |
+| $`N`$ | $`D=100/N`$ | model 项 | data 项 | $`f`$ |
 |---:|---:|---:|---:|---:|
-| 1 | 100 | $1/\sqrt1=1$ | $1/\sqrt{100}=0.1$ | 1.1 |
-| 4 | 25 | $1/2=0.5$ | $1/5=0.2$ | 0.7 |
-| 10 | 10 | $1/\sqrt{10}\approx0.316$ | 同为 0.316 | **0.632** |
-| 25 | 4 | $1/5=0.2$ | $1/2=0.5$ | 0.7 |
-| 100 | 1 | $1/10=0.1$ | $1/1=1$ | 1.1 |
+| 1 | 100 | $`1/\sqrt1=1`$ | $`1/\sqrt{100}=0.1`$ | 1.1 |
+| 4 | 25 | $`1/2=0.5`$ | $`1/5=0.2`$ | 0.7 |
+| 10 | 10 | $`1/\sqrt{10}\approx0.316`$ | 同为 0.316 | **0.632** |
+| 25 | 4 | $`1/5=0.2`$ | $`1/2=0.5`$ | 0.7 |
+| 100 | 1 | $`1/10=0.1`$ | $`1/1=1`$ | 1.1 |
 
-表中从 1.1 降到 0.632，再升回 1.1；所以 $(10,10)$ 至少是这五个候选中最低的。连续范围内的严格最优已经由 §13.3 的导数证明；这张表只负责建立数值直觉，不能单靠五个离散点排除两点之间还有更低位置。
+表中从 1.1 降到 0.632，再升回 1.1；所以 $`(10,10)`$ 至少是这五个候选中最低的。连续范围内的严格最优已经由 §13.3 的导数证明；这张表只负责建立数值直觉，不能单靠五个离散点排除两点之间还有更低位置。
 
-compute 增 4 倍：$ND=400$。公式指数：
+compute 增 4 倍：$`ND=400`$。公式指数：
 
-$$
+```math
 \frac\beta{\alpha+\beta}=\frac{0.5}{1}=0.5.
-$$
+```
 
-所以 $N,D$ 都乘：
+所以 $`N,D`$ 都乘：
 
-$$
+```math
 4^{0.5}=2.
-$$
+```
 
-新最优 $N=D=20$，并且 $20\times20=400$。这只是比例教学例；现实 parameters 与 tokens 的数值单位不同，不要求 $N=D$。
+新最优 $`N=D=20`$，并且 $`20\times20=400`$。这只是比例教学例；现实 parameters 与 tokens 的数值单位不同，不要求 $`N=D`$。
 
 ---
 
@@ -1179,21 +1151,21 @@ $$
 
 **【课程】【PDF 45】【视频补充】[60:21](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=3621s)** 课件列：
 
-$$
+```math
 N_{\text{opt}}\propto C^{0.73},
 \qquad
 D_{\text{opt}}\propto C^{0.27}.
-$$
+```
 
 compute 增 100 倍：
 
-$$
+```math
 N\text{ 倍数}=100^{0.73}=10^{1.46}\approx28.84,
-$$
+```
 
-$$
+```math
 D\text{ 倍数}=100^{0.27}=10^{0.54}\approx3.47.
-$$
+```
 
 因此更偏向增大 model，而 data 增得较慢。回忆 §10.5 的 cross-entropy loss：Kaplan 原论文研究的是这种 loss 的经验规律，不是所有任务的定理。[Kaplan 原论文](https://arxiv.org/abs/2001.08361)
 
@@ -1201,28 +1173,28 @@ $$
 
 Hoffmann 等训练 400 多个模型，在其研究范围内得到 compute-optimal model size 与 tokens 大致同比例扩张，常概括为：
 
-$$
+```math
 N_{\text{opt}}\propto C^{0.5},
 \qquad
 D_{\text{opt}}\propto C^{0.5}.
-$$
+```
 
-compute 增 100 倍时，两者各增 $\sqrt{100}=10$ 倍。这与 Kaplan 的资源分配明显不同。[Chinchilla 原论文](https://arxiv.org/abs/2203.15556)
+compute 增 100 倍时，两者各增 $`\sqrt{100}=10`$ 倍。这与 Kaplan 的资源分配明显不同。[Chinchilla 原论文](https://arxiv.org/abs/2203.15556)
 
 ### 14.3 tokens/parameter 会怎么变
 
 比率：
 
-$$
+```math
 \frac DN\propto C^{d-n},
-$$
+```
 
-其中 $d,n$ 分别是 data/model exponent。
+其中 $`d,n`$ 分别是 data/model exponent。
 
-- Kaplan：$D/N\propto C^{0.27-0.73}=C^{-0.46}$，compute 越大，比率越低。
-- Chinchilla 0.5/0.5：$D/N\propto C^0$，比率近似保持常数。
+- Kaplan：$`D/N\propto C^{0.27-0.73}=C^{-0.46}`$，compute 越大，比率越低。
+- Chinchilla 0.5/0.5：$`D/N\propto C^0`$，比率近似保持常数。
 
-“约 20 tokens/parameter”来自特定 Chinchilla 训练设置与前两种估计，不是由 $0.5/0.5$ 单独决定；常数还要由实验拟合。
+“约 20 tokens/parameter”来自特定 Chinchilla 训练设置与前两种估计，不是由 $`0.5/0.5`$ 单独决定；常数还要由实验拟合。
 
 ---
 
@@ -1238,44 +1210,44 @@ $$
 | 20 | 2.7 | 2.5 | 2.9 | 2.5（B） |
 | 40 | 2.6 | 2.3 | 2.1 | 2.1（C） |
 
-连接 envelope 点，再拟合最优 $N$ 随 $C$ 的关系。风险：没有在某段 compute 试到真正好模型，envelope 会偏高。
+连接 envelope 点，再拟合最优 $`N`$ 随 $`C`$ 的关系。风险：没有在某段 compute 试到真正好模型，envelope 会偏高。
 
 ### 15.2 Method 2：IsoFLOP
 
-**IsoFLOP** 表示相同 FLOPs。固定 $C\approx6ND$，等价于固定 $ND$，扫描不同 $N,D$。
+**IsoFLOP** 表示相同 FLOPs。固定 $`C\approx6ND`$，等价于固定 $`ND`$，扫描不同 $`N,D`$。
 
-用 $ND=36$、额外 loss $f=1/\sqrt N+1/\sqrt D$：
+用 $`ND=36`$、额外 loss $`f=1/\sqrt N+1/\sqrt D`$：
 
-| $N$ | $D=36/N$ | $f$ |
+| $`N`$ | $`D=36/N`$ | $`f`$ |
 |---:|---:|---:|
-| 1 | 36 | $1+1/6=1.167$ |
-| 2 | 18 | $0.707+0.236=0.943$ |
-| 3 | 12 | $0.577+0.289=0.866$ |
-| 4 | 9 | $0.5+0.333=0.833$ |
-| 6 | 6 | $0.408+0.408=0.816$（最低） |
-| 9 | 4 | $0.333+0.5=0.833$ |
-| 18 | 2 | $0.236+0.707=0.943$ |
-| 36 | 1 | $0.167+1=1.167$ |
+| 1 | 36 | $`1+1/6=1.167`$ |
+| 2 | 18 | $`0.707+0.236=0.943`$ |
+| 3 | 12 | $`0.577+0.289=0.866`$ |
+| 4 | 9 | $`0.5+0.333=0.833`$ |
+| 6 | 6 | $`0.408+0.408=0.816`$（最低） |
+| 9 | 4 | $`0.333+0.5=0.833`$ |
+| 18 | 2 | $`0.236+0.707=0.943`$ |
+| 36 | 1 | $`0.167+1=1.167`$ |
 
-在 log-$N$ 横轴上像一个碗，碗底给该 compute 的 $N_{\text{opt}}$。再换多个 compute budgets，拟合碗底怎样移动。视频 [64:28](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=3868s) 开始 Method 2。
+在 log-$`N`$ 横轴上像一个碗，碗底给该 compute 的 $`N_{\text{opt}}`$。再换多个 compute budgets，拟合碗底怎样移动。视频 [64:28](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=3868s) 开始 Method 2。
 
 ### 15.3 Method 3：联合参数曲面
 
 固定形式：
 
-$$
+```math
 L=E+A N^{-\alpha}+B D^{-\beta},
-$$
+```
 
-让最小二乘同时拟合 $E,A,B,\alpha,\beta$。若暂时已知 $E=1,\alpha=\beta=0.5$，三个实验：
+让最小二乘同时拟合 $`E,A,B,\alpha,\beta`$。若暂时已知 $`E=1,\alpha=\beta=0.5`$，三个实验：
 
-| $(N,D)$ | 预测 $L$（取 $A=B=1$） |
+| $`(N,D)`$ | 预测 $`L`$（取 $`A=B=1`$） |
 |---|---:|
-| (4,4) | $1+1/2+1/2=2$ |
-| (4,16) | $1+1/2+1/4=1.75$ |
-| (16,4) | $1+1/4+1/2=1.75$ |
+| (4,4) | $`1+1/2+1/2=2`$ |
+| (4,16) | $`1+1/2+1/4=1.75`$ |
+| (16,4) | $`1+1/4+1/2=1.75`$ |
 
-真实拟合还要从噪声数据中估五个量，容易出现参数互相补偿。数值优化器还可能停在 **local optimum（局部最优）**：在附近移动都更差，但更远处仍有更低的解。PDF p49 展示的是二维 $N,D$ 上的 loss surface，不是只拟合一条线。
+真实拟合还要从噪声数据中估五个量，容易出现参数互相补偿。数值优化器还可能停在 **local optimum（局部最优）**：在附近移动都更差，但更远处仍有更低的解。PDF p49 展示的是二维 $`N,D`$ 上的 loss surface，不是只拟合一条线。
 
 ### 15.4 三种方法为什么可能不一致
 
@@ -1285,7 +1257,7 @@ $$
 
 **Confidence interval（置信区间）**是按某套重复抽样程序表达估计不确定性的区间；它不是“真值保证有某个百分比一定在这里”。PDF p46 的 2022 课件表（括号为页上 confidence interval）是：
 
-| 方法 | $N_{opt}$ exponent | $D_{opt}$ exponent |
+| 方法 | $`N_{opt}`$ exponent | $`D_{opt}`$ exponent |
 |---|---:|---:|
 | Approach 1 | 0.50（0.488, 0.502） | 0.50（0.501, 0.512） |
 | Approach 2 | 0.49（0.462, 0.534） | 0.51（0.483, 0.529） |
@@ -1310,9 +1282,9 @@ $$
 
 视频 [68:53](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4133s) 从 parameter count 开始；[69:40](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4180s) 讲 warmup；[70:03](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4203s) 讲固定 batch。
 
-PDF p51 对 Porian 等结果给了一条定量“修正阶梯”；纵轴拟合的是 $N^*(C)\propto C^a$ 中的 model exponent $a$：
+PDF p51 对 Porian 等结果给了一条定量“修正阶梯”；纵轴拟合的是 $`N^*(C)\propto C^a`$ 中的 model exponent $`a`$：
 
-| 设置 | $a$（页上区间） |
+| 设置 | $`a`$（页上区间） |
 |---|---:|
 | 复现 Kaplan 设置 | 0.835（0.82, 0.85） |
 | 计入 last-layer FLOPs | 0.706（0.69, 0.72） |
@@ -1347,17 +1319,17 @@ Besiroglu 等 2024 针对 **Chinchilla Method 3**，从论文图中重建数据�
 
 粗略总成本：
 
-$$
+```math
 C_{\text{total}}
 =C_{\text{train}}
 +Q\left(C_{\text{prefill per request}}+T_{\text{gen}}C_{\text{decode per token}}\right).
-$$
+```
 
-- $Q$：请求数。
-- $T_{\text{gen}}$：每请求生成 tokens。
+- $`Q`$：请求数。
+- $`T_{\text{gen}}`$：每请求生成 tokens。
 - prefill：一次读入 prompt；decode：逐 token 生成。
 
-若只做极粗 dense matmul 估算，每生成 token forward 约 $2N$ FLOPs；实际还受 attention、KV cache、batching、hardware utilization 影响。
+若只做极粗 dense matmul 估算，每生成 token forward 约 $`2N`$ FLOPs；实际还受 attention、KV cache、batching、hardware utilization 影响。
 
 ### 17.2 break-even 手算
 
@@ -1370,21 +1342,21 @@ $$
 
 总成本：
 
-$$
+```math
 C_A=1000+10Q,
 \qquad C_B=1600+4Q.
-$$
+```
 
 break-even（两者相等的分界点）：
 
-$$
+```math
 1000+10Q=1600+4Q
-$$
+```
 
-$$
+```math
 6Q=600
 \Rightarrow Q=100.
-$$
+```
 
 - 少于 100 请求：A 的额外训练节省占优。
 - 多于 100 请求：B 每请求省 6，最终摊回多花的 600 训练成本。
@@ -1422,16 +1394,16 @@ $$
 
 - 每条曲线直接回答“同样训练预算下哪个配置 loss 最低”。
 - 碗形曲线容易看见扫描范围是否覆盖 optimum。
-- 可扩展到 diffusion、MoE sparsity 等，不限 $N,D$。
+- 可扩展到 diffusion、MoE sparsity 等，不限 $`N,D`$。
 
 ### 18.2 从小网格到大 run
 
-1. **先定义 x 轴。**$N$ 是 total 还是 non-embedding？$D$ 是 unique 还是 seen tokens？
+1. **先定义 x 轴。**$`N`$ 是 total 还是 non-embedding？$`D`$ 是 unique 还是 seen tokens？
 2. **固定 recipe。**tokenizer、数据质量、optimizer family、目标 loss 尽量一致。
-3. **选多个 compute budgets。**每个 budget 用 $C\approx6ND$ 生成候选网格。
-4. **每个 budget 扫 $N/D$。**确保碗底左右都有点，不是最低点落在边界。
+3. **选多个 compute budgets。**每个 budget 用 $`C\approx6ND`$ 生成候选网格。
+4. **每个 budget 扫 $`N/D`$。**确保碗底左右都有点，不是最低点落在边界。
 5. **拟合每个碗底。**不要只挑肉眼最好点；记录不确定度与 residual。
-6. **跨 budgets 拟合 $N_{\text{opt}}(C),D_{\text{opt}}(C)$。**
+6. **跨 budgets 拟合 $`N_{\text{opt}}(C),D_{\text{opt}}(C)`$。**
 7. **做 backtest（回测）。**故意只用较小预算拟合，把一个已实际跑过的较大预算留作 held-out scale（拟合时不让模型看到的规模），再比较预测与实测。
 8. **保留验证预算。**不要把全部钱都花在拟合网格；留一个大 run 检验外推。
 9. **大 run 仍监控。**若 early loss、gradient、throughput 偏离小模型趋势，及时停查。
@@ -1444,12 +1416,12 @@ $$
 - tokenizer 或 sequence length 改了；
 - train/test contamination（泄漏）让 loss/accuracy 虚好；
 - 日志噪声、短 run 未收敛；
-- 只看 $R^2$，不看 residual pattern；
+- 只看 $`R^2`$，不看 residual pattern；
 - 候选网格没覆盖碗底；
-- $C\approx6ND$ 在 attention、MoE 或重计算主导时不准；
+- $`C\approx6ND`$ 在 attention、MoE 或重计算主导时不准；
 - 目标其实是 deployment cost，却只最小化 train FLOPs。
 
-PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说明方法通用；不说明每一种都能被同一个 $6ND$ 模型精确描述。视频 [76:44](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4604s) 给出的正确态度是“good default”，不是“永不失败”。
+PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说明方法通用；不说明每一种都能被同一个 $`6ND`$ 模型精确描述。视频 [76:44](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4604s) 给出的正确态度是“good default”，不是“永不失败”。
 
 ---
 
@@ -1494,13 +1466,13 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 | 2 | 插值准，所以外推 1000 倍也准。 | 外推可能跨 regime、数据饱和或系统瓶颈。 | 明写外推倍数并留外部验证点。 |
 | 3 | 理论 generalization bound 就是经验曲线。 | 一个是证明的上界，一个是实际趋势拟合。 | 分开报告 bound 与 fit。 |
 | 4 | log-log 直线说明原坐标也是直线。 | 取 log 改变了坐标。 | 原坐标是 power curve。 |
-| 5 | $\alpha$ 越大，loss 越大。 | $n^{-\alpha}$ 在 $n>1$ 时随 $\alpha$ 增大而更小。 | $\alpha$ 大表示随规模改善更快。 |
-| 6 | 数据翻 4 倍，总 loss 一定减半。 | 只有当 $\alpha=0.5$ 时，额外 loss 减半；还要加 $L_\infty$。 | 计算 $r^{-\alpha}$ 并只作用于可改善项。 |
-| 7 | $L_\infty=0$。 | 数据本身有熵，模型/loss 口径也可能有不可约项。 | 把 $L_\infty$ 拟合或说明固定依据。 |
-| 8 | MSE 与标准误差都是 $1/n$。 | 标准误差是 MSE/variance 的平方根。 | MSE $\propto1/n$，标准误差 $\propto1/\sqrt n$。 |
+| 5 | $`\alpha`$ 越大，loss 越大。 | $`n^{-\alpha}`$ 在 $`n>1`$ 时随 $`\alpha`$ 增大而更小。 | $`\alpha`$ 大表示随规模改善更快。 |
+| 6 | 数据翻 4 倍，总 loss 一定减半。 | 只有当 $`\alpha=0.5`$ 时，额外 loss 减半；还要加 $`L_\infty`$。 | 计算 $`r^{-\alpha}`$ 并只作用于可改善项。 |
+| 7 | $`L_\infty=0`$。 | 数据本身有熵，模型/loss 口径也可能有不可约项。 | 把 $`L_\infty`$ 拟合或说明固定依据。 |
+| 8 | MSE 与标准误差都是 $`1/n`$。 | 标准误差是 MSE/variance 的平方根。 | MSE $`\propto1/n`$，标准误差 $`\propto1/\sqrt n`$。 |
 | 9 | 方差总能相加。 | 需要独立，或加入 covariance 项。 | 说明样本独立假设。 |
 | 10 | Nonparametric 就是没有参数。 | 所需局部自由度可随数据增长。 | 它是不固定有限维参数族。 |
-| 11 | p19 的 $n^{-1/d}$ 是万能定理。 | rate 还依赖 smoothness、loss、估计器。 | 把它当课程简化启发。 |
+| 11 | p19 的 $`n^{-1/d}`$ 是万能定理。 | rate 还依赖 smoothness、loss、估计器。 | 把它当课程简化启发。 |
 | 12 | scaling exponent 等于语言的真实 intrinsic dimension。 | 该连接依赖模型与估计假设，dimension 也难测。 | 只能作谨慎解释。 |
 | 13 | 好数据只改 offset，永远不改 slope。 | 这是特定研究观察。 | mixture、质量、regime 都可能改两者。 |
 | 14 | 小模型最佳 mixture 必是大模型最佳。 | 两条曲线可能交叉。 | 多规模比较 mixture。 |
@@ -1512,23 +1484,23 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 | 20 | MoE total parameters 决定每 token FLOPs。 | 每 token 只激活部分 experts。 | 同时报 total 与 active parameters。 |
 | 21 | pretraining loss 可直接换算 downstream accuracy。 | 下游评测可噪声更大、排序不同。 | 分别拟合并验证。 |
 | 22 | Batch 越大，steps 永远按比例减少。 | 超过 critical batch 后回报递减。 | 同时看 steps 与 examples。 |
-| 23 | $E=SB$ 中 $E$ 是 irreducible loss。 | §11 的 $E$ 是 examples，§13 的 $E$ 才是 irreducible loss。 | 看所在章节和单位。 |
+| 23 | $`E=SB`$ 中 $`E`$ 是 irreducible loss。 | §11 的 $`E`$ 是 examples，§13 的 $`E`$ 才是 irreducible loss。 | 看所在章节和单位。 |
 | 24 | Critical batch 同时达到最少 steps 与最少 examples。 | 临界点是两者各约极限 2 倍的折中。 | 用精确曲线复算。 |
-| 25 | $B_{crit}$ 是训练全过程固定常数。 | gradient noise scale 常随 loss/训练进度变。 | 可随训练阶段调整 batch。 |
+| 25 | $`B_{crit}`$ 是训练全过程固定常数。 | gradient noise scale 常随 loss/训练进度变。 | 可随训练阶段调整 batch。 |
 | 26 | 普通参数化下 LR 一定跨 width 转移。 | update scale 会随 width 变。 | 调参或使用经过验证的 scale-aware parameterization。 |
 | 27 | muP 保证所有超参数都不漂移。 | 论文结论有规则和适用范围。 | 本讲只作预告，细节留 L11。 |
-| 28 | $C=6ND$ 是精确硬件耗时。 | 它是 dense 训练 FLOPs 粗估，不含通信/利用率。 | 区分 FLOPs 与 wall-clock。 |
-| 29 | $C=6ND$ 也直接用于推理。 | backward 不存在，prefill/decode 结构不同。 | 推理单独建成本模型。 |
-| 30 | 固定 $ND$ 就保证所有 IsoFLOP run 真同成本。 | embedding、attention、sequence length、重计算可不同。 | 记录实测 FLOPs/时间并说明近似。 |
+| 28 | $`C=6ND`$ 是精确硬件耗时。 | 它是 dense 训练 FLOPs 粗估，不含通信/利用率。 | 区分 FLOPs 与 wall-clock。 |
+| 29 | $`C=6ND`$ 也直接用于推理。 | backward 不存在，prefill/decode 结构不同。 | 推理单独建成本模型。 |
+| 30 | 固定 $`ND`$ 就保证所有 IsoFLOP run 真同成本。 | embedding、attention、sequence length、重计算可不同。 | 记录实测 FLOPs/时间并说明近似。 |
 | 31 | Kaplan 错、Chinchilla 永远对。 | 两者实验范围和 recipe 不同，后续复核只解释特定差异。 | 报告方法、范围与不确定度。 |
 | 32 | Chinchilla Method 1/2/3 原本完全一致。 | p46 的 Method 3 exponent 不同。 | 分开列三种结果。 |
 | 33 | 2024 replication 拿到了 Chinchilla 全部原数据。 | Besiroglu 等从论文图重建。 | 明确数据来源边界。 |
 | 34 | 20 tokens/parameter 是黄金比例。 | 这是特定 train-optimal 快照，服务目标不同。 | 加 inference 请求量做 deployment optimization。 |
 | 35 | “Overtrained”就是过拟合。 | 这里指超过训练 compute-optimal token 比。 | 检查 validation loss 是否恶化才谈传统过拟合。 |
 | 36 | GPT-3 的课件值没有歧义。 | PDF 写 2，视频口述 3。 | 保留材料冲突。 |
-| 37 | 高 $R^2$ 就证明外推可靠。 | 错误函数也可在窄区间高 $R^2$。 | 看 residual 与 out-of-range backtest。 |
+| 37 | 高 $`R^2`$ 就证明外推可靠。 | 错误函数也可在窄区间高 $`R^2`$。 | 看 residual 与 out-of-range backtest。 |
 | 38 | Scaling law 预测 emergence 已被严格证明。 | loss 的平滑变化不决定阈值评测的视觉形状。 | 对能力/accuracy 单独、谨慎建模。 |
-| 39 | 数据量只要写“1T”就够。 | unique/seen tokens、tokenizer、重复和 mixture 不同。 | 首先定义 $D$。 |
+| 39 | 数据量只要写“1T”就够。 | unique/seen tokens、tokenizer、重复和 mixture 不同。 | 首先定义 $`D`$。 |
 | 40 | 一次最佳大 run 能替代网格。 | 没有对照就不知道是否在 frontier。 | 小网格、拟合、验证、大 run。 |
 
 ---
@@ -1544,8 +1516,8 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 | empirical | 来自实验观察，不等于数学证明 |
 | generalization bound | 对未见数据误差的理论上界 |
 | sample complexity | 达到目标误差所需样本量 |
-| power law | 形如 $y=Ax^k$ 的幂函数关系 |
-| exponent | 幂次 $k$；控制缩放速度 |
+| power law | 形如 $`y=Ax^k`$ 的幂函数关系 |
+| exponent | 幂次 $`k`$；控制缩放速度 |
 | log-log plot | 横纵轴都取对数的图 |
 | monotonic | 输入增加时，输出只朝一个方向变化 |
 | asymptote | 曲线越来越接近的极限线 |
@@ -1594,58 +1566,58 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 ### 22.2 四则运算与公式复算（16–70）
 
-16. **【手算】**算 $2^4$、$2^{-2}$、$16^{1/2}$。
-17. **【手算】**为什么 $\log_{10}(1000)=3$？计算器中 `4^(-0.5)` 是多少？
-18. **【手算】**点 $(2,7)$ 与 $(6,3)$ 之间斜率是多少？
-19. **【手算】**预测为 $[2.0,2.5,3.0]$，实测为 $[2.1,2.3,3.2]$。列 residual，并算 SSE。
-20. **【手算】**$L_\infty=1,A=8,\alpha=0.5,n=1$ 时，总 loss 是多少？
-21. **【手算】**沿用 Q20，$n=4$ 时总 loss 是多少？资源 4 倍改变的是哪一部分？
-22. **【手算】**沿用 Q20，$n=10$ 时额外 loss 与总 loss 各约多少？
-23. **【手算】**资源每翻倍，额外 loss 乘 0.8。由 $2^{-\alpha}=0.8$ 算 $\alpha=-\ln0.8/\ln2$，保留三位小数。
-24. **【手算】**从 $L-L_\infty=An^{-\alpha}$ 逐步取 log，写出直线斜率与截距。
-25. **【手算】**某 log-log 直线为 $y=\ln4-0.25x$。对应 $A$、$\alpha$ 各是多少？
-26. **【手算】**若误差 $e(n)=1/\sqrt n$，要 $e\le0.05$，最少需要多少样本？
-27. **【手算】**样本 $[1,3,5,7]$ 的样本均值是多少？
-28. **【手算】**若每个 $X_i$ 的期望都是 10，写出 $n=4$ 时 $\mathbb E[\bar X]$ 的逐项计算。
-29. **【手算】**独立样本 variance 都是 9，$n=9$ 时：先写含 covariance 交叉项的均值 variance 公式，再说明交叉项为何为 0，最后算结果。
-30. **【手算】**$\sigma=2$ 时，先从无偏性写出“均值估计量的 MSE = variance”，再算 $n=4,16$ 的 MSE。
-31. **【手算】**沿用 Q30，先用一句人话定义 standard error，再算两种情况下的 standard error。说明为何不是都按 $1/n$。
-32. **【手算】**二维分箱 $n=10,000$：边长、每边箱数、总箱数、每箱样本数各是多少？
-33. **【手算】**二维分箱 $n=65,536=16^4$：重复 Q32 四个量，并算方差型量级。
-34. **【手算】**仅按课件 $d$ 维简化的**误差率** $n^{-1/d}$，$n=10^6,d=3$ 是多少？这里的 $n^{-1/d}$ 是边长还是误差？为什么不能把它当完整定理？
+16. **【手算】**算 $`2^4`$、$`2^{-2}`$、$`16^{1/2}`$。
+17. **【手算】**为什么 $`\log_{10}(1000)=3`$？计算器中 `4^(-0.5)` 是多少？
+18. **【手算】**点 $`(2,7)`$ 与 $`(6,3)`$ 之间斜率是多少？
+19. **【手算】**预测为 $`[2.0,2.5,3.0]`$，实测为 $`[2.1,2.3,3.2]`$。列 residual，并算 SSE。
+20. **【手算】**$`L_\infty=1,A=8,\alpha=0.5,n=1`$ 时，总 loss 是多少？
+21. **【手算】**沿用 Q20，$`n=4`$ 时总 loss 是多少？资源 4 倍改变的是哪一部分？
+22. **【手算】**沿用 Q20，$`n=10`$ 时额外 loss 与总 loss 各约多少？
+23. **【手算】**资源每翻倍，额外 loss 乘 0.8。由 $`2^{-\alpha}=0.8`$ 算 $`\alpha=-\ln0.8/\ln2`$，保留三位小数。
+24. **【手算】**从 $`L-L_\infty=An^{-\alpha}`$ 逐步取 log，写出直线斜率与截距。
+25. **【手算】**某 log-log 直线为 $`y=\ln4-0.25x`$。对应 $`A`$、$`\alpha`$ 各是多少？
+26. **【手算】**若误差 $`e(n)=1/\sqrt n`$，要 $`e\le0.05`$，最少需要多少样本？
+27. **【手算】**样本 $`[1,3,5,7]`$ 的样本均值是多少？
+28. **【手算】**若每个 $`X_i`$ 的期望都是 10，写出 $`n=4`$ 时 $`\mathbb E[\bar X]`$ 的逐项计算。
+29. **【手算】**独立样本 variance 都是 9，$`n=9`$ 时：先写含 covariance 交叉项的均值 variance 公式，再说明交叉项为何为 0，最后算结果。
+30. **【手算】**$`\sigma=2`$ 时，先从无偏性写出“均值估计量的 MSE = variance”，再算 $`n=4,16`$ 的 MSE。
+31. **【手算】**沿用 Q30，先用一句人话定义 standard error，再算两种情况下的 standard error。说明为何不是都按 $`1/n`$。
+32. **【手算】**二维分箱 $`n=10,000`$：边长、每边箱数、总箱数、每箱样本数各是多少？
+33. **【手算】**二维分箱 $`n=65,536=16^4`$：重复 Q32 四个量，并算方差型量级。
+34. **【手算】**仅按课件 $`d`$ 维简化的**误差率** $`n^{-1/d}`$，$`n=10^6,d=3`$ 是多少？这里的 $`n^{-1/d}`$ 是边长还是误差？为什么不能把它当完整定理？
 35. **【手算】**2000 tokens 按 60% 网页、25% 代码、15% 书籍混合，各是多少 tokens？
-36. **【手算】**两曲线 $L_A=1+4D^{-0.2}$、$L_B=1+6D^{-0.3}$ 在何处相交？提示化为 $D^{0.1}=1.5$，算 $1.5^{10}$。
-37. **【手算】**重复公式中 $U_D=100,R_D^*=2,R_D=0$，算 $D'$；总 epochs 是多少？
-38. **【手算】**沿用 Q37，$R_D=1$ 时算 $D'$；总 epochs 是多少？用 $e^{-0.5}\approx0.6065$。
-39. **【手算】**沿用 Q37，当 $R_D\to\infty$，$D'$ 上限是多少？
-40. **【手算】**沿用 Q37，$R_D=2$ 时实际 processed tokens 与 effective tokens 各是多少？用 $e^{-1}\approx0.3679$。
+36. **【手算】**两曲线 $`L_A=1+4D^{-0.2}`$、$`L_B=1+6D^{-0.3}`$ 在何处相交？提示化为 $`D^{0.1}=1.5`$，算 $`1.5^{10}`$。
+37. **【手算】**重复公式中 $`U_D=100,R_D^*=2,R_D=0`$，算 $`D'`$；总 epochs 是多少？
+38. **【手算】**沿用 Q37，$`R_D=1`$ 时算 $`D'`$；总 epochs 是多少？用 $`e^{-0.5}\approx0.6065`$。
+39. **【手算】**沿用 Q37，当 $`R_D\to\infty`$，$`D'`$ 上限是多少？
+40. **【手算】**沿用 Q37，$`R_D=2`$ 时实际 processed tokens 与 effective tokens 各是多少？用 $`e^{-1}\approx0.3679`$。
 41. **【手算】**词表 50,000、hidden width 1000，embedding 参数量是多少？若主体也是 50M，计入后总参数翻几倍？
 42. **【手算】**8 个 100M experts、top-2：total expert parameters 与每 token active expert parameters 各多少？
-43. **【手算】**$B=32$ examples/step、$S=250$，$E$ 是多少？
-44. **【手算】**$E_{\min}=1200$ examples、$S_{\min}=100$ steps，$B_{crit}$ 是多少，单位是什么？
-45. **【手算】**$S_{min}=100,E_{min}=1000,B=5$，算 $S,E$，并验证 $E=SB$。
-46. **【手算】**同 Q45，但 $B=10$；验证双曲线两括号乘积为 1。
-47. **【手算】**同 Q45，但 $B=20$；算出相对最少 steps/examples 的倍数。
-48. **【手算】**定义 $s=S/S_{min},e=E/E_{min},b=B/B_{crit}$。从 $b=e/s$ 与 $(s-1)(e-1)=1$ 完整推出 $s=1+1/b,e=1+b$，再验证 $E/S=B$。
-49. **【手算】**$S_{min}=100,E_{min}=1000$，观察到 $S=250$。由精确曲线求 $E$ 与 $B$。
-50. **【手算】**gradient covariance 对角线是 $[4,9,16]$，trace 是多少？它用人话表示什么？
-51. **【手算】**dense 训练 $N=2$M parameters、$D=3$M tokens，按 $C=6ND$ 算 FLOPs。
+43. **【手算】**$`B=32`$ examples/step、$`S=250`$，$`E`$ 是多少？
+44. **【手算】**$`E_{\min}=1200`$ examples、$`S_{\min}=100`$ steps，$`B_{crit}`$ 是多少，单位是什么？
+45. **【手算】**$`S_{min}=100,E_{min}=1000,B=5`$，算 $`S,E`$，并验证 $`E=SB`$。
+46. **【手算】**同 Q45，但 $`B=10`$；验证双曲线两括号乘积为 1。
+47. **【手算】**同 Q45，但 $`B=20`$；算出相对最少 steps/examples 的倍数。
+48. **【手算】**定义 $`s=S/S_{min},e=E/E_{min},b=B/B_{crit}`$。从 $`b=e/s`$ 与 $`(s-1)(e-1)=1`$ 完整推出 $`s=1+1/b,e=1+b`$，再验证 $`E/S=B`$。
+49. **【手算】**$`S_{min}=100,E_{min}=1000`$，观察到 $`S=250`$。由精确曲线求 $`E`$ 与 $`B`$。
+50. **【手算】**gradient covariance 对角线是 $`[4,9,16]`$，trace 是多少？它用人话表示什么？
+51. **【手算】**dense 训练 $`N=2`$M parameters、$`D=3`$M tokens，按 $`C=6ND`$ 算 FLOPs。
 52. **【手算】**Q51 中 forward 与 backward 粗略各多少 FLOPs？
-53. **【手算】**固定 $C/6=ND=120$，若 $N=10$，$D$ 是多少；若 $N=20$，$D$ 又是多少？
-54. **【手算】**联合 law 中 $\alpha=0.4,\beta=0.6$。$N_{opt}$ 与 $D_{opt}$ 对 $C$ 的 exponent 各多少？
-55. **【手算】**沿用 Q54，compute 增 $16$ 倍，$N,D$ 分别约增多少倍？计算 $16^{0.6}$ 与 $16^{0.4}$。
-56. **【手算】**$\alpha=\beta=0.5$，compute 增 9 倍时，最优 $N,D$ 各增几倍？验证乘积增 9 倍。
-57. **【手算】**取 $E=1,A=B=1,\alpha=\beta=0.5$，比较 $(N,D)=(4,16)$ 与 $(16,4)$ 的 loss。
-58. **【手算】**固定 $ND=36$，计算 $(N,D)=(4,9),(6,6),(9,4)$ 的 $1/\sqrt N+1/\sqrt D$，哪个最低？
+53. **【手算】**固定 $`C/6=ND=120`$，若 $`N=10`$，$`D`$ 是多少；若 $`N=20`$，$`D`$ 又是多少？
+54. **【手算】**联合 law 中 $`\alpha=0.4,\beta=0.6`$。$`N_{opt}`$ 与 $`D_{opt}`$ 对 $`C`$ 的 exponent 各多少？
+55. **【手算】**沿用 Q54，compute 增 $`16`$ 倍，$`N,D`$ 分别约增多少倍？计算 $`16^{0.6}`$ 与 $`16^{0.4}`$。
+56. **【手算】**$`\alpha=\beta=0.5`$，compute 增 9 倍时，最优 $`N,D`$ 各增几倍？验证乘积增 9 倍。
+57. **【手算】**取 $`E=1,A=B=1,\alpha=\beta=0.5`$，比较 $`(N,D)=(4,16)`$ 与 $`(16,4)`$ 的 loss。
+58. **【手算】**固定 $`ND=36`$，计算 $`(N,D)=(4,9),(6,6),(9,4)`$ 的 $`1/\sqrt N+1/\sqrt D`$，哪个最低？
 59. **【手算】**compute=20 时三个 recipe loss 为 2.7、2.5、2.9；lower envelope 是哪一个？若新 recipe 得 2.3，envelope 如何变？
 60. **【手算】**模型主体 100M、embedding 50M、output 50M。分别算 total、non-embedding、排除 embedding 但保留 output 三种参数口径。
-61. **【手算】**Kaplan exponent 下 compute 增 100 倍，$N,D$ 各约多少倍？
-62. **【手算】**Chinchilla 0.5/0.5 下 compute 增 100 倍，$N,D$ 各多少倍？
-63. **【手算】**若 $N\propto C^{0.7},D\propto C^{0.3}$，$D/N$ 对 $C$ 的 exponent 是多少？compute 增 100 倍时比率乘多少？
-64. **【手算】**Method 3 小例中 $E=1,A=B=1,\alpha=\beta=0.5$，算 $(N,D)=(9,16)$ 的 loss。
-65. **【手算】**四个 residual 为 $0.1,-0.1,0.2,-0.2$，SSE 是多少？残差平均虽为 0，为何仍不能说拟合完美？
-66. **【手算】**候选 A：$1000+10Q$；B：$1600+4Q$。求 break-even 请求数，并判断 $Q=200$ 谁便宜。
-67. **【手算】**粗略每生成 token 是 $2N$ FLOPs。$N=7$B、生成 1000 tokens，算 FLOPs；这里忽略了什么？
+61. **【手算】**Kaplan exponent 下 compute 增 100 倍，$`N,D`$ 各约多少倍？
+62. **【手算】**Chinchilla 0.5/0.5 下 compute 增 100 倍，$`N,D`$ 各多少倍？
+63. **【手算】**若 $`N\propto C^{0.7},D\propto C^{0.3}`$，$`D/N`$ 对 $`C`$ 的 exponent 是多少？compute 增 100 倍时比率乘多少？
+64. **【手算】**Method 3 小例中 $`E=1,A=B=1,\alpha=\beta=0.5`$，算 $`(N,D)=(9,16)`$ 的 loss。
+65. **【手算】**四个 residual 为 $`0.1,-0.1,0.2,-0.2`$，SSE 是多少？残差平均虽为 0，为何仍不能说拟合完美？
+66. **【手算】**候选 A：$`1000+10Q`$；B：$`1600+4Q`$。求 break-even 请求数，并判断 $`Q=200`$ 谁便宜。
+67. **【手算】**粗略每生成 token 是 $`2N`$ FLOPs。$`N=7`$B、生成 1000 tokens，算 FLOPs；这里忽略了什么？
 68. **【手算】**按 PDF 快照，Llama 3 70B、215 tokens/parameter，对应约多少训练 tokens？用 T 表示。
 69. **【手算/核对】**PDF 与视频给 GPT-3 的 tokens/parameter 分别是多少？应该怎样记录？
 70. **【填表】**把下列现象分别归入“x 轴定义、recipe 公平、数据问题、拟合诊断”：不计 output layer；小模型 warmup 占满全程；validation 泄漏；残差随规模持续为正。
@@ -1653,12 +1625,12 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 ### 22.3 综合判断（71–80）
 
 71. 什么是 backtest？为什么应故意让验证点位于拟合区之外？
-72. 为什么高 $R^2$ 不能单独证明 scaling law 可外推？
-73. 给出两个 $C\approx6ND$ 会明显失真的场景。
+72. 为什么高 $`R^2`$ 不能单独证明 scaling law 可外推？
+73. 给出两个 $`C\approx6ND`$ 会明显失真的场景。
 74. 一个模型训练成本更低但每请求贵，另一个相反。最少还需要知道什么量才能做 deployment-optimal 决策？
 75. 列出至少四个可能造成 Kaplan/Chinchilla exponent 不同的口径或 recipe 细节。
-76. 想比较 5 个固定 compute budgets 下的最佳 $N/D$，三种 Chinchilla 方法中哪种最直接？为什么？
-77. 语言模型 batch 用 tokens/step，而图表用 examples/step。公式 $E=SB$ 还能用吗？需要怎样改单位？
+76. 想比较 5 个固定 compute budgets 下的最佳 $`N/D`$，三种 Chinchilla 方法中哪种最直接？为什么？
+77. 语言模型 batch 用 tokens/step，而图表用 examples/step。公式 $`E=SB`$ 还能用吗？需要怎样改单位？
 78. 本讲重复数据公式能否表示“重复太多后 validation loss 反而变坏”？为什么？
 79. 写出一次 scaling 实验从 x 轴定义到大 run 的至少六步流程。
 80. 用五句话串起本讲：幂律来源、数据/模型联合、critical batch、Kaplan/Chinchilla、deployment。
@@ -1672,7 +1644,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 1. **答：**Scaling law 是在特定模型、数据、训练 recipe 与规模范围内，资源和表现之间观察并拟合出的简单规律。它不保证跨出该范围仍准，也不保证 pretraining loss 能精确预测 downstream accuracy。
 2. **答：**3B 位于 2B 与 4B 之间，是 interpolation；80B 超出最大 8B，是 extrapolation。80B 更危险，因为可能跨入没有测过的新 regime。
 3. **答：**Empirical law 来自实验点拟合；generalization bound 来自明确假设下的数学证明。前者追求实际预测，后者追求最坏情况保证。
-4. **答：**Monotonic 表示输入增加时输出只朝同一方向走，例如 loss 只下降；asymptote 是曲线越来越接近的极限线，例如 $L_\infty$。
+4. **答：**Monotonic 表示输入增加时输出只朝同一方向走，例如 loss 只下降；asymptote 是曲线越来越接近的极限线，例如 $`L_\infty`$。
 5. **答：**Loss 是连续训练目标；accuracy 常由离散答对/答错形成，还受 prompt、任务分布与阈值影响。因此两者排序与曲线形状可能不同。
 6. **答：**Nonparametric 方法仍可有大量局部参数，只是有效自由度不是预先固定的有限数，会随数据增加。
 7. **答：**Intrinsic dimension 是描述数据真正变化所需的自由方向数。把 exponent 连接到它需要 smoothness、估计器与数据流形等假设，而且 dimension 本身难可靠测量，所以不能严格反推。
@@ -1680,7 +1652,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 9. **答：**Lower envelope 是每个资源水平上已试候选的最低 loss。新 recipe、新数据或新架构仍可更低，所以不是数学上的不可突破下界。
 10. **答：**它平衡少 training steps 的时间效率与少 processed examples 的样本/计算效率。
 11. **答：**muP 想减少普通参数化下最佳 LR 等超参数随 width 漂移。本讲只预告，具体 tensor 缩放需完整 parameterization 背景，留到 Lecture 11。
-12. **答：**IsoFLOP 是固定训练 FLOPs，在同一预算下扫描 $N,D$ 或其它自由度，寻找最低 loss 的实验设计。
+12. **答：**IsoFLOP 是固定训练 FLOPs，在同一预算下扫描 $`N,D`$ 或其它自由度，寻找最低 loss 的实验设计。
 13. **答：**Train-optimal 只最小化一次训练成本下的 loss；deployment-optimal 还加上所有未来请求的 prefill/decode 推理成本。
 14. **答：**这里的 “overtrained” 只表示 tokens 超过 training-compute-optimal 配比；validation loss 仍可继续下降。传统过拟合则指训练表现改善、泛化表现恶化。
 15. **答：**FLOP 是一次浮点操作；FLOPs 在本文语境常指完成任务所需操作总数；FLOP/s 才是每秒吞吐。
@@ -1689,593 +1661,359 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 16. **答：**
 
-    $$
-    2^4=2\times2\times2\times2=16,
-    $$
+    $`2^4=2\times2\times2\times2=16,`$
 
-    $$
-    2^{-2}=\frac1{2^2}=\frac14=0.25,
-    $$
+    $`2^{-2}=\frac1{2^2}=\frac14=0.25,`$
 
-    $$
-    16^{1/2}=\sqrt{16}=4.
-    $$
+    $`16^{1/2}=\sqrt{16}=4.`$
 
-17. **答：**因为 $10^3=1000$，所以 $\log_{10}(1000)=3$。$4^{-0.5}=1/\sqrt4=1/2=0.5$。
+17. **答：**因为 $`10^3=1000`$，所以 $`\log_{10}(1000)=3`$。$`4^{-0.5}=1/\sqrt4=1/2=0.5`$。
 18. **答：**
 
-    $$
-    m=\frac{3-7}{6-2}=\frac{-4}{4}=-1.
-    $$
+    $`m=\frac{3-7}{6-2}=\frac{-4}{4}=-1.`$
 
 19. **答：**Residual = 实测 − 预测：
 
-    $$
-    [2.1-2.0,\ 2.3-2.5,\ 3.2-3.0]=[0.1,-0.2,0.2].
-    $$
+    $`[2.1-2.0,\ 2.3-2.5,\ 3.2-3.0]=[0.1,-0.2,0.2].`$
 
-    $$
-    \text{SSE}=0.1^2+(-0.2)^2+0.2^2=0.01+0.04+0.04=0.09.
-    $$
+    $`\text{SSE}=0.1^2+(-0.2)^2+0.2^2=0.01+0.04+0.04=0.09.`$
 
 20. **答：**
 
-    $$
-    L(1)=1+8\times1^{-0.5}=1+8=9.
-    $$
+    $`L(1)=1+8\times1^{-0.5}=1+8=9.`$
 
 21. **答：**
 
-    $$
-    L(4)=1+\frac8{\sqrt4}=1+\frac82=5.
-    $$
+    $`L(4)=1+\frac8{\sqrt4}=1+\frac82=5.`$
 
     资源从 1 增到 4，只把额外 loss 从 8 减到 4；不可约的 1 没变，所以总 loss 从 9 到 5，不是到 4.5。
 22. **答：**
 
-    $$
-    \sqrt{10}\approx3.162,
-    \qquad \Delta L=8/3.162\approx2.530.
-    $$
+    $`\sqrt{10}\approx3.162, \qquad \Delta L=8/3.162\approx2.530.`$
 
-    总 loss $\approx1+2.530=3.530$。
+    总 loss $`\approx1+2.530=3.530`$。
 23. **答：**
 
-    $$
-    \alpha=-\frac{\ln0.8}{\ln2}
-    =-\frac{-0.22314}{0.69315}
-    \approx0.32193\approx0.322.
-    $$
+    $`\alpha=-\frac{\ln0.8}{\ln2} =-\frac{-0.22314}{0.69315} \approx0.32193\approx0.322.`$
 
 24. **答：**
 
-    $$
-    L-L_\infty=An^{-\alpha}
-    $$
+    $`L-L_\infty=An^{-\alpha}`$
 
-    $$
-    \log(L-L_\infty)=\log A+\log(n^{-\alpha})
-    =\log A-\alpha\log n.
-    $$
+    $`\log(L-L_\infty)=\log A+\log(n^{-\alpha}) =\log A-\alpha\log n.`$
 
-    横轴 $x=\log n$、纵轴 $y=\log(L-L_\infty)$，斜率 $-\alpha$，截距 $\log A$。
-25. **答：**与 $y=\log A-\alpha x$ 对照：截距是 $\ln4$，所以 $A=4$；斜率是 $-0.25$，所以 $\alpha=0.25$。
+    横轴 $`x=\log n`$、纵轴 $`y=\log(L-L_\infty)`$，斜率 $`-\alpha`$，截距 $`\log A`$。
+25. **答：**与 $`y=\log A-\alpha x`$ 对照：截距是 $`\ln4`$，所以 $`A=4`$；斜率是 $`-0.25`$，所以 $`\alpha=0.25`$。
 26. **答：**
 
-    $$
-    \frac1{\sqrt n}\le0.05=\frac1{20}
-    \Rightarrow \sqrt n\ge20
-    \Rightarrow n\ge400.
-    $$
+    $`\frac1{\sqrt n}\le0.05=\frac1{20} \Rightarrow \sqrt n\ge20 \Rightarrow n\ge400.`$
 
 27. **答：**
 
-    $$
-    \bar X=\frac{1+3+5+7}{4}=\frac{16}{4}=4.
-    $$
+    $`\bar X=\frac{1+3+5+7}{4}=\frac{16}{4}=4.`$
 
 28. **答：**
 
-    $$
-    \mathbb E[\bar X]
-    =\frac{\mathbb E[X_1]+\cdots+\mathbb E[X_4]}4
-    =\frac{10+10+10+10}{4}=10.
-    $$
+    $`\mathbb E[\bar X] =\frac{\mathbb E[X_1]+\cdots+\mathbb E[X_4]}4 =\frac{10+10+10+10}{4}=10.`$
 
-    这里用了“期望可以逐项相加”。这一步本身不要求 $X_i$ 独立；独立性会在下一题消掉 covariance 交叉项时用到。
+    这里用了“期望可以逐项相加”。这一步本身不要求 $`X_i`$ 独立；独立性会在下一题消掉 covariance 交叉项时用到。
 
 29. **答：**
 
-    先写完整公式。对 $\bar X=(X_1+\cdots+X_9)/9$：
+    先写完整公式。对 $`\bar X=(X_1+\cdots+X_9)/9`$：
 
-    $$
-    \operatorname{Var}(\bar X)
-    =\frac1{9^2}\left[
-    \sum_{i=1}^{9}\operatorname{Var}(X_i)
-    +2\sum_{i<j}\operatorname{Cov}(X_i,X_j)
-    \right].
-    $$
+    $`\mathrm{Var}(\bar X) =\frac1{9^2}\left[ \sum_{i=1}^{9}\mathrm{Var}(X_i) +2\sum_{i<j}\mathrm{Cov}(X_i,X_j) \right].`$
 
     独立表示知道一个样本的取值，不会改变另一个样本的概率分布。因此
 
-    $$
-    \mathbb E[X_iX_j]=\mathbb E[X_i]\mathbb E[X_j]
-    \Rightarrow \operatorname{Cov}(X_i,X_j)=0.
-    $$
+    $`\mathbb E[X_iX_j]=\mathbb E[X_i]\mathbb E[X_j] \Rightarrow \mathrm{Cov}(X_i,X_j)=0.`$
 
     于是交叉项全为 0：
 
-    $$
-    \operatorname{Var}(\bar X)
-    =\frac1{81}(9\times9)
-    =\frac{81}{81}=1.
-    $$
+    $`\mathrm{Var}(\bar X) =\frac1{81}(9\times9) =\frac{81}{81}=1.`$
 
-30. **答：**因为样本均值无偏，即 $\mathbb E[\bar X]=\mu$：
+30. **答：**因为样本均值无偏，即 $`\mathbb E[\bar X]=\mu`$：
 
-    $$
-    \operatorname{MSE}(\bar X)
-    =\mathbb E[(\bar X-\mu)^2]
-    =\mathbb E[(\bar X-\mathbb E[\bar X])^2]
-    =\operatorname{Var}(\bar X)
-    =\frac{\sigma^2}{n}.
-    $$
+    $`\mathrm{MSE}(\bar X) =\mathbb E[(\bar X-\mu)^2] =\mathbb E[(\bar X-\mathbb E[\bar X])^2] =\mathrm{Var}(\bar X) =\frac{\sigma^2}{n}.`$
 
-    $\sigma=2\Rightarrow\sigma^2=4$，所以：
+    $`\sigma=2\Rightarrow\sigma^2=4`$，所以：
 
-    $$
-    n=4:\ 4/4=1;
-    \qquad n=16:\ 4/16=0.25.
-    $$
+    $`n=4:\ 4/4=1; \qquad n=16:\ 4/16=0.25.`$
 
 31. **答：**Standard error（标准误）是“如果反复抽样，估计量本身会晃动多少”的标准差。对样本均值：
 
-    $$
-    \operatorname{SE}(\bar X)
-    =\sqrt{\operatorname{Var}(\bar X)}
-    =\sqrt{\frac{\sigma^2}{n}}
-    =\frac{\sigma}{\sqrt n}.
-    $$
+    $`\mathrm{SE}(\bar X) =\sqrt{\mathrm{Var}(\bar X)} =\sqrt{\frac{\sigma^2}{n}} =\frac{\sigma}{\sqrt n}.`$
 
-    代入 $\sigma=2$：
+    代入 $`\sigma=2`$：
 
-    $$
-    n=4:\ 2/\sqrt4=2/2=1;
-    \qquad n=16:\ 2/\sqrt{16}=2/4=0.5.
-    $$
+    $`n=4:\ 2/\sqrt4=2/2=1; \qquad n=16:\ 2/\sqrt{16}=2/4=0.5.`$
 
-    Variance/MSE 按 $1/n$；standard error 按 $1/\sqrt n$，所以数据 4 倍时后者只减半。
+    Variance/MSE 按 $`1/n`$；standard error 按 $`1/\sqrt n`$，所以数据 4 倍时后者只减半。
 32. **答：**
 
-    $$
-    n^{1/4}=10,
-    \qquad h=n^{-1/4}=0.1.
-    $$
+    $`n^{1/4}=10, \qquad h=n^{-1/4}=0.1.`$
 
-    $h$ 是二维平面上每个正方形箱子的**边长**。每边 $1/h=10$ 箱，总箱 $10^2=100$，每箱平均 $10,000/100=100$ 样本。若只看每箱平均带来的 variance 型误差，其量级是 $1/100=0.01=n^{-1/2}$；不能把这个数误叫边长。
-33. **答：**因为 $65,536=16^4$：
+    $`h`$ 是二维平面上每个正方形箱子的**边长**。每边 $`1/h=10`$ 箱，总箱 $`10^2=100`$，每箱平均 $`10,000/100=100`$ 样本。若只看每箱平均带来的 variance 型误差，其量级是 $`1/100=0.01=n^{-1/2}`$；不能把这个数误叫边长。
+33. **答：**因为 $`65,536=16^4`$：
 
-    $$
-    h=1/16,
-    $$
+    $`h=1/16,`$
 
-    这里 $h$ 是二维箱边长。每边 16 箱，总箱 $16^2=256$，每箱 $65,536/256=256$ 样本，方差型误差量级 $1/256=0.00390625=n^{-1/2}$。
+    这里 $`h`$ 是二维箱边长。每边 16 箱，总箱 $`16^2=256`$，每箱 $`65,536/256=256`$ 样本，方差型误差量级 $`1/256=0.00390625=n^{-1/2}`$。
 34. **答：**
 
-    $$
-    n^{-1/d}=(10^6)^{-1/3}=10^{-2}=0.01.
-    $$
+    $`n^{-1/d}=(10^6)^{-1/3}=10^{-2}=0.01.`$
 
-    课件这里的 $n^{-1/d}$ 指简化的**误差率**，不是箱子的边长。代 $d=2$ 会得到 $n^{-1/2}$，正好与本讲二维例的方差型误差一致。不能当完整定理，因为从“有多少箱、每箱多少样本”本身推不出总误差；真正 rate 还依赖函数 smoothness、bias、loss、噪声与估计器。
+    课件这里的 $`n^{-1/d}`$ 指简化的**误差率**，不是箱子的边长。代 $`d=2`$ 会得到 $`n^{-1/2}`$，正好与本讲二维例的方差型误差一致。不能当完整定理，因为从“有多少箱、每箱多少样本”本身推不出总误差；真正 rate 还依赖函数 smoothness、bias、loss、噪声与估计器。
 35. **答：**
 
-    $$
-    \text{网页}=2000\times0.60=1200,
-    $$
+    $`\text{网页}=2000\times0.60=1200,`$
 
-    $$
-    \text{代码}=2000\times0.25=500,
-    $$
+    $`\text{代码}=2000\times0.25=500,`$
 
-    $$
-    \text{书籍}=2000\times0.15=300.
-    $$
+    $`\text{书籍}=2000\times0.15=300.`$
 
-    检查：$1200+500+300=2000$。
+    检查：$`1200+500+300=2000`$。
 36. **答：**相交时：
 
-    $$
-    4D^{-0.2}=6D^{-0.3}
-    \Rightarrow D^{0.1}=6/4=1.5.
-    $$
+    $`4D^{-0.2}=6D^{-0.3} \Rightarrow D^{0.1}=6/4=1.5.`$
 
     两边取 10 次方：
 
-    $$
-    D=1.5^{10}\approx57.665.
-    $$
+    $`D=1.5^{10}\approx57.665.`$
 
-    所以约在 $D=58$ 的归一化单位附近交叉。
+    所以约在 $`D=58`$ 的归一化单位附近交叉。
 37. **答：**
 
-    $$
-    D'=100+200(1-e^0)=100+200(0)=100.
-    $$
+    $`D'=100+200(1-e^0)=100+200(0)=100.`$
 
-    $R_D=0$ 表示没有额外重复，总计 1 epoch。
+    $`R_D=0`$ 表示没有额外重复，总计 1 epoch。
 38. **答：**
 
-    $$
-    D'=100+200(1-0.6065)
-    =100+200(0.3935)
-    =178.7.
-    $$
+    $`D'=100+200(1-0.6065) =100+200(0.3935) =178.7.`$
 
-    $R_D=1$ 是额外重复 1 次，总计 2 epochs。
-39. **答：**$e^{-R_D/2}\to0$：
+    $`R_D=1`$ 是额外重复 1 次，总计 2 epochs。
+39. **答：**$`e^{-R_D/2}\to0`$：
 
-    $$
-    D'\to100+200(1-0)=300.
-    $$
+    $`D'\to100+200(1-0)=300.`$
 
-40. **答：**$R_D=2$ 表示总计 3 epochs，所以实际 processed tokens：
+40. **答：**$`R_D=2`$ 表示总计 3 epochs，所以实际 processed tokens：
 
-    $$
-    100(2+1)=300.
-    $$
+    $`100(2+1)=300.`$
 
     Effective tokens：
 
-    $$
-    D'=100+200(1-e^{-1})
-    =100+200(1-0.3679)
-    =226.42.
-    $$
+    $`D'=100+200(1-e^{-1}) =100+200(1-0.3679) =226.42.`$
 
 ### 23.3 答案 41–70
 
 41. **答：**
 
-    $$
-    50,000\times1000=50,000,000=50\text{M}.
-    $$
+    $`50,000\times1000=50,000,000=50\text{M}.`$
 
-    主体也是 50M 时，总参数 $50+50=100$M，是只计主体的 $100/50=2$ 倍。
+    主体也是 50M 时，总参数 $`50+50=100`$M，是只计主体的 $`100/50=2`$ 倍。
 42. **答：**Total：
 
-    $$
-    8\times100\text{M}=800\text{M}.
-    $$
+    $`8\times100\text{M}=800\text{M}.`$
 
     每 token active：
 
-    $$
-    2\times100\text{M}=200\text{M}.
-    $$
+    $`2\times100\text{M}=200\text{M}.`$
 
     还未计 router/shared layers。
 43. **答：**
 
-    $$
-    E=SB=250\times32=8000\text{ examples}.
-    $$
+    $`E=SB=250\times32=8000\text{ examples}.`$
 
 44. **答：**
 
-    $$
-    B_{crit}=\frac{E_{min}}{S_{min}}=\frac{1200}{100}=12.
-    $$
+    $`B_{crit}=\frac{E_{min}}{S_{min}}=\frac{1200}{100}=12.`$
 
     单位是 examples/step。
-45. **答：**$B_{crit}=1000/100=10$，所以 $b=5/10=0.5$：
+45. **答：**$`B_{crit}=1000/100=10`$，所以 $`b=5/10=0.5`$：
 
-    $$
-    S=100(1+1/0.5)=100(3)=300,
-    $$
+    $`S=100(1+1/0.5)=100(3)=300,`$
 
-    $$
-    E=1000(1+0.5)=1500.
-    $$
+    $`E=1000(1+0.5)=1500.`$
 
-    检查：$SB=300\times5=1500=E$。
-46. **答：**$b=10/10=1$：
+    检查：$`SB=300\times5=1500=E`$。
+46. **答：**$`b=10/10=1`$：
 
-    $$
-    S=100(1+1)=200,
-    \qquad E=1000(1+1)=2000.
-    $$
+    $`S=100(1+1)=200, \qquad E=1000(1+1)=2000.`$
 
     双曲线：
 
-    $$
-    (200/100-1)(2000/1000-1)=1\times1=1.
-    $$
+    $`(200/100-1)(2000/1000-1)=1\times1=1.`$
 
-47. **答：**$b=20/10=2$：
+47. **答：**$`b=20/10=2`$：
 
-    $$
-    S=100(1+1/2)=150=1.5S_{min},
-    $$
+    $`S=100(1+1/2)=150=1.5S_{min},`$
 
-    $$
-    E=1000(1+2)=3000=3E_{min}.
-    $$
+    $`E=1000(1+2)=3000=3E_{min}.`$
 
 48. **答：**
 
     先把三个无单位比值写出来：
 
-    $$
-    s=\frac S{S_{min}},
-    \qquad e=\frac E{E_{min}},
-    \qquad b=\frac B{B_{crit}}.
-    $$
+    $`s=\frac S{S_{min}}, \qquad e=\frac E{E_{min}}, \qquad b=\frac B{B_{crit}}.`$
 
-    因为 $B=E/S$ 且 $B_{crit}=E_{min}/S_{min}$：
+    因为 $`B=E/S`$ 且 $`B_{crit}=E_{min}/S_{min}`$：
 
-    $$
-    b
-    =\frac{E/S}{E_{min}/S_{min}}
-    =\frac{E/E_{min}}{S/S_{min}}
-    =\frac es,
-    $$
+    $`b =\frac{E/S}{E_{min}/S_{min}} =\frac{E/E_{min}}{S/S_{min}} =\frac es,`$
 
-    所以 $e=bs$。把它放进双曲线：
+    所以 $`e=bs`$。把它放进双曲线：
 
-    $$
-    (s-1)(e-1)=1
-    \Rightarrow(s-1)(bs-1)=1.
-    $$
+    $`(s-1)(e-1)=1 \Rightarrow(s-1)(bs-1)=1.`$
 
     展开左边：
 
-    $$
-    bs^2-bs-s+1=1
-    \Rightarrow bs^2-(b+1)s=0.
-    $$
+    $`bs^2-bs-s+1=1 \Rightarrow bs^2-(b+1)s=0.`$
 
-    提出 $s$：
+    提出 $`s`$：
 
-    $$
-    s[bs-(b+1)]=0.
-    $$
+    $`s[bs-(b+1)]=0.`$
 
-    $s=S/S_{min}>0$，不能取 0，所以：
+    $`s=S/S_{min}>0`$，不能取 0，所以：
 
-    $$
-    bs=b+1
-    \Rightarrow s=\frac{b+1}{b}=1+\frac1b.
-    $$
+    $`bs=b+1 \Rightarrow s=\frac{b+1}{b}=1+\frac1b.`$
 
-    再用 $e=bs$：
+    再用 $`e=bs`$：
 
-    $$
-    e=b\left(1+\frac1b\right)=b+1.
-    $$
+    $`e=b\left(1+\frac1b\right)=b+1.`$
 
     最后检查实际 batch：
 
-    $$
-    \frac ES
-    =\frac{E_{min}(1+b)}{S_{min}(1+1/b)}.
-    $$
+    $`\frac ES =\frac{E_{min}(1+b)}{S_{min}(1+1/b)}.`$
 
-    因为 $1+1/b=(b+1)/b$：
+    因为 $`1+1/b=(b+1)/b`$：
 
-    $$
-    \frac ES
-    =\frac{E_{min}}{S_{min}}\frac{1+b}{(1+b)/b}
-    =B_{crit}b
-    =B_{crit}\frac B{B_{crit}}
-    =B.
-    $$
+    $`\frac ES =\frac{E_{min}}{S_{min}}\frac{1+b}{(1+b)/b} =B_{crit}b =B_{crit}\frac B{B_{crit}} =B.`$
 
 49. **答：**
 
-    $$
-    S/S_{min}-1=250/100-1=1.5.
-    $$
+    $`S/S_{min}-1=250/100-1=1.5.`$
 
     因双曲线乘积为 1：
 
-    $$
-    E/E_{min}-1=1/1.5=2/3.
-    $$
+    $`E/E_{min}-1=1/1.5=2/3.`$
 
-    $$
-    E=1000(1+2/3)=1666.67.
-    $$
+    $`E=1000(1+2/3)=1666.67.`$
 
-    $$
-    B=E/S=1666.67/250\approx6.667\text{ examples/step}.
-    $$
+    $`B=E/S=1666.67/250\approx6.667\text{ examples/step}.`$
 
 50. **答：**
 
-    $$
-    \operatorname{trace}=4+9+16=29.
-    $$
+    $`\mathrm{trace}=4+9+16=29.`$
 
     它是三个 gradient 坐标 variance 的总和，粗略表示总波动规模；不包含 off-diagonal covariance 的符号信息。
 51. **答：**
 
-    $$
-    C=6ND=6(2\times10^6)(3\times10^6)
-    =36\times10^{12}
-    =3.6\times10^{13}\text{ FLOPs}.
-    $$
+    $`C=6ND=6(2\times10^6)(3\times10^6) =36\times10^{12} =3.6\times10^{13}\text{ FLOPs}.`$
 
 52. **答：**
 
     Forward 是 tokens 从输入经过模型各层、产生预测并算 loss；这一路会产生 activations。Backward 从 loss 反向传播：一部分工作算 activation gradients，把错误信号传回前层；另一部分算 weight gradients，供 optimizer 更新参数。
 
-    $$
-    C_{forward}\approx2ND
-    =2(2\times10^6)(3\times10^6)
-    =1.2\times10^{13}.
-    $$
+    $`C_{forward}\approx2ND =2(2\times10^6)(3\times10^6) =1.2\times10^{13}.`$
 
-    $$
-    C_{backward}\approx4ND=2.4\times10^{13}.
-    $$
+    $`C_{backward}\approx4ND=2.4\times10^{13}.`$
 
-    合计 $3.6\times10^{13}$。
-53. **答：**固定 $ND=120$：
+    合计 $`3.6\times10^{13}`$。
+53. **答：**固定 $`ND=120`$：
 
-    $$
-    N=10\Rightarrow D=120/10=12;
-    $$
+    $`N=10\Rightarrow D=120/10=12;`$
 
-    $$
-    N=20\Rightarrow D=120/20=6.
-    $$
+    $`N=20\Rightarrow D=120/20=6.`$
 
     模型翻倍时，同 compute 下 data 必须减半。
 54. **答：**
 
-    $$
-    N\text{ exponent}=\frac\beta{\alpha+\beta}
-    =\frac{0.6}{1.0}=0.6.
-    $$
+    $`N\text{ exponent}=\frac\beta{\alpha+\beta} =\frac{0.6}{1.0}=0.6.`$
 
-    $$
-    D\text{ exponent}=\frac\alpha{\alpha+\beta}
-    =\frac{0.4}{1.0}=0.4.
-    $$
+    $`D\text{ exponent}=\frac\alpha{\alpha+\beta} =\frac{0.4}{1.0}=0.4.`$
 
-    注意方向交叉：model exponent 用 data-loss exponent $\beta$。
+    注意方向交叉：model exponent 用 data-loss exponent $`\beta`$。
 55. **答：**
 
-    $$
-    N\text{ 倍数}=16^{0.6}\approx5.278,
-    $$
+    $`N\text{ 倍数}=16^{0.6}\approx5.278,`$
 
-    $$
-    D\text{ 倍数}=16^{0.4}\approx3.031.
-    $$
+    $`D\text{ 倍数}=16^{0.4}\approx3.031.`$
 
-    检查：$5.278\times3.031\approx16.0$，与 compute 倍数一致。
-56. **答：**两者 exponent 都是 $0.5$：
+    检查：$`5.278\times3.031\approx16.0`$，与 compute 倍数一致。
+56. **答：**两者 exponent 都是 $`0.5`$：
 
-    $$
-    9^{0.5}=\sqrt9=3.
-    $$
+    $`9^{0.5}=\sqrt9=3.`$
 
-    所以 $N,D$ 各增 3 倍，乘积增 $3\times3=9$ 倍。
+    所以 $`N,D`$ 各增 3 倍，乘积增 $`3\times3=9`$ 倍。
 57. **答：**
 
-    $$
-    L(4,16)=1+1/\sqrt4+1/\sqrt{16}
-    =1+1/2+1/4=1.75.
-    $$
+    $`L(4,16)=1+1/\sqrt4+1/\sqrt{16} =1+1/2+1/4=1.75.`$
 
-    $$
-    L(16,4)=1+1/4+1/2=1.75.
-    $$
+    $`L(16,4)=1+1/4+1/2=1.75.`$
 
-    因为这里 $A=B,\alpha=\beta$，交换 $N,D$ 不变。
+    因为这里 $`A=B,\alpha=\beta`$，交换 $`N,D`$ 不变。
 58. **答：**
 
-    $$
-    (4,9):\ 1/2+1/3=0.8333;
-    $$
+    $`(4,9):\ 1/2+1/3=0.8333;`$
 
-    $$
-    (6,6):\ 2/\sqrt6\approx2/2.449=0.8165;
-    $$
+    $`(6,6):\ 2/\sqrt6\approx2/2.449=0.8165;`$
 
-    $$
-    (9,4):\ 1/3+1/2=0.8333.
-    $$
+    $`(9,4):\ 1/3+1/2=0.8333.`$
 
-    最低是 $(6,6)$。
+    最低是 $`(6,6)`$。
 59. **答：**原 envelope 是三者最小值 2.5，对应 B。加入 2.3 后，新 envelope 变为 2.3；这证明 envelope 只是候选集合相关。
 60. **答：**
 
-    - total：$100+50+50=200$M。
+    - total：$`100+50+50=200`$M。
     - non-embedding 若按“主体、不计 embedding 与 output”口径：100M。
-    - 只排 embedding、保留 output：$100+50=150$M。
+    - 只排 embedding、保留 output：$`100+50=150`$M。
 
     名称可能被论文用得不一致，所以必须把包含项写出来。
 61. **答：**
 
-    $$
-    N\text{ 倍数}=100^{0.73}=10^{1.46}\approx28.84,
-    $$
+    $`N\text{ 倍数}=100^{0.73}=10^{1.46}\approx28.84,`$
 
-    $$
-    D\text{ 倍数}=100^{0.27}=10^{0.54}\approx3.47.
-    $$
+    $`D\text{ 倍数}=100^{0.27}=10^{0.54}\approx3.47.`$
 
 62. **答：**
 
-    $$
-    100^{0.5}=\sqrt{100}=10.
-    $$
+    $`100^{0.5}=\sqrt{100}=10.`$
 
-    所以 $N,D$ 都增 10 倍。
+    所以 $`N,D`$ 都增 10 倍。
 63. **答：**
 
-    $$
-    D/N\propto C^{0.3-0.7}=C^{-0.4}.
-    $$
+    $`D/N\propto C^{0.3-0.7}=C^{-0.4}.`$
 
     compute 增 100 倍：
 
-    $$
-    100^{-0.4}=10^{-0.8}\approx0.1585.
-    $$
+    $`100^{-0.4}=10^{-0.8}\approx0.1585.`$
 
     即 tokens/parameter 变为原来的约 15.85%。
 64. **答：**
 
-    $$
-    L=1+1/\sqrt9+1/\sqrt{16}
-    =1+1/3+1/4
-    =1+7/12
-    \approx1.5833.
-    $$
+    $`L=1+1/\sqrt9+1/\sqrt{16} =1+1/3+1/4 =1+7/12 \approx1.5833.`$
 
 65. **答：**
 
-    $$
-    \text{SSE}=0.1^2+(-0.1)^2+0.2^2+(-0.2)^2
-    =0.01+0.01+0.04+0.04=0.10.
-    $$
+    $`\text{SSE}=0.1^2+(-0.1)^2+0.2^2+(-0.2)^2 =0.01+0.01+0.04+0.04=0.10.`$
 
     平均 residual 为 0 只说明正负抵消；每个点仍有误差，且 residual 还可能有随规模变化的结构。
 66. **答：**令成本相等：
 
-    $$
-    1000+10Q=1600+4Q
-    \Rightarrow6Q=600
-    \Rightarrow Q=100.
-    $$
+    $`1000+10Q=1600+4Q \Rightarrow6Q=600 \Rightarrow Q=100.`$
 
-    $Q=200$：
+    $`Q=200`$：
 
-    $$
-    C_A=1000+2000=3000,
-    \qquad C_B=1600+800=2400.
-    $$
+    $`C_A=1000+2000=3000, \qquad C_B=1600+800=2400.`$
 
     B 便宜 600。
 67. **答：**
 
-    $$
-    2N\times T=2(7\times10^9)(1000)
-    =14\times10^{12}=1.4\times10^{13}\text{ FLOPs}.
-    $$
+    $`2N\times T=2(7\times10^9)(1000) =14\times10^{12}=1.4\times10^{13}\text{ FLOPs}.`$
 
     它忽略 prompt prefill、attention/context length、KV cache、batching、MoE、hardware utilization 与数据移动。
 68. **答：**
 
-    $$
-    D=70\times10^9\times215
-    =15,050\times10^9
-    =15.05\times10^{12}
-    =15.05\text{T tokens}.
-    $$
+    $`D=70\times10^9\times215 =15,050\times10^9 =15.05\times10^{12} =15.05\text{T tokens}.`$
 
 69. **答：**PDF p54 写 2；视频 75:18 口述 3。正确做法是同时记录并标“课程材料内部冲突”，不能无说明地挑一个。
 70. **答：**
@@ -2290,15 +2028,15 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 ### 23.4 答案 71–80
 
 71. **答：**Backtest 是只用小规模点拟合，再预测一个当时不让拟合器看到、但我们已有实测的大规模点。验证点在拟合区外，才能真正检查 extrapolation，而非只检查 interpolation。
-72. **答：**窄范围内许多不同曲线都能给高 $R^2$；若 residual 有系统形状，或外部点偏离，外推仍会失败。还要检查 residual、参数稳定性、不同拟合窗口与 held-out scale。
-73. **答：**例如：（1）长序列 attention 的 $O(s^2)$ 项主导；（2）MoE 每 token 只激活部分 total parameters。其它例子包括 activation checkpoint 重算、embedding/output 占比很高和通信主导 wall-clock。
+72. **答：**窄范围内许多不同曲线都能给高 $`R^2`$；若 residual 有系统形状，或外部点偏离，外推仍会失败。还要检查 residual、参数稳定性、不同拟合窗口与 held-out scale。
+73. **答：**例如：（1）长序列 attention 的 $`O(s^2)`$ 项主导；（2）MoE 每 token 只激活部分 total parameters。其它例子包括 activation checkpoint 重算、embedding/output 占比很高和通信主导 wall-clock。
 74. **答：**至少要知道预计请求数，以及每请求 prompt/generated tokens 或实际推理成本。否则无法判断更高训练成本何时被更低 serving 成本摊回。
 75. **答：**任选四个：embedding/output parameter count；last-layer FLOPs；warmup 占训练比例；batch size 是否随规模调；LR/optimizer tuning；compute range；小模型是否收敛；数据/tokenizer 口径。
-76. **答：**Method 2 IsoFLOP 最直接，因为它在每个固定 compute budget 内直接扫 $N/D$ 并看碗底，不必先从不同训练曲线估 lower envelope，也不必立即联合拟合五个参数。
-77. **答：**能用，但单位必须统一。若 $B$ 是 tokens/step，$E$ 就必须是 processed tokens，不能仍写 examples；若一个 example 长度不同，还要先把它们换成 token 数。
+76. **答：**Method 2 IsoFLOP 最直接，因为它在每个固定 compute budget 内直接扫 $`N/D`$ 并看碗底，不必先从不同训练曲线估 lower envelope，也不必立即联合拟合五个参数。
+77. **答：**能用，但单位必须统一。若 $`B`$ 是 tokens/step，$`E`$ 就必须是 processed tokens，不能仍写 examples；若一个 example 长度不同，还要先把它们换成 token 数。
 78. **答：**不能。这个 exponential effective-data 公式随重复单调增加并最终 plateau，不会让有效数据减少。原论文拟合时也排除了“过多 epoch/参数导致表现变坏”的样本；真实训练仍可能因过拟合或超参不合适而变坏。
-79. **答：**一种合格流程：（1）定义 $N,D,C,loss$ 口径；（2）固定可比 recipe；（3）选多个 compute budgets；（4）每个预算扫足够宽的候选网格；（5）拟合并看 residual/不确定度；（6）做 held-out-scale backtest；（7）保留验证预算；（8）执行大 run 并监控早期偏差。
-80. **答：**（1）许多学习问题在一定范围出现 power law，均值与分箱例子说明不同 exponent 可来自不同统计难度。（2）模型与数据的误差项可联合写成 $E+A/N^\alpha+B/D^\beta$，固定 $6ND$ 后能推最优扩张指数。（3）Critical batch 用精确双曲线交换 steps 与 examples，在 $B_{crit}$ 处两者各约极限 2 倍。（4）Kaplan 与 Chinchilla 给出不同 compute 分配，差异受 parameter count、warmup、batch、范围与拟合方法影响。（5）训练 compute-optimal 不等于部署最优，请求多时，更多 tokens 训练的小模型可能总成本更低。
+79. **答：**一种合格流程：（1）定义 $`N,D,C,loss`$ 口径；（2）固定可比 recipe；（3）选多个 compute budgets；（4）每个预算扫足够宽的候选网格；（5）拟合并看 residual/不确定度；（6）做 held-out-scale backtest；（7）保留验证预算；（8）执行大 run 并监控早期偏差。
+80. **答：**（1）许多学习问题在一定范围出现 power law，均值与分箱例子说明不同 exponent 可来自不同统计难度。（2）模型与数据的误差项可联合写成 $`E+A/N^\alpha+B/D^\beta`$，固定 $`6ND`$ 后能推最优扩张指数。（3）Critical batch 用精确双曲线交换 steps 与 examples，在 $`B_{crit}`$ 处两者各约极限 2 倍。（4）Kaplan 与 Chinchilla 给出不同 compute 分配，差异受 parameter count、warmup、batch、范围与拟合方法影响。（5）训练 compute-optimal 不等于部署最优，请求多时，更多 tokens 训练的小模型可能总成本更低。
 
 ---
 
@@ -2331,7 +2069,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 - [16:06](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=966s)：均值估计例开始。
 - [17:02](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1022s)：parametric estimation 的 polynomial rate。
 - [17:58](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1078s)：神经 scaling 的收敛更慢。
-- [18:53](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1133s)：每个二维箱约 $\sqrt n$ 样本。
+- [18:53](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1133s)：每个二维箱约 $`\sqrt n`$ 样本。
 - [19:49](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1189s)：理论解释工作与其局限。
 - [20:45](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1245s)：课堂问题继续澄清 model/data 相对大小。
 
@@ -2454,7 +2192,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 - [McCandlish et al. 2018](https://arxiv.org/abs/1812.06162)：gradient noise scale 与 critical batch。
 - [Hoffmann et al. 2022](https://arxiv.org/abs/2203.15556)：Chinchilla 三种 compute-optimal 方法。
 - [Yang et al. 2022](https://arxiv.org/abs/2203.03466)：muP / muTransfer。
-- [Muennighoff et al. 2023](https://arxiv.org/abs/2305.16264)：重复数据的 effective-data law；原文定义 $R_D$ 为首遍后的重复次数。
+- [Muennighoff et al. 2023](https://arxiv.org/abs/2305.16264)：重复数据的 effective-data law；原文定义 $`R_D`$ 为首遍后的重复次数。
 - [Besiroglu et al. 2024](https://arxiv.org/abs/2404.10102)：从图中重建数据复核 Chinchilla Method 3。
 - [Porian et al. 2024](https://arxiv.org/abs/2406.19146)：复现并解释 Kaplan/Chinchilla 差异。
 
@@ -2471,13 +2209,13 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 读完并做完题后，你应该能：
 
-- 从 $L_\infty+An^{-\alpha}$ 推出资源翻倍倍率与 log-log 斜率；
-- 从独立样本方差相加推到 $\operatorname{MSE}=\sigma^2/n$；
+- 从 $`L_\infty+An^{-\alpha}`$ 推出资源翻倍倍率与 log-log 斜率；
+- 从独立样本方差相加推到 $`\mathrm{MSE}=\sigma^2/n`$；
 - 手算二维分箱的边长、箱数、每箱样本与 variance/bias trade-off；
-- 区分 unique、processed、effective data，并正确把 $R_D$ 解释为额外重复次数；
-- 用 $E=SB$ 和 critical-batch 双曲线复算 steps/examples 表；
+- 区分 unique、processed、effective data，并正确把 $`R_D`$ 解释为额外重复次数；
+- 用 $`E=SB`$ 和 critical-batch 双曲线复算 steps/examples 表；
 - 区分 total/active/non-embedding parameters；
-- 从 $C\approx6ND$ 与联合 loss law 推出两个 compute-optimal exponents；
+- 从 $`C\approx6ND`$ 与联合 loss law 推出两个 compute-optimal exponents；
 - 手算 lower-envelope、IsoFLOP 碗底和 Method 3 小曲面；
 - 准确说明 Kaplan、Chinchilla 与 2024 两类复核各自证明了什么、没有证明什么；
 - 把 training cost 与 serving requests 合并做 break-even；

@@ -66,8 +66,8 @@ Dr.GRPO 等变体修正；真实系统还要处理 rollout、长 CoT 和 straggl
 1. **RLVR** 是 Reinforcement Learning from Verifiable Rewards，可验证奖励强化学习；验证器检查的是代理条件，不是宇宙真相。详见 §3。
 2. policy gradient 的核心是 `reward × log-prob gradient`；高回报动作概率上升，低回报动作概率下降。详见 §4。
 3. baseline 只要在给定 prompt 后不依赖当前采样 response，减掉它不会改变期望梯度，却可减小方差。详见 §5、§11。
-4. PPO 用新旧策略概率比 \(\rho_t\) 和 clip 限制一次更新过猛；正、负 advantage 必须分别判断。详见 §6、§9。
-5. GRPO 对同一 prompt 采样 \(G\) 个 responses，以组内奖励均值和标准差得到 advantage，省去 value model。详见 §7–§8。
+4. PPO 用新旧策略概率比 $`\rho_t`$ 和 clip 限制一次更新过猛；正、负 advantage 必须分别判断。详见 §6、§9。
+5. GRPO 对同一 prompt 采样 $`G`$ 个 responses，以组内奖励均值和标准差得到 advantage，省去 value model。详见 §7–§8。
 6. 组内 advantage 不是 value function：它只比较这组样本，换一组数就可能变。详见 §8。
 7. 原始 GRPO 的“response 内 token mean”、组标准差和含自身均值会改变权重或产生偏差；Dr.GRPO 去掉其中一些来源。详见 §11–§12。
 8. DeepSeek-R1-Zero 展示纯 RL 起步；生产版 R1 加 cold-start SFT（Supervised Fine-Tuning，监督微调：用标准答案做下一 token 训练）、再 RL、再 SFT/RLHF。详见 §13–§15。
@@ -84,11 +84,11 @@ Dr.GRPO 等变体修正；真实系统还要处理 rollout、长 CoT 和 straggl
 
 【补充解释】把 RLVR 想成数学竞赛训练：
 
-- **prompt \(x\)**：一道题；
-- **response \(o_i\)**：第 \(i\) 份完整解答；
-- **token \(o_{i,t}\)**：解答中的第 \(t\) 个小文字单位；
-- **reward \(r_i\)**：判卷得到的分数；
-- **policy \(\pi_\theta\)**：当前会写答案的模型，参数是 \(\theta\)；
+- **prompt $`x`$**：一道题；
+- **response $`o_i`$**：第 $`i`$ 份完整解答；
+- **token $`o_{i,t}`$**：解答中的第 $`t`$ 个小文字单位；
+- **reward $`r_i`$**：判卷得到的分数；
+- **policy $`\pi_\theta`$**：当前会写答案的模型，参数是 $`\theta`$；
 - **rollout**：模型从 prompt 开始实际采样出一份 response 的过程和结果。
 
 一个 group 是**同一道题**的多份回答；一个 batch 可含多道题的多个 groups：
@@ -108,51 +108,51 @@ batch
 
 1. sequence sum：一条回答所有 token 相加；
 2. token mean：除以这条回答长度；
-3. group mean：除以同题回答数 \(G\)；
+3. group mean：除以同题回答数 $`G`$；
 4. batch mean：再对 prompts 平均。
 
 ### 2.2 概率、log probability 与梯度
 
 - **probability（概率）**在 0 到 1 之间。
-- **log probability（对数概率）**是 \(\log p\)，本讲 log 指自然对数 \(\ln\)。因为 \(0<p\le1\)，所以 \(\log p\le0\)。
-- \(e\approx2.71828\)，\(\log\) 与指数互逆：\(\log(e^a)=a\)。
+- **log probability（对数概率）**是 $`\log p`$，本讲 log 指自然对数 $`\ln`$。因为 $`0<p\le1`$，所以 $`\log p\le0`$。
+- $`e\approx2.71828`$，$`\log`$ 与指数互逆：$`\log(e^a)=a`$。
 - **loss（损失）**是“坏程度”，训练通常让它变小；**objective（目标）**若写成最大化，就让它变大。
 - **gradient（梯度）**是参数轻微变化时，目标变化的局部方向和速度。
 
-若当前 token 概率从 0.20 变到 0.24，概率比为 \(0.24/0.20=1.2\)。用 log 写：
+若当前 token 概率从 0.20 变到 0.24，概率比为 $`0.24/0.20=1.2`$。用 log 写：
 
-\[
+```math
 \exp(\log 0.24-\log0.20)=\exp(\log(0.24/0.20))=1.2.
-\]
+```
 
 ### 2.3 均值、方差和两种标准差
 
-给 \(G\) 个数 \(r_1,\dots,r_G\)，均值是：
+给 $`G`$ 个数 $`r_1,\dots,r_G`$，均值是：
 
-\[
+```math
 \bar r=\frac{1}{G}\sum_{i=1}^{G}r_i.
-\]
+```
 
-**population variance（总体方差）**把这组数据当完整总体，分母是 \(G\)：
+**population variance（总体方差）**把这组数据当完整总体，分母是 $`G`$：
 
-\[
+```math
 \sigma_{\mathrm{pop}}^2=\frac1G\sum_i(r_i-\bar r)^2.
-\]
+```
 
-**sample variance（样本方差）**把这组数据当作更大总体的样本，常用分母 \(G-1\)：
+**sample variance（样本方差）**把这组数据当作更大总体的样本，常用分母 $`G-1`$：
 
-\[
+```math
 s^2=\frac1{G-1}\sum_i(r_i-\bar r)^2.
-\]
+```
 
-标准差是方差开平方。平方根 \(\sqrt a\) 是“乘自己得到 \(a\) 的非负数”；\(\sqrt{0.5}\approx0.7071\)，因为 \(0.7071^2\approx0.5\)。课程的简化 NumPy 实现用 `numpy.std()` 默认的总体标准差，即分母 \(G\)（PDF p.20）。读其他实现必须先查 `ddof`。
+标准差是方差开平方。平方根 $`\sqrt a`$ 是“乘自己得到 $`a`$ 的非负数”；$`\sqrt{0.5}\approx0.7071`$，因为 $`0.7071^2\approx0.5`$。课程的简化 NumPy 实现用 `numpy.std()` 默认的总体标准差，即分母 $`G`$（PDF p.20）。读其他实现必须先查 `ddof`。
 
 ### 2.4 五个策略角色不要混
 
-- **current policy \(\pi_\theta\)**：正在更新的模型。
-- **old policy \(\pi_{\theta_{old}}\)**：采样该批 rollout 时的冻结快照，用作 PPO 比率分母。
-- **reference policy \(\pi_{ref}\)**：较长期冻结的参考模型，用 KL 约束 current 不要跑太远。
-- **value model \(V_\phi\)**：PPO 中预测未来回报的模型；GRPO 的卖点之一是不用它。
+- **current policy $`\pi_\theta`$**：正在更新的模型。
+- **old policy $`\pi_{\theta_{old}}`$**：采样该批 rollout 时的冻结快照，用作 PPO 比率分母。
+- **reference policy $`\pi_{ref}`$**：较长期冻结的参考模型，用 KL 约束 current 不要跑太远。
+- **value model $`V_\phi`$**：PPO 中预测未来回报的模型；GRPO 的卖点之一是不用它。
 - **reward/verifier**：根据完整输出给分；不一定是神经网络。
 
 old 和 reference 可能在某一时刻数值相同，但职责不同。old 会按训练批次更新；reference 通常长期冻结。
@@ -161,16 +161,16 @@ old 和 reference 可能在某一时刻数值相同，但职责不同。old 会�
 
 | 符号 | 含义 | 层级/单位 |
 |---|---|---|
-| \(x\) | prompt | 一道题 |
-| \(G\) | 每个 prompt 的 responses 数 | 条 |
-| \(o_i\) | 第 \(i\) 条完整 response | token 序列 |
-| \(|o_i|\) | 第 \(i\) 条 response 长度 | token 数 |
-| \(t\) | token 位置 | 整数下标 |
-| \(r_i\) | verifier 给 response 的 reward | 分数，无统一单位 |
-| \(A_i\) | 第 \(i\) 条 response 的 advantage | 相对分数 |
-| \(\rho_{i,t}\) | current/old token 概率比 | 无单位 |
-| \(\epsilon_{clip}\) | PPO clip 半宽 | 无单位 |
-| \(\beta\) | KL 惩罚系数 | 使两项量级匹配的权重 |
+| $`x`$ | prompt | 一道题 |
+| $`G`$ | 每个 prompt 的 responses 数 | 条 |
+| $`o_i`$ | 第 $`i`$ 条完整 response | token 序列 |
+| $`\lvert o_i\rvert`$ | 第 $`i`$ 条 response 长度 | token 数 |
+| $`t`$ | token 位置 | 整数下标 |
+| $`r_i`$ | verifier 给 response 的 reward | 分数，无统一单位 |
+| $`A_i`$ | 第 $`i`$ 条 response 的 advantage | 相对分数 |
+| $`\rho_{i,t}`$ | current/old token 概率比 | 无单位 |
+| $`\epsilon_{clip}`$ | PPO clip 半宽 | 无单位 |
+| $`\beta`$ | KL 惩罚系数 | 使两项量级匹配的权重 |
 
 <a id="l16-rlvr"></a>
 
@@ -234,16 +234,16 @@ old 和 reference 可能在某一时刻数值相同，但职责不同。old 会�
 
 策略从动作集合采样回答，目标是最大化期望奖励：
 
-\[
+```math
 J(\theta)=\mathbb E_{o\sim\pi_\theta(\cdot|x)}[R(x,o)].
-\]
+```
 
-\(J\) 是越大越好的目标；\(\mathbb E\) 表示按模型概率加权平均；\(R\) 是完整回答奖励。REINFORCE 的 log-derivative trick 给出：
+$`J`$ 是越大越好的目标；$`\mathbb E`$ 表示按模型概率加权平均；$`R`$ 是完整回答奖励。REINFORCE 的 log-derivative trick 给出：
 
-\[
+```math
 \nabla_\theta J
 =\mathbb E\left[R(x,o)\nabla_\theta\log\pi_\theta(o|x)\right].
-\]
+```
 
 人话：抽到好回答，就沿“提高这条回答 log 概率”的方向走；抽到坏回答，就少鼓励或反向压低。
 
@@ -251,35 +251,35 @@ J(\theta)=\mathbb E_{o\sim\pi_\theta(\cdot|x)}[R(x,o)].
 
 离散回答时：
 
-\[
+```math
 J=\sum_o\pi_\theta(o|x)R(o).
-\]
+```
 
-因为 \(\nabla \pi=\pi\nabla\log\pi\)，所以：
+因为 $`\nabla \pi=\pi\nabla\log\pi`$，所以：
 
-\[
+```math
 \nabla J
 =\sum_oR(o)\nabla\pi(o)
 =\sum_o\pi(o)R(o)\nabla\log\pi(o).
-\]
+```
 
 最后一行正是“按当前策略采样后求平均”的形式。reward 本身不必可微；只要能打分，梯度通过 log probability 走回模型。
 
 ### 4.3 两动作手算
 
-模型答 A 的概率 0.25、答 B 的概率 0.75；奖励 \(R(A)=1,R(B)=0\)。期望奖励：
+模型答 A 的概率 0.25、答 B 的概率 0.75；奖励 $`R(A)=1,R(B)=0`$。期望奖励：
 
-\[
+```math
 J=0.25\times1+0.75\times0=0.25.
-\]
+```
 
 若更新让 A 概率升到 0.30，B 自动降到 0.70：
 
-\[
+```math
 J_{\mathrm{new}}=0.30\times1+0.70\times0=0.30.
-\]
+```
 
-增加 \(0.30-0.25=0.05\)。但一次采样可能碰巧只看到 B，估计会很吵，这就是 **high variance（高方差）**：重复估计差别很大。
+增加 $`0.30-0.25=0.05`$。但一次采样可能碰巧只看到 B，估计会很吵，这就是 **high variance（高方差）**：重复估计差别很大。
 
 ### 4.4 stop-gradient / detach：先画清梯度能走哪条路
 
@@ -301,7 +301,7 @@ loss = policy_objective(current_logprob, old_logprob,
 loss.backward()                                      # 只更新 current policy
 ```
 
-因此，本次更新中要视为常数的是：已经采出的 responses、reward、advantage、group mean/std、old log-prob 和 reference log-prob；只有重新计算的 **current log-prob** 对 \(\theta\) 求导。若忘记 detach，梯度可能错误地穿过 advantage 或旧模型；若把 current log-prob 也 detach，就完全没有 policy 梯度。后文 §11.1 的 baseline 证明和 §17.3 的 Kimi 梯度都沿用这条梯度路径。
+因此，本次更新中要视为常数的是：已经采出的 responses、reward、advantage、group mean/std、old log-prob 和 reference log-prob；只有重新计算的 **current log-prob** 对 $`\theta`$ 求导。若忘记 detach，梯度可能错误地穿过 advantage 或旧模型；若把 current log-prob 也 detach，就完全没有 policy 梯度。后文 §11.1 的 baseline 证明和 §17.3 的 Kimi 梯度都沿用这条梯度路径。
 
 ## 5. Baseline、TRPO 与 PPO 的直觉
 
@@ -309,9 +309,9 @@ loss.backward()                                      # 只更新 current policy
 
 把 reward 换成 advantage：
 
-\[
+```math
 A(x,o)=R(x,o)-b(x).
-\]
+```
 
 **baseline（基线）**是“这题通常能得多少”。若某题平均 0.8，得 1 只比预期好 0.2；另一难题平均 0.1，得 1 比预期好 0.9。相对比较通常比裸 reward 方差更小。
 
@@ -327,41 +327,41 @@ TRPO 把更新限制在一个 KL 邻域内，理论清楚但实现较复杂。KL
 
 PPO 是 **Proximal Policy Optimization（近端策略优化）**。定义 token 概率比：
 
-\[
+```math
 \rho_t(\theta)=
 \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}.
-\]
+```
 
 - 分子：current policy 给已采样 token 的概率；
 - 分母：old policy 采样时给它的概率；
-- \(\rho=1\)：没变化；
-- \(\rho=1.3\)：概率变成 1.3 倍；
-- \(\rho=0.7\)：概率变成 0.7 倍。
+- $`\rho=1`$：没变化；
+- $`\rho=1.3`$：概率变成 1.3 倍；
+- $`\rho=0.7`$：概率变成 0.7 倍。
 
 **surrogate（替代目标）**是“比原始目标更容易优化、希望近似其更新效果的公式”；它不是环境的真实 reward。PPO 的 clipped surrogate：
 
-\[
+```math
 L^{clip}_t=\min\left(
 \rho_t A_t,
-\operatorname{clip}(\rho_t,1-\epsilon,1+\epsilon)A_t
+\mathrm{clip}(\rho_t,1-\epsilon,1+\epsilon)A_t
 \right).
-\]
+```
 
-`clip` 把数夹在区间内。若 \(\epsilon=0.2\)，区间是 \([0.8,1.2]\)：1.4 夹成 1.2，0.6 夹成 0.8，1.1 不变。
+`clip` 把数夹在区间内。若 $`\epsilon=0.2`$，区间是 $`[0.8,1.2]`$：1.4 夹成 1.2，0.6 夹成 0.8，1.1 不变。
 
 ### 5.4 正、负 advantage 为什么分支不同
 
-设 \(A=+2,\rho=1.4\)：
+设 $`A=+2,\rho=1.4`$：
 
-- 裸项 \(1.4\times2=2.8\)；
-- clip 项 \(1.2\times2=2.4\)；
+- 裸项 $`1.4\times2=2.8`$；
+- clip 项 $`1.2\times2=2.4`$；
 - min 取 2.4，阻止过度提高好动作概率。
 
-设 \(A=-2,\rho=0.6\)：
+设 $`A=-2,\rho=0.6`$：
 
-- 裸项 \(0.6\times(-2)=-1.2\)；
-- clip 项 \(0.8\times(-2)=-1.6\)；
-- min 取 \(-1.6\)，阻止过度降低坏动作概率。
+- 裸项 $`0.6\times(-2)=-1.2`$；
+- clip 项 $`0.8\times(-2)=-1.6`$；
+- min 取 $`-1.6`$，阻止过度降低坏动作概率。
 
 只背“ratio 超界就裁剪”会做错。min 和 advantage 符号共同决定分支。
 
@@ -369,7 +369,7 @@ L^{clip}_t=\min\left(
 
 ### 6.1 token 是动作，response 是轨迹
 
-【课程内容，PDF p.6–15】生成第 \(t\) 个 token 前的 prompt 与已有前缀是 state \(s_t\)，新 token 是 action \(a_t\)。完整回答才拿到终局 reward。PPO 通常需要：
+【课程内容，PDF p.6–15】生成第 $`t`$ 个 token 前的 prompt 与已有前缀是 state $`s_t`$，新 token 是 action $`a_t`$。完整回答才拿到终局 reward。PPO 通常需要：
 
 1. policy 生成 rollout；
 2. reward/verifier 打分；
@@ -382,7 +382,7 @@ L^{clip}_t=\min\left(
 
 ### 6.2 value、advantage 与 GAE
 
-**value function \(V(s_t)\)** 预测从当前前缀继续时的期望总回报。最简单 advantage 可写“实际回报减预测”。GAE 是 **Generalized Advantage Estimation（广义优势估计）**，把多步时序差分按衰减权重混合，以权衡噪声和偏差。
+**value function $`V(s_t)`$** 预测从当前前缀继续时的期望总回报。最简单 advantage 可写“实际回报减预测”。GAE 是 **Generalized Advantage Estimation（广义优势估计）**，把多步时序差分按衰减权重混合，以权衡噪声和偏差。
 
 本讲只需知道：GAE 不是一个神秘奖励；它是 PPO 里构造 token-level advantage 的方法。GRPO 用同题组内相对奖励替代 value model，是减少内存和复杂度的关键。
 
@@ -390,12 +390,12 @@ L^{clip}_t=\min\left(
 
 对生成 token，常见样本级 log-ratio 是：
 
-\[
+```math
 d_t=\log\pi_\theta(o_t|x,o_{<t})-
 \log\pi_{ref}(o_t|x,o_{<t}).
-\]
+```
 
-单个 sampled log-ratio 可以正或负；理论 \(D_{KL}(current\|reference)\) 是对 current policy 的期望，所以非负。课程 p.14 的单边 clamp 与 GRPO 常用的逐样本非负 \(e^d-d-1\) estimator 不是同一公式，见 §10。必须写明“token 求和”还是“token 平均”；回答长短不同时结果会变。
+单个 sampled log-ratio 可以正或负；理论 $`D_{KL}(current\|reference)`$ 是对 current policy 的期望，所以非负。课程 p.14 的单边 clamp 与 GRPO 常用的逐样本非负 $`e^d-d-1`$ estimator 不是同一公式，见 §10。必须写明“token 求和”还是“token 平均”；回答长短不同时结果会变。
 
 <a id="l16-grpo"></a>
 
@@ -403,68 +403,68 @@ d_t=\log\pi_\theta(o_t|x,o_{<t})-
 
 ### 7.1 Group Relative Policy Optimization
 
-【课程内容，PDF p.16–18】GRPO 是 **Group Relative Policy Optimization（组相对策略优化）**。对每个 prompt \(x\)：
+【课程内容，PDF p.16–18】GRPO 是 **Group Relative Policy Optimization（组相对策略优化）**。对每个 prompt $`x`$：
 
-1. old policy 采样 \(G\) 条 responses \(o_1,\ldots,o_G\)；
-2. verifier 给 rewards \(r_1,\ldots,r_G\)；
-3. 组内标准化得到每条 response 的 \(A_i\)；
-4. 把同一个 \(A_i\) 赋给该 response 的每个生成 token；
+1. old policy 采样 $`G`$ 条 responses $`o_1,\ldots,o_G`$；
+2. verifier 给 rewards $`r_1,\ldots,r_G`$；
+3. 组内标准化得到每条 response 的 $`A_i`$；
+4. 把同一个 $`A_i`$ 赋给该 response 的每个生成 token；
 5. 用 PPO clip 与 reference KL 更新 current policy。
 
-它没有训练一个 \(V_\phi\)。因此组内 advantage **不是 value function**，也不预测未来；它只是“这条回答比这次同题同组平均好多少”。
+它没有训练一个 $`V_\phi`$。因此组内 advantage **不是 value function**，也不预测未来；它只是“这条回答比这次同题同组平均好多少”。
 
 ### 7.2 原始组内 advantage
 
-\[
+```math
 A_i=\frac{r_i-\bar r}{\sigma_r+\varepsilon_{std}},
 \qquad
 \bar r=\frac1G\sum_{j=1}^{G}r_j.
-\]
+```
 
-- \(r_i\)：第 \(i\) 条完整回答 reward；
-- \(\bar r\)：同一 prompt 的 group mean；
-- \(\sigma_r\)：课程实现中的 group population std；
-- \(\varepsilon_{std}\)：防止除以 0 的小数；PDF p.20 代码为 \(10^{-4}\)；
-- \(A_i\)：无单位相对分数。
+- $`r_i`$：第 $`i`$ 条完整回答 reward；
+- $`\bar r`$：同一 prompt 的 group mean；
+- $`\sigma_r`$：课程实现中的 group population std；
+- $`\varepsilon_{std}`$：防止除以 0 的小数；PDF p.20 代码为 $`10^{-4}`$；
+- $`A_i`$：无单位相对分数。
 
-同一 \(A_i\) 常复制到回答内每个 token。这不表示每个 token 都独立被 verifier 判过。
+同一 $`A_i`$ 常复制到回答内每个 token。这不表示每个 token 都独立被 verifier 判过。
 
 ### 7.3 原始论文总览式与 token 实现式不能混
 
 【课程材料符号边界】PDF p.18 截取的原始 GRPO 总览式直接写 response 概率比
 
-\[
+```math
 \frac{\pi_\theta(o_i\mid x)}{\pi_{old}(o_i\mid x)},
-\]
+```
 
-即一条 response 一个 ratio/项。PDF p.23 在讨论真实训练偏差时，才明确展开为每个生成 token 的 ratio、先对 token 求和，并在原 GRPO 中除以本条长度 \(|o_i|\)。下面的逐 token 手算采用 **p.23 的 implementation-shaped（实现形状）公式**，不是偷偷声称 p.18 已经写出内层 token 求和：
+即一条 response 一个 ratio/项。PDF p.23 在讨论真实训练偏差时，才明确展开为每个生成 token 的 ratio、先对 token 求和，并在原 GRPO 中除以本条长度 $`|o_i|`$。下面的逐 token 手算采用 **p.23 的 implementation-shaped（实现形状）公式**，不是偷偷声称 p.18 已经写出内层 token 求和：
 
-\[
+```math
 J_{\mathrm{GRPO}}=\mathbb E\left[
 \frac1G\sum_{i=1}^{G}\frac1{|o_i|}\sum_{t=1}^{|o_i|}
 \left(
-\min(\rho_{i,t}A_i,\operatorname{clip}(\rho_{i,t},1-\epsilon,1+\epsilon)A_i)
+\min(\rho_{i,t}A_i,\mathrm{clip}(\rho_{i,t},1-\epsilon,1+\epsilon)A_i)
 -\beta\widehat D_{\mathrm{KL},i,t}
 \right)
 \right].
-\]
+```
 
 从里到外读这份 token 实现式：
 
 1. 每 token 算 clipped PG 项和 KL；
-2. 除以该 response 长度 \(|o_i|\)，得到 response 内 token mean；
-3. 对 \(G\) 条 responses 求 group mean；
+2. 除以该 response 长度 $`|o_i|`$，得到 response 内 token mean；
+3. 对 $`G`$ 条 responses 求 group mean；
 4. 对 prompts/batches 求期望。
 
-若代码最小化 loss，则写 \(L=-J\)。忘记负号会把更新方向说反。
+若代码最小化 loss，则写 $`L=-J`$。忘记负号会把更新方向说反。
 
 ### 7.4 online 第一小步为何 ratio 可能是 1
 
 rollout 刚由 current policy 采样并复制为 old policy 时，二者相同：
 
-\[
+```math
 \rho=\pi_\theta/\pi_{\mathrm{old}}=1.
-\]
+```
 
 **minibatch（小批）**是把本轮 rollout batch 再切成若干小块逐次更新；**epoch（遍历轮）**是把同一批数据完整过一遍。第一次更新内 clip 不起作用；做多个 minibatch、多个 epoch 后 current 变化，ratio 才偏离 1。clip 仍有意义，因为它约束同一批数据上的后续复用。
 
@@ -474,84 +474,84 @@ rollout 刚由 current policy 采样并复制为 old policy 时，二者相同�
 
 ### 8.1 奖励组
 
-同一道题采样 \(G=4\) 条回答，rewards：
+同一道题采样 $`G=4`$ 条回答，rewards：
 
-\[
+```math
 [r_1,r_2,r_3,r_4]=[0,1,1,2].
-\]
+```
 
 均值：
 
-\[
+```math
 \bar r=(0+1+1+2)/4=4/4=1.
-\]
+```
 
-离均差：\([-1,0,0,1]\)；平方：\([1,0,0,1]\)；平方和是 2。
+离均差：$`[-1,0,0,1]`$；平方：$`[1,0,0,1]`$；平方和是 2。
 
 ### 8.2 population std：课程代码口径
 
-\[
+```math
 \sigma_{\mathrm{pop}}^2=2/4=0.5,
 \qquad
 \sigma_{\mathrm{pop}}=\sqrt{0.5}\approx0.7071.
-\]
+```
 
-先忽略 \(10^{-4}\) 时：
+先忽略 $`10^{-4}`$ 时：
 
-| response | reward | \(r_i-\bar r\) | \(A_i=(r_i-\bar r)/0.7071\) |
+| response | reward | $`r_i-\bar r`$ | $`A_i=(r_i-\bar r)/0.7071`$ |
 |---|---:|---:|---:|
 | 1 | 0 | -1 | -1.4142 |
 | 2 | 1 | 0 | 0 |
 | 3 | 1 | 0 | 0 |
 | 4 | 2 | 1 | 1.4142 |
 
-加 \(10^{-4}\) 后分母 0.7072，数值略变为约 \(\pm1.4140\)。这只是数值稳定项，不是新奖励。
+加 $`10^{-4}`$ 后分母 0.7072，数值略变为约 $`\pm1.4140`$。这只是数值稳定项，不是新奖励。
 
 ### 8.3 sample std：另一口径，不可混用
 
 若某实现用样本标准差：
 
-\[
+```math
 s^2=2/(4-1)=2/3\approx0.6667,
 \qquad s\approx0.8165.
-\]
+```
 
-优势变为 \([-1.2247,0,0,1.2247]\)。两套都可定义，但不能拿一种标准差算正文、另一种标准差验代码。
+优势变为 $`[-1.2247,0,0,1.2247]`$。两套都可定义，但不能拿一种标准差算正文、另一种标准差验代码。
 
 ### 8.4 零方差组
 
-若 rewards 是 \([1,1,1,1]\)：均值 1，每个分子都为 0，标准差为 0。
+若 rewards 是 $`[1,1,1,1]`$：均值 1，每个分子都为 0，标准差为 0。
 
-- 加 epsilon：\(A_i=0/(0+10^{-4})=0\)；
+- 加 epsilon：$`A_i=0/(0+10^{-4})=0`$；
 - 跳过 group：避免做没有相对信号的更新；
-- 不能写成 \(0/0\)，那会得到 NaN（Not a Number，非法数值）。
+- 不能写成 $`0/0`$，那会得到 NaN（Not a Number，非法数值）。
 
 epsilon 只防除零，**不会凭空造 reward advantage**。因此：
 
-- 只看 policy-gradient/reward 项时，所有 \(A_i=0\)，该项更新为 0；
+- 只看 policy-gradient/reward 项时，所有 $`A_i=0`$，该项更新为 0；
 - 若实现直接 skip 整个 group，则这组总更新为 0；
-- 若不 skip，且仍保留 \(\beta>0\) 的 reference KL，current 又不同于 reference，则 KL 正则项仍可能有梯度，把 current 往 reference 拉。不能把“reward 没信号”写成“完整 loss 一定没梯度”。
+- 若不 skip，且仍保留 $`\beta>0`$ 的 reference KL，current 又不同于 reference，则 KL 正则项仍可能有梯度，把 current 往 reference 拉。不能把“reward 没信号”写成“完整 loss 一定没梯度”。
 
-同理 \(G=1\) 时组内没有比较信息。实现必须定义行为。
+同理 $`G=1`$ 时组内没有比较信息。实现必须定义行为。
 
 ## 9. 完整 token clip 表：正负 advantage 都算
 
 ### 9.1 设置
 
-继续用 §8 的四条 responses，长度为 \([2,1,2,1]\)，共 6 个生成 token。取 \(\epsilon=0.2\)，clip 区间 \([0.8,1.2]\)。为突出 PPO 项，先令 KL 为 0。
+继续用 §8 的四条 responses，长度为 $`[2,1,2,1]`$，共 6 个生成 token。取 $`\epsilon=0.2`$，clip 区间 $`[0.8,1.2]`$。为突出 PPO 项，先令 KL 为 0。
 
 给每 token 的 current/old 概率比：
 
 | response | token ratios |
 |---|---|
-| 1，\(A=-1.4142\) | 0.7，1.1 |
-| 2，\(A=0\) | 1.3 |
-| 3，\(A=0\) | 0.9，1.1 |
-| 4，\(A=1.4142\) | 1.3 |
+| 1，$`A=-1.4142`$ | 0.7，1.1 |
+| 2，$`A=0`$ | 1.3 |
+| 3，$`A=0`$ | 0.9，1.1 |
+| 4，$`A=1.4142`$ | 1.3 |
 
 ### 9.2 每个 token 逐项算
 
-| resp/token | \(\rho\) | clip(\(\rho\)) | \(\rho A\) | clip\(\times A\) | min |
+| resp/token | $`\rho`$ | clip($`\rho`$) | $`\rho A`$ | clip$`\times A`$ | min |
 |---|---:|---:|---:|---:|---:|
 | 1/1 | 0.7 | 0.8 | -0.9899 | -1.1314 | -1.1314 |
 | 1/2 | 1.1 | 1.1 | -1.5556 | -1.5556 | -1.5556 |
@@ -560,28 +560,28 @@ epsilon 只防除零，**不会凭空造 reward advantage**。因此：
 | 3/2 | 1.1 | 1.1 | 0 | 0 | 0 |
 | 4/1 | 1.3 | 1.2 | 1.8385 | 1.6970 | 1.6970 |
 
-第一格验证：\(0.7\times(-1.4142)=-0.98994\)；\(0.8\times(-1.4142)=-1.13136\)；min 是更小的 \(-1.13136\)。最后一格：\(1.3\times1.4142=1.83846\)，裁剪后 \(1.2\times1.4142=1.69704\)。
+第一格验证：$`0.7\times(-1.4142)=-0.98994`$；$`0.8\times(-1.4142)=-1.13136`$；min 是更小的 $`-1.13136`$。最后一格：$`1.3\times1.4142=1.83846`$，裁剪后 $`1.2\times1.4142=1.69704`$。
 
 ### 9.3 response mean 与 global token mean 不同
 
 原始 GRPO 先做每回答 token mean：
 
-- response 1：\((-1.1314-1.5556)/2=-1.3435\)；
+- response 1：$`(-1.1314-1.5556)/2=-1.3435`$；
 - response 2：0；
 - response 3：0；
 - response 4：1.6970。
 
-再除以 \(G=4\)：
+再除以 $`G=4`$：
 
-\[
+```math
 J_{\mathrm{PG}}=(-1.3435+0+0+1.6970)/4=0.088375.
-\]
+```
 
 若改成全局 token mean：
 
-\[
+```math
 (-1.1314-1.5556+1.6970)/6=-0.1650.
-\]
+```
 
 一个为正、一个为负。原因不是算错，而是**分母定义改变了每条长短回答的权重**。实现和论文比较必须先对齐聚合口径。
 
@@ -589,27 +589,27 @@ J_{\mathrm{PG}}=(-1.3435+0+0+1.6970)/4=0.088375.
 
 ### 10.1 两个约束各管什么
 
-- old policy 出现在 \(\rho=\pi_\theta/\pi_{\mathrm{old}}\)，约束“对这一批 rollout 别一次改太猛”；
+- old policy 出现在 $`\rho=\pi_\theta/\pi_{\mathrm{old}}`$，约束“对这一批 rollout 别一次改太猛”；
 - reference 出现在 KL，约束“长期别离出发模型太远”。
 
 ### 10.2 三种很像、其实不同的 KL 量
 
 PDF p.14 与 p.18 展示了不同实践，必须拆开。
 
-先定义 **support（支持集）**：一个概率分布里“概率不为 0 的动作集合”。例如 \([0.6,0.4,0]\) 的 support 是前两个动作，不含第三个。下面出现 \(\pi_{ref}(a)/\pi_\theta(a)\) 时，分母必须大于 0；而要把期望中的求和完整还原成 \(\sum_a\pi_{ref}(a)=1\)，current policy 的 support 还必须覆盖 reference 的全部概率质量。最省心的充分条件是双方在同一组动作上都有正概率；普通有限-logit softmax 通常满足，但截断采样、top-k 或硬 mask 可能破坏它。
+先定义 **support（支持集）**：一个概率分布里“概率不为 0 的动作集合”。例如 $`[0.6,0.4,0]`$ 的 support 是前两个动作，不含第三个。下面出现 $`\pi_{ref}(a)/\pi_\theta(a)`$ 时，分母必须大于 0；而要把期望中的求和完整还原成 $`\sum_a\pi_{ref}(a)=1`$，current policy 的 support 还必须覆盖 reference 的全部概率质量。最省心的充分条件是双方在同一组动作上都有正概率；普通有限-logit softmax 通常满足，但截断采样、top-k 或硬 mask 可能破坏它。
 
-**第一种：裸 sampled log-ratio。** 对 current 采到的一个 token \(a\)：
+**第一种：裸 sampled log-ratio。** 对 current 采到的一个 token $`a`$：
 
-\[
+```math
 g(a)=\log\pi_\theta(a)-\log\pi_{ref}(a).
-\]
+```
 
-它逐样本可正可负。例如 current/ref 概率为 \(0.4/0.2\)，\(g=\log2=0.6931\)；若为 \(0.2/0.4\)，\(g=-0.6931\)。只有在 \(a\sim\pi_\theta\)、覆盖支持集且 log-prob 精确时，期望才是：
+它逐样本可正可负。例如 current/ref 概率为 $`0.4/0.2`$，$`g=\log2=0.6931`$；若为 $`0.2/0.4`$，$`g=-0.6931`$。只有在 $`a\sim\pi_\theta`$、覆盖支持集且 log-prob 精确时，期望才是：
 
-\[
+```math
 \mathbb E_{a\sim\pi_\theta}[g(a)]
 =D_{KL}(\pi_\theta\|\pi_{ref})\ge0.
-\]
+```
 
 **第二种：p.14 的单边 reward-shaping heuristic。** **heuristic（启发式）**是经验上可能有用、但并非由目标严格推出的规则；**reward shaping（奖励塑形）**是先修改喂给学习器的奖励信号。课程截图代码是：
 
@@ -617,29 +617,29 @@ g(a)=\log\pi_\theta(a)-\log\pi_{ref}(a).
 kl_one_sided = torch.clamp(logprobs - ref_logprobs, min=0.0)
 ```
 
-即 \(\max(g,0)\)。若 \(g=-0.4\)，clamp 后 0；若 \(g=0.7\)，保留 0.7。它逐样本非负、可防某一方向的分数爆大，但它是**单边启发式 shaping**，不是对称距离，也不是下一个 estimator 的同义写法。
+即 $`\max(g,0)`$。若 $`g=-0.4`$，clamp 后 0；若 $`g=0.7`$，保留 0.7。它逐样本非负、可防某一方向的分数爆大，但它是**单边启发式 shaping**，不是对称距离，也不是下一个 estimator 的同义写法。
 
-**第三种：p.18/GRPO 常见的 \(k_3\) estimator。** 令相反方向的样本 log-ratio：
+**第三种：p.18/GRPO 常见的 $`k_3`$ estimator。** 令相反方向的样本 log-ratio：
 
-\[
+```math
 d=\log\pi_{ref}(a)-\log\pi_\theta(a)=-g(a),
-\]
+```
 
 则：
 
-\[
+```math
 \widehat D_{k_3}=e^d-d-1.
-\]
+```
 
-因为对任意实数 \(d\)，\(e^d\ge1+d\)，所以它**每个样本都非负**。若 \(d=\log2\approx0.6931\)：
+因为对任意实数 $`d`$，$`e^d\ge1+d`$，所以它**每个样本都非负**。若 $`d=\log2\approx0.6931`$：
 
-\[
+```math
 e^{0.6931}-0.6931-1\approx2-0.6931-1=0.3069.
-\]
+```
 
-在 \(a\sim\pi_\theta\)、current/reference 概率均精确且支持集条件成立时：
+在 $`a\sim\pi_\theta`$、current/reference 概率均精确且支持集条件成立时：
 
-\[
+```math
 \begin{aligned}
 \mathbb E_{a\sim\pi_\theta}[e^d-d-1]
 &=\sum_a\pi_\theta(a)\frac{\pi_{ref}(a)}{\pi_\theta(a)}
@@ -648,33 +648,33 @@ e^{0.6931}-0.6931-1\approx2-0.6931-1=0.3069.
 &=\mathbb E[\log\pi_\theta-\log\pi_{ref}]\\
 &=D_{KL}(\pi_\theta\|\pi_{ref}).
 \end{aligned}
-\]
+```
 
-这里的 **Monte Carlo estimator（蒙特卡洛估计量）**是“用随机抽到的少量样本平均，近似无法逐项枚举的完整期望”。在上述共同正 support、\(a\sim\pi_\theta\)、精确 log-prob 条件下，它是 forward \(D_{KL}(current\|reference)\) 的无偏 Monte Carlo estimator；不要只凭 \(d\) 的书写方向把它叫“reverse KL”。off-policy 样本、近似 log-prob、截断/温度不一致都会破坏这条等式。
+这里的 **Monte Carlo estimator（蒙特卡洛估计量）**是“用随机抽到的少量样本平均，近似无法逐项枚举的完整期望”。在上述共同正 support、$`a\sim\pi_\theta`$、精确 log-prob 条件下，它是 forward $`D_{KL}(current\|reference)`$ 的无偏 Monte Carlo estimator；不要只凭 $`d`$ 的书写方向把它叫“reverse KL”。off-policy 样本、近似 log-prob、截断/温度不一致都会破坏这条等式。
 
 两动作反例能看清 support 为什么不是小字备注。令：
 
-\[
+```math
 \pi_\theta=[1,0],\qquad \pi_{ref}=[0.5,0.5].
-\]
+```
 
-current 只能采到动作 A；在 A 上 \(\pi_{ref}/\pi_\theta=0.5/1=0.5\)，所以：
+current 只能采到动作 A；在 A 上 $`\pi_{ref}/\pi_\theta=0.5/1=0.5`$，所以：
 
-\[
+```math
 \mathbb E_{a\sim\pi_\theta}\left[\frac{\pi_{ref}(a)}{\pi_\theta(a)}\right]
 =1\times0.5=0.5\ne1.
-\]
+```
 
-reference 在动作 B 上还有 0.5 概率，但 current 永远采不到 B；而 B 上又会出现 \(0.5/0\) 的非法除法。于是上面把第一项写成 1 的桥断了，\(k_3\) 的无偏等式也不能照搬。
+reference 在动作 B 上还有 0.5 概率，但 current 永远采不到 B；而 B 上又会出现 $`0.5/0`$ 的非法除法。于是上面把第一项写成 1 的桥断了，$`k_3`$ 的无偏等式也不能照搬。
 
-若 \(\beta=0.05\)，数例的 penalty 为 \(0.05\times0.3069=0.015345\)。若 \(d\) 是整条 response 的 sequence log-ratio，结果是 response-level；若 \(d\) 是某 token，再聚合就是 token-level。代码必须声明层级。
+若 $`\beta=0.05`$，数例的 penalty 为 $`0.05\times0.3069=0.015345`$。若 $`d`$ 是整条 response 的 sequence log-ratio，结果是 response-level；若 $`d`$ 是某 token，再聚合就是 token-level。代码必须声明层级。
 
 ### 10.3 sum 还是 mean
 
-三 token KL estimates 为 \([0.1,0.2,0.3]\)：
+三 token KL estimates 为 $`[0.1,0.2,0.3]`$：
 
-- sequence sum：\(0.1+0.2+0.3=0.6\)；
-- token mean：\(0.6/3=0.2\)。
+- sequence sum：$`0.1+0.2+0.3=0.6`$；
+- token mean：$`0.6/3=0.2`$。
 
 长度 30 的回答若每 token 同为 0.2，sum 是 6，mean 仍是 0.2。两种正则对长回答施加的总压力不同，不能只写“加 KL”而不写分母。
 
@@ -684,11 +684,11 @@ reference 在动作 B 上还有 0.5 概率，但 current 永远采不到 B；而
 
 ### 11.1 state-dependent baseline 为什么不改期望梯度
 
-本节沿用 §4.4 的 stop-gradient 契约：sample、reward 与 baseline 数值在当前更新中固定，只有 current log-prob 对 \(\theta\) 求导。
+本节沿用 §4.4 的 stop-gradient 契约：sample、reward 与 baseline 数值在当前更新中固定，只有 current log-prob 对 $`\theta`$ 求导。
 
-固定 prompt \(x\)，baseline \(b(x)\) 不依赖采样 response \(o\)：
+固定 prompt $`x`$，baseline $`b(x)`$ 不依赖采样 response $`o`$：
 
-\[
+```math
 \begin{aligned}
 \mathbb E_{o\sim\pi}[b(x)\nabla\log\pi(o|x)]
 &=b(x)\sum_o\pi(o|x)\nabla\log\pi(o|x)\\
@@ -696,65 +696,65 @@ reference 在动作 B 上还有 0.5 概率，但 current 永远采不到 B；而
 &=b(x)\nabla\sum_o\pi(o|x)\\
 &=b(x)\nabla1=0.
 \end{aligned}
-\]
+```
 
 所以减去它只改估计噪声，不改期望方向。关键条件是：给定 state/prompt 后，它不看当前 sampled action。
 
 ### 11.2 group mean 含自身：有固定缩放
 
-先固定成立条件：给定同一 prompt，\(G\) 条 responses 是 **IID（independent and identically distributed，独立同分布）**采样。**独立**是某条 rollout 的随机生成不查看其他 rollout 的结果；**同分布**是它们都来自同一个 policy 与同一套采样配置。本段只研究 **减 group mean**，暂时不含随机 std、PPO clip、KL 和每回答长度权重。以这 \(G\) 个 samples 的均值为 baseline 时，第 \(i\) 项：
+先固定成立条件：给定同一 prompt，$`G`$ 条 responses 是 **IID（independent and identically distributed，独立同分布）**采样。**独立**是某条 rollout 的随机生成不查看其他 rollout 的结果；**同分布**是它们都来自同一个 policy 与同一套采样配置。本段只研究 **减 group mean**，暂时不含随机 std、PPO clip、KL 和每回答长度权重。以这 $`G`$ 个 samples 的均值为 baseline 时，第 $`i`$ 项：
 
-\[
+```math
 r_i-\bar r
 =r_i-\frac{r_i+\sum_{j\ne i}r_j}{G}
 =\frac{G-1}{G}r_i-\frac1G\sum_{j\ne i}r_j.
-\]
+```
 
-第二项相对 \(o_i\) 独立，可作 baseline；第一项把有效 reward 乘了 \((G-1)/G\)。例如 \(G=4\)，缩放是 \(3/4=0.75\)。若只做 mean subtraction，可乘 \(G/(G-1)=4/3\) 校正固定比例。
+第二项相对 $`o_i`$ 独立，可作 baseline；第一项把有效 reward 乘了 $`(G-1)/G`$。例如 $`G=4`$，缩放是 $`3/4=0.75`$。若只做 mean subtraction，可乘 $`G/(G-1)=4/3`$ 校正固定比例。
 
 这不是说“完整 GRPO 只差一个常数”，也不是说“GRPO 完全没梯度”；它只证明 **mean-subtraction 这一项**相对理想 policy gradient 有固定比例。把 std、clip、token 权重加回来后，不能继续沿用这一个比例概括整个算法。
 
 ### 11.3 leave-one-out baseline
 
-**leave-one-out（留一法）**对第 \(i\) 条回答，只用另外 \(G-1\) 条的均值：
+**leave-one-out（留一法）**对第 $`i`$ 条回答，只用另外 $`G-1`$ 条的均值：
 
-\[
+```math
 b_{-i}=\frac1{G-1}\sum_{j\ne i}r_j.
-\]
+```
 
-在 §8 的 \([0,1,1,2]\) 中：
+在 §8 的 $`[0,1,1,2]`$ 中：
 
-- \(i=1\)：别人均值 \((1+1+2)/3=4/3\)，advantage \(0-4/3=-4/3\)；
-- \(i=2\)：别人均值 \((0+1+2)/3=1\)，advantage 0；
-- \(i=3\)：同样 0；
-- \(i=4\)：别人均值 \((0+1+1)/3=2/3\)，advantage \(2-2/3=4/3\)。
+- $`i=1`$：别人均值 $`(1+1+2)/3=4/3`$，advantage $`0-4/3=-4/3`$；
+- $`i=2`$：别人均值 $`(0+1+2)/3=1`$，advantage 0；
+- $`i=3`$：同样 0；
+- $`i=4`$：别人均值 $`(0+1+1)/3=2/3`$，advantage $`2-2/3=4/3`$。
 
-在给定 prompt 后其他 rollouts 与当前 \(o_i\) 条件独立时，\(b_{-i}\) 不包含自身，因此满足 action-independent 条件。若采样过程共享自适应状态、后一次会看前一次，条件独立还要重新检查。
+在给定 prompt 后其他 rollouts 与当前 $`o_i`$ 条件独立时，$`b_{-i}`$ 不包含自身，因此满足 action-independent 条件。若采样过程共享自适应状态、后一次会看前一次，条件独立还要重新检查。
 
 ### 11.4 除 group std 为什么更麻烦
 
-原 GRPO 还除以由全组 rewards 计算的随机 \(\sigma_r\)。改变当前 \(o_i\) 会改变 \(r_i\)，进而改变均值和标准差；分母依赖当前 action。它通常不能直接套 §11.1 的零期望 baseline 证明，因此一般不是原始目标的严格无偏估计。
+原 GRPO 还除以由全组 rewards 计算的随机 $`\sigma_r`$。改变当前 $`o_i`$ 会改变 $`r_i`$，进而改变均值和标准差；分母依赖当前 action。它通常不能直接套 §11.1 的零期望 baseline 证明，因此一般不是原始目标的严格无偏估计。
 
 更直白地说：
 
-- rewards \([0,0,0,1]\) 的 std 与 \([0,1,1,1]\) 相同但方向分布不同；
-- 很容易或很难、但仍有非零离差的题，若 \(\sigma\) 很小，会被 \(1/(\sigma+\epsilon)\) 放大；完全相等时分子全 0，不会被放大成 reward 信号；
+- rewards $`[0,0,0,1]`$ 的 std 与 $`[0,1,1,1]`$ 相同但方向分布不同；
+- 很容易或很难、但仍有非零离差的题，若 $`\sigma`$ 很小，会被 $`1/(\sigma+\epsilon)`$ 放大；完全相等时分子全 0，不会被放大成 reward 信号；
 - epsilon 防数值崩溃，不自动修统计偏差。
 
 课程与 Dr.GRPO 论文的批评重点正是：**“减均值可用 baseline 理论解释”不等于“再除一个含当前样本的随机 std 也自动无偏”。**
 
-视频约 22 分钟处口头用了 “descend the reward”。按本文符号 \(J\) 是越大越好的 reward objective，正确方向是 **ascend reward**；若代码把 \(loss=-J\) 定义成越小越好的 loss，才说 **descend negative loss**。这只是符号口径纠正，不改变讲者在讨论“更新是否沿原 reward 正确方向”的问题。
+视频约 22 分钟处口头用了 “descend the reward”。按本文符号 $`J`$ 是越大越好的 reward objective，正确方向是 **ascend reward**；若代码把 $`loss=-J`$ 定义成越小越好的 loss，才说 **descend negative loss**。这只是符号口径纠正，不改变讲者在讨论“更新是否沿原 reward 正确方向”的问题。
 
 ## 12. Length bias 与 Dr.GRPO
 
-### 12.1 原始每回答 \(1/|o_i|\) 做了什么
+### 12.1 原始每回答 $`1/|o_i|`$ 做了什么
 
 原始目标先让每条 response 的 token 项求平均。因此一个 response 的总权重不随长度线性增加。
 
-若同一个负 advantage \(A=-1\)：
+若同一个负 advantage $`A=-1`$：
 
-- 长度 2，每 token 约分到 \(-1/2=-0.5\)；
-- 长度 10，每 token 约分到 \(-1/10=-0.1\)。
+- 长度 2，每 token 约分到 $`-1/2=-0.5`$；
+- 长度 10，每 token 约分到 $`-1/10=-0.1`$。
 
 错误长回答的每 token 惩罚更弱；正确短回答的每 token 奖励更强。训练动态可能鼓励错误时继续写长，或改变长度分布。这是优化权重效应，不是语言上“长一定坏”。
 
@@ -762,29 +762,29 @@ b_{-i}=\frac1{G-1}\sum_{j\ne i}r_j.
 
 【课程内容，PDF p.21–24】Dr.GRPO 来自 *Understanding R1-Zero-Like Training: A Critical Perspective*。按 p.23 的简化公式（先略 KL）直接写：
 
-\[
+```math
 J_{\mathrm{Dr.GRPO}}
 =\frac1G\sum_{i=1}^{G}\sum_{t=1}^{|o_i|}
 \min\left[
 \rho_{i,t}\hat A_i,
-\operatorname{clip}(\rho_{i,t},1-\epsilon,1+\epsilon)\hat A_i
+\mathrm{clip}(\rho_{i,t},1-\epsilon,1+\epsilon)\hat A_i
 \right],
-\]
+```
 
-\[
+```math
 \hat A_i=r_i-\bar r,
 \qquad
 \bar r=\frac1G\sum_{j=1}^{G}r_j.
-\]
+```
 
 和原 GRPO 对照，p.23 明确删除两项：
 
-1. 删除每条 response 自己的 \(1/|o_i|\)，保留 token **sum**；
-2. 删除 group standard deviation，不再除 \(\sigma_r\)。
+1. 删除每条 response 自己的 $`1/|o_i|`$，保留 token **sum**；
+2. 删除 group standard deviation，不再除 $`\sigma_r`$。
 
-但它**仍保留含自身的** \(r_i-\bar r\)，并没有自动变成 leave-one-out。按 §11.2 的 iid、同 prompt、只看 mean-subtraction 条件，其期望 reward-gradient 是理想 REINFORCE/LOO 方向的固定 \((G-1)/G\) 缩放。固定正比例不改变 ascent 方向，可吸收到学习率，所以论文/课件称其去掉关键偏差；这不等于逐样本 estimator 与 LOO 完全相同。
+但它**仍保留含自身的** $`r_i-\bar r`$，并没有自动变成 leave-one-out。按 §11.2 的 iid、同 prompt、只看 mean-subtraction 条件，其期望 reward-gradient 是理想 REINFORCE/LOO 方向的固定 $`(G-1)/G`$ 缩放。固定正比例不改变 ascent 方向，可吸收到学习率，所以论文/课件称其去掉关键偏差；这不等于逐样本 estimator 与 LOO 完全相同。
 
-例如 \(G=4\)，固定比例为 \(3/4\)；LOO advantages 是 \([-4/3,0,0,4/3]\)，含自身均值是 \([-1,0,0,1]\)，恰好前者乘 \(3/4\)。因此课件脚注说 “pretty close to REINFORCE with leave-one-out”，不能改写成“Dr.GRPO 就是 LOO”。
+例如 $`G=4`$，固定比例为 $`3/4`$；LOO advantages 是 $`[-4/3,0,0,4/3]`$，含自身均值是 $`[-1,0,0,1]`$，恰好前者乘 $`3/4`$。因此课件脚注说 “pretty close to REINFORCE with leave-one-out”，不能改写成“Dr.GRPO 就是 LOO”。
 
 不同代码库的 `Dr.GRPO` 细节可能不同。必须核对公式、mask 和总分母，不能只看算法名字。
 
@@ -792,8 +792,8 @@ J_{\mathrm{Dr.GRPO}}
 
 PDF p.23 的核心是“不各除自己的长度”。为让数值小一些，假设某实现对整个例子统一除以同一个最大生成长度 10；这是教学换算，不是说幻灯片公式额外写了这个 10：
 
-- 短回答每 token 系数 \(-1/10\)，2 token 总 \(-0.2\)；
-- 长回答每 token 系数 \(-1/10\)，10 token 总 \(-1.0\)。
+- 短回答每 token 系数 $`-1/10`$，2 token 总 $`-0.2`$；
+- 长回答每 token 系数 $`-1/10`$，10 token 总 $`-1.0`$。
 
 长回答实际用了更多动作，因此总影响更大；不再因为“每条都先平均到 1”而抹平 token 数。是否采用最大长度、全局总 token 或固定常数，是具体实现选择。
 
@@ -903,17 +903,17 @@ MCTS 是 **Monte Carlo Tree Search（蒙特卡洛树搜索）**，通过分支�
 
 ### 16.2 best-of-8 难度小例
 
-PDF p.41 的课程 bullet 说：只保留模型在 best-of-8 中失败的问题。若每次成功概率 \(p=0.1\)，并暂时假设 8 次条件独立：
+PDF p.41 的课程 bullet 说：只保留模型在 best-of-8 中失败的问题。若每次成功概率 $`p=0.1`$，并暂时假设 8 次条件独立：
 
-\[
+```math
 P(\text{8 次全失败})=(1-0.1)^8=0.9^8\approx0.4305.
-\]
+```
 
 至少一次成功：
 
-\[
+```math
 1-0.4305=0.5695.
-\]
+```
 
 所以一个真实成功率 10% 的题，仍有约 43.05% 概率被“8 次全失败”选为难题。筛选是有噪声的。
 
@@ -934,24 +934,24 @@ PDF bullet/课堂口述用 **best-of-8**；同页嵌入的 Kimi 报告文字写�
 | curriculum | 跨训练阶段改变整体题目难度/长度 | 阶段1以短题为主，阶段2加入长难题 |
 | prioritized sampling | 当前阶段内改变各题抽样概率 | 同一题池中，成功率低但仍可学的题多抽 |
 
-若题 \(i\) 当前成功率为 \(s_i\)，课程写相对抽样权重：
+若题 $`i`$ 当前成功率为 $`s_i`$，课程写相对抽样权重：
 
-\[
+```math
 w_i\propto1-s_i.
-\]
+```
 
-\(\propto\) 表示“只给相对权重”；要变成概率还要归一化：
+$`\propto`$ 表示“只给相对权重”；要变成概率还要归一化：
 
-\[
+```math
 p_i=\frac{1-s_i}{\sum_j(1-s_j)}.
-\]
+```
 
-三题成功率 \([0.2,0.8,0.5]\)，未归一权重 \([0.8,0.2,0.5]\)，总和 1.5：
+三题成功率 $`[0.2,0.8,0.5]`$，未归一权重 $`[0.8,0.2,0.5]`$，总和 1.5：
 
-\[
+```math
 p=[0.8/1.5,\ 0.2/1.5,\ 0.5/1.5]
 \approx[0.5333,0.1333,0.3333].
-\]
+```
 
 已掌握的第二题少采；仍可能学会的题多采。若成功率估计噪声大或 verifier 有偏，sampling 也会跟着偏。
 
@@ -976,66 +976,66 @@ p.47 的小模型数学曲线展示训练步、accuracy 与 token length 同时�
 
 【课程内容，PDF p.42】Kimi 报告写一类目标：
 
-\[
+```math
 \max_\theta\ 
 \mathbb E_{(x,y^*)\sim D,\,(y,z)\sim\pi_\theta}
 \left[
 r(x,y,y^*)-\tau\,\mathrm{KL}
 (\pi_\theta(\cdot|x)\|\pi_{\theta_i}(\cdot|x))
 \right].
-\]
+```
 
-- \(x\)：题目；\(y^*\)：参考答案；
-- \(y,z\)：模型输出答案与推理轨迹；
-- \(r\)：可验证 reward；
-- \(\pi_{\theta_i}\)：本轮开始时冻结的策略快照；在 Kimi 这套特例里，它同时充当“产生本批样本的 behavior/old policy”和“KL 拉回的 reference policy”。一般 PPO 中 old 与长期 reference 不必是同一个模型，见 §10.1；
-- \(\tau\)：偏离惩罚强度。
+- $`x`$：题目；$`y^*`$：参考答案；
+- $`y,z`$：模型输出答案与推理轨迹；
+- $`r`$：可验证 reward；
+- $`\pi_{\theta_i}`$：本轮开始时冻结的策略快照；在 Kimi 这套特例里，它同时充当“产生本批样本的 behavior/old policy”和“KL 拉回的 reference policy”。一般 PPO 中 old 与长期 reference 不必是同一个模型，见 §10.1；
+- $`\tau`$：偏离惩罚强度。
 
-\(\tau=0\) 时没有这项拉回力；\(\tau\) 太大时策略可能几乎不学新行为。
+$`\tau=0`$ 时没有这项拉回力；$`\tau`$ 太大时策略可能几乎不学新行为。
 
 ### 17.2 从最优分布关系到平方 surrogate
 
 课件给出最优策略关系：
 
-\[
+```math
 r(x,y,y^*)-\tau\log Z(x)
 =\tau\log\frac{\pi^*(y,z|x)}{\pi_{\theta_i}(y,z|x)},
-\]
+```
 
-这条闭式关系先用了 **nonparametric assumption（非参数化假设）**：对每个 prompt，\(\pi^*\) 可以在“所有可能的输出概率分布”中自由选择，而不是受某个有限神经网络的共享参数和容量限制。现实中的有限 neural network 未必能精确表达每个 prompt 的闭式 \(\pi^*\)；后面的 surrogate 只是用同一组参数去拟合这份理想关系。
+这条闭式关系先用了 **nonparametric assumption（非参数化假设）**：对每个 prompt，$`\pi^*`$ 可以在“所有可能的输出概率分布”中自由选择，而不是受某个有限神经网络的共享参数和容量限制。现实中的有限 neural network 未必能精确表达每个 prompt 的闭式 $`\pi^*`$；后面的 surrogate 只是用同一组参数去拟合这份理想关系。
 
 这里先把层级固定：
 
-- \(D\)：完整 prompt/参考答案分布；
-- \(x\)：当前同一道 prompt；\(y^*\)：参考答案；
-- \(k\)：对这个 \(x\) 采的 responses 数；
-- 第 \(j\) 条由答案 \(y_j\) 与 reasoning trace \(z_j\) 组成；
-- \(r_j=r(x,y_j,y^*)\)；
-- \(\bar r=k^{-1}\sum_{j=1}^k r_j\)；
-- \(\pi_{\theta_i}\)：产生本批 samples 的 behavior/old 策略，同时也是这套 Kimi 特例中的 KL reference；它在本次更新中冻结；
-- \(\pi_\theta\)：正在更新的策略。
+- $`D`$：完整 prompt/参考答案分布；
+- $`x`$：当前同一道 prompt；$`y^*`$：参考答案；
+- $`k`$：对这个 $`x`$ 采的 responses 数；
+- 第 $`j`$ 条由答案 $`y_j`$ 与 reasoning trace $`z_j`$ 组成；
+- $`r_j=r(x,y_j,y^*)`$；
+- $`\bar r=k^{-1}\sum_{j=1}^k r_j`$；
+- $`\pi_{\theta_i}`$：产生本批 samples 的 behavior/old 策略，同时也是这套 Kimi 特例中的 KL reference；它在本次更新中冻结；
+- $`\pi_\theta`$：正在更新的策略。
 
-\(Z(x)\) 是只依赖 prompt 的归一化常数：
+$`Z(x)`$ 是只依赖 prompt 的归一化常数：
 
-\[
+```math
 Z(x)=\mathbb E_{(y,z)\sim\pi_{\theta_i}}
 \left[e^{r(x,y,y^*)/\tau}\right].
-\]
+```
 
-若只有本 prompt 的 \(k\) 个 samples，一个直接 Monte Carlo 近似是 **log-mean-exp**：
+若只有本 prompt 的 $`k`$ 个 samples，一个直接 Monte Carlo 近似是 **log-mean-exp**：
 
-\[
+```math
 \tau\log Z(x)
 \approx\tau\log\left[
 \frac1k\sum_{j=1}^{k}e^{r_j/\tau}
 \right].
-\]
+```
 
-log-mean-exp 不是普通均值；高 reward 会被指数放大。Kimi 报告说明，当 \(\tau\) 较大时，这个量趋近 reward mean，因此实践推导用 \(\bar r\) 近似 \(\tau\log Z\)。有限 \(\tau\)、小 \(k\)、重尾 reward 时两者可明显不同，不能把近似写成恒等式。
+log-mean-exp 不是普通均值；高 reward 会被指数放大。Kimi 报告说明，当 $`\tau`$ 较大时，这个量趋近 reward mean，因此实践推导用 $`\bar r`$ 近似 $`\tau\log Z`$。有限 $`\tau`$、小 $`k`$、重尾 reward 时两者可明显不同，不能把近似写成恒等式。
 
-训练时未知 \(\pi^*\)。Kimi 来源给出的有限样本平方目标先是：
+训练时未知 $`\pi^*`$。Kimi 来源给出的有限样本平方目标先是：
 
-\[
+```math
 L_{sq}^{\mathrm{source}}(\theta)
 =\frac1k\sum_{j=1}^{k}
 \left[
@@ -1043,32 +1043,32 @@ r_j-\tau\log Z(x)
 -\tau\log\frac{\pi_\theta(y_j,z_j|x)}
 {\pi_{\theta_i}(y_j,z_j|x)}
 \right]^2.
-\]
+```
 
 为让后面的梯度系数更整洁，本文重新标记一个**正数缩放版本**：
 
-\[
+```math
 \widetilde L_{sq}
 =\frac{L_{sq}^{\mathrm{source}}}{2\tau}
 =\frac1{2\tau k}\sum_{j=1}^{k}[\cdots]^2.
-\]
+```
 
-因为 \(\tau>0\)，除以 \(2\tau\) 不改变极小点；但会改变 loss 的数值和梯度整体尺度，所以不能把 \(\widetilde L_{sq}\) 冒充来源原式。它们都是要**最小化**的平方 surrogate（surrogate=更容易优化、用来近似原目标的替代目标）。
+因为 $`\tau>0`$，除以 $`2\tau`$ 不改变极小点；但会改变 loss 的数值和梯度整体尺度，所以不能把 $`\widetilde L_{sq}`$ 冒充来源原式。它们都是要**最小化**的平方 surrogate（surrogate=更容易优化、用来近似原目标的替代目标）。
 
-实践近似把 \(\tau\log Z(x)\) 换成 \(\bar r\)。注意：平方括号里 reward 差与 log-ratio 正则在**同一项**，外面是对同一 prompt 的 \(k\) 条回答求和。
+实践近似把 $`\tau\log Z(x)`$ 换成 $`\bar r`$。注意：平方括号里 reward 差与 log-ratio 正则在**同一项**，外面是对同一 prompt 的 $`k`$ 条回答求和。
 
 ### 17.3 对平方 loss 求梯度，得到正则化 policy-gradient
 
 令：
 
-\[
+```math
 \ell_j(\theta)=\log\frac{\pi_\theta(y_j,z_j|x)}
 {\pi_{\theta_i}(y_j,z_j|x)}.
-\]
+```
 
-因为 \(\pi_{\theta_i}\) 冻结，\(\nabla_\theta\ell_j=\nabla_\theta\log\pi_\theta(y_j,z_j|x)\)。这里严格沿用 §4.4：sample、\(r_j\)、\(\bar r\) 和旧策略 log-prob 全部 stop-gradient，只有 current log-prob 对 \(\theta\) 求导。把 \(\tau\log Z\) 用 \(\bar r\) 近似，对本文的 \(\widetilde L_{sq}\) 做 gradient descent，等价于沿下面方向做 ascent：
+因为 $`\pi_{\theta_i}`$ 冻结，$`\nabla_\theta\ell_j=\nabla_\theta\log\pi_\theta(y_j,z_j|x)`$。这里严格沿用 §4.4：sample、$`r_j`$、$`\bar r`$ 和旧策略 log-prob 全部 stop-gradient，只有 current log-prob 对 $`\theta`$ 求导。把 $`\tau\log Z`$ 用 $`\bar r`$ 近似，对本文的 $`\widetilde L_{sq}`$ 做 gradient descent，等价于沿下面方向做 ascent：
 
-\[
+```math
 \begin{aligned}
 -\nabla_\theta \widetilde L_{sq}
 &\approx\frac1k\sum_{j=1}^{k}
@@ -1080,71 +1080,71 @@ r_j-\tau\log Z(x)
 -\frac\tau2\nabla_\theta\ell_j^2
 \right].
 \end{aligned}
-\]
+```
 
 第一项鼓励高于均值的回答；第二项惩罚 log-ratio 绝对值过大。它不是 DPO 的成对 chosen/rejected loss；“DPO-style”只说明使用了相似的 KL 正则最优关系。
 
-### 17.4 一个 \(k=2\) 完整数例
+### 17.4 一个 $`k=2`$ 完整数例
 
-同一 prompt 采两条，\(r_1=1,r_2=0,\tau=0.5\)，current/old log-ratios \(\ell_1=0.2,\ell_2=-0.2\)。
+同一 prompt 采两条，$`r_1=1,r_2=0,\tau=0.5`$，current/old log-ratios $`\ell_1=0.2,\ell_2=-0.2`$。
 
 先算精确样本 log-mean-exp 近似：
 
-\[
+```math
 \tau\log Z\approx0.5\log\frac{e^{1/0.5}+e^{0/0.5}}2
 =0.5\log\frac{e^2+1}{2}
 \approx0.5\log4.1945\approx0.7169.
-\]
+```
 
 精确桥的两个括号：
 
-\[
+```math
 a_1=1-0.7169-0.5(0.2)=0.1831,
-\]
+```
 
-\[
+```math
 a_2=0-0.7169-0.5(-0.2)=-0.6169.
-\]
+```
 
 本文缩放后的平方 loss：
 
-\[
+```math
 \widetilde L_{sq}=\frac{0.1831^2+(-0.6169)^2}{2\times0.5\times2}
 \approx\frac{0.0335+0.3806}{2}=0.2071.
-\]
+```
 
-这里 \(2\tau=2\times0.5=1\)，所以 \(\widetilde L_{sq}=L_{sq}^{\mathrm{source}}\) **恰好数值相同**；换一个 \(\tau\) 就不再相同。
+这里 $`2\tau=2\times0.5=1`$，所以 $`\widetilde L_{sq}=L_{sq}^{\mathrm{source}}`$ **恰好数值相同**；换一个 $`\tau`$ 就不再相同。
 
-实践均值近似是 \(\bar r=(1+0)/2=0.5\)，于是 ascent 系数：
+实践均值近似是 $`\bar r=(1+0)/2=0.5`$，于是 ascent 系数：
 
-\[
+```math
 c_1=(1-0.5)-0.5(0.2)=0.4,
 \qquad
 c_2=(0-0.5)-0.5(-0.2)=-0.4.
-\]
+```
 
-所以第一条概率被推高，第二条被压低；同时平方 log-ratio 把两条都约束在旧策略附近。均值近似下 \(\widetilde L_{sq}=[0.4^2+(-0.4)^2]/2=0.16\)。它与 0.2071 不同，正好展示 \(\bar r\approx\tau\log Z\) 不是精确等式。
+所以第一条概率被推高，第二条被压低；同时平方 log-ratio 把两条都约束在旧策略附近。均值近似下 $`\widetilde L_{sq}=[0.4^2+(-0.4)^2]/2=0.16`$。它与 0.2071 不同，正好展示 $`\bar r\approx\tau\log Z`$ 不是精确等式。
 
-### 17.5 长度奖励 \(\lambda\)
+### 17.5 长度奖励 $`\lambda`$
 
 PDF p.43 的训练配方不是一开始就施加长度压力：团队先做正常训练，等策略经过 warm-up（暖启动，先获得基础解题能力）后，才在后期启用固定 length penalty。否则早期模型还不会解题时就强迫变短，可能压住探索和错误后的恢复。这是经验配方选择，不是下面公式数学上必然要求的时序。
 
 启用后，PDF p.43 写：
 
-\[
-\lambda_i=0.5-\frac{\operatorname{len}(i)-\min\_len}
+```math
+\lambda_i=0.5-\frac{\mathrm{len}(i)-\min\_len}
 {\max\_len-\min\_len}.
-\]
+```
 
-若组内长度 \([100,200,300]\)，最短 100、最长 300：
+若组内长度 $`[100,200,300]`$，最短 100、最长 300：
 
-- 100：\(0.5-(100-100)/200=0.5\)；
-- 200：\(0.5-100/200=0\)；
-- 300：\(0.5-200/200=-0.5\)。
+- 100：$`0.5-(100-100)/200=0.5`$；
+- 200：$`0.5-100/200=0`$；
+- 300：$`0.5-200/200=-0.5`$。
 
-正确回答得到 \(\lambda_i\)；错误回答得到 \(\min(0,\lambda_i)\)。所以错误且短的 \(\lambda=0.5\) 会被截成 0，不会拿正长度奖励；错误且长的拿 \(-0.5\)。
+正确回答得到 $`\lambda_i`$；错误回答得到 $`\min(0,\lambda_i)`$。所以错误且短的 $`\lambda=0.5`$ 会被截成 0，不会拿正长度奖励；错误且长的拿 $`-0.5`$。
 
-若所有回答等长，\(\max len=\min len\)，原分母为 0。**Kimi 报告给出的 fallback 是：所有 length reward 都设为 0。** 其他代码可以选择跳过，但必须另标“其他实现”，不能冒充论文口径。
+若所有回答等长，$`\max len=\min len`$，原分母为 0。**Kimi 报告给出的 fallback 是：所有 length reward 都设为 0。** 其他代码可以选择跳过，但必须另标“其他实现”，不能冒充论文口径。
 
 ## 18. On-policy rollout 与系统瓶颈
 
@@ -1158,16 +1158,16 @@ PDF p.43 的训练配方不是一开始就施加长度压力：团队先做正�
 
 **straggler（拖尾任务）**是比同组其他任务慢很多、让大家等待的任务。4 个 rollout 长度：
 
-\[
+```math
 [100,120,110,1000].
-\]
+```
 
 若同步批处理都 pad（填充）到 1000 token：
 
-- 实际有用 token：\(100+120+110+1000=1330\)；
-- 分配 token slots：\(4\times1000=4000\)；
-- 利用率：\(1330/4000=0.3325=33.25\%\)；
-- 浪费：\(4000-1330=2670\) slots。
+- 实际有用 token：$`100+120+110+1000=1330`$；
+- 分配 token slots：$`4\times1000=4000`$；
+- 利用率：$`1330/4000=0.3325=33.25\%`$；
+- 浪费：$`4000-1330=2670`$ slots。
 
 长度分桶、异步调度、partial rollout 可减少等待，却会改变 batch 组成、on-policy 新鲜度或梯度统计，需要共同审计。
 
@@ -1182,9 +1182,9 @@ rollout/logprobs/rewards → 训练引擎 → 更新
 
 若每轮传 100 GB 权重、链路 20 GB/s，光单向理想传输下界：
 
-\[
+```math
 100/20=5\text{ 秒}.
-\]
+```
 
 还未含同步、格式转换、网络竞争。Kimi 的混合 Megatron/vLLM 设计是其工程案例，不是唯一实现。
 
@@ -1203,15 +1203,15 @@ PDF p.51 给出 **3995 examples**，不是“正好 4000”。字幕口头说约
 
 若每 prompt 采样 8 responses：
 
-\[
+```math
 3995\times8=31{,}960\text{ responses}.
-\]
+```
 
 若平均每条 2048 token：
 
-\[
+```math
 31{,}960\times2048=65{,}454{,}080\text{ generated tokens}.
-\]
+```
 
 这是教学预算例，不是报告公开的真实总 rollout token 数。
 
@@ -1246,7 +1246,7 @@ PDF p.54 的表显示一般能力/偏好训练可提升部分通用任务，同�
 
 ### 20.2 midtraining 与 600B repository tokens
 
-**midtraining（中期训练）**位于通用预训练与 post-training 之间，强化长上下文、代码仓库、agent 交互等分布。课件写 600B repository-level tokens；\(B\) 在这里是 billion（十亿）token，不是 bytes。
+**midtraining（中期训练）**位于通用预训练与 post-training 之间，强化长上下文、代码仓库、agent 交互等分布。课件写 600B repository-level tokens；$`B`$ 在这里是 billion（十亿）token，不是 bytes。
 
 仓库级数据保留跨文件依赖、测试和提交结构；它不等于把孤立代码文件拼起来。
 
@@ -1297,16 +1297,16 @@ Lean 等形式系统也只验证形式化规格；规格或允许的环境若泄
 2. **“RLVR 不会 reward hack。”** 测试/解析器也可有漏洞；正确说法：使用隐藏验证与轨迹审计。
 3. **“GRPO advantage 是 value。”** 它只看当前 group；正确说法：它是组相对分数。
 4. **“同一 reward 的 advantage 固定。”** 组换了均值/std 就换；正确说法：写出 group。
-5. **“std 总是除 \(G-1\)。”** NumPy 默认除 \(G\)；正确说法：查实现。
+5. **“std 总是除 $`G-1`$。”** NumPy 默认除 $`G`$；正确说法：查实现。
 6. **“epsilon 修复无偏性。”** 它只防除零；正确说法：统计依赖仍在。
 7. **“baseline 可以看当前 action。”** 会改变期望；正确说法：prompt-dependent、action-independent。
-8. **“含自身均值完全没问题。”** 有 \((G-1)/G\) 缩放；正确说法：校正或 leave-one-out。
+8. **“含自身均值完全没问题。”** 有 $`(G-1)/G`$ 缩放；正确说法：校正或 leave-one-out。
 9. **“除 group std 是合法 baseline。”** 分母也依赖 action；正确说法：另做偏差分析。
 10. **“PPO ratio 是 current/reference。”** 分母是 old；reference 用于 KL。
 11. **“ratio 超界就一定取 clip。”** advantage 符号影响 min；正确说法：算两项。
 12. **“KL 每个 token 都非负。”** log-ratio 样本可负；正确说法：KL 期望非负，特定 estimator 可逐样本非负。
 13. **“KL sum=KL mean。”** 长度不同权重不同；正确说法：标分母。
-14. **“目标和 loss 符号一样。”** 最大化 \(J\) 等价最小化 \(-J\)。
+14. **“目标和 loss 符号一样。”** 最大化 $`J`$ 等价最小化 $`-J`$。
 15. **“每回答平均很公平。”** 它会改变每 token 权重并引入 length bias。
 16. **“Dr.GRPO 是唯一固定代码。”** 实现细节不同；正确说法：核对公式/mask/denominator。
 17. **“CoT 变长证明推理变强。”** 相关不等于因果；还可能是长度偏差。
@@ -1316,8 +1316,8 @@ Lean 等形式系统也只验证形式化规格；规格或允许的环境若泄
 21. **“R1 的 PRM/MCTS 失败证明方法无用。”** 只支持该实验设置。
 22. **“distillation 复制 teacher 权重。”** 它训练 student 模仿数据/分布。
 23. **“Kimi best-of-8 与十次估难完全相同。”** 课程 bullet 与报告截图口径不同。
-24. **“Kimi 错误短答案拿 +0.5。”** 规则是 \(\min(0,\lambda)\)，所以拿 0。
-25. **“所有回答等长仍可直接算 \(\lambda\)。”** 分母为 0，必须定义 fallback。
+24. **“Kimi 错误短答案拿 +0.5。”** 规则是 $`\min(0,\lambda)`$，所以拿 0。
+25. **“所有回答等长仍可直接算 $`\lambda`$。”** 分母为 0，必须定义 fallback。
 26. **“3995=4000 精确值。”** 4000 是口头近似。
 27. **“thinking budget 越大必然越好。”** 图只支持特定任务/模型区间。
 28. **“general RL 所有指标同升。”** 多目标会 trade off。
@@ -1328,29 +1328,29 @@ Lean 等形式系统也只验证形式化规格；规格或允许的环境若泄
 33. **“形式验证器不可被钻。”** 它只保证相对形式规格成立。
 34. **“benchmark 上升=产品一定更好。”** 还缺真实流量、成本、安全和分布外评估。
 35. **“全组 reward 相等时，epsilon 会造出一点学习信号。”** 分子全为 0，reward advantage 仍全为 0；只有未跳组时另加的 reference-KL 项可能更新。
-36. **“Dr.GRPO 就是 leave-one-out。”** 它仍减含自身的组均值；在 iid 简化条件下只与 LOO 相差固定 \((G-1)/G\)，但逐样本公式并不相同。
-37. **“clamp 正 log-ratio 与 \(e^d-d-1\) 是同一个 KL estimator。”** 前者是课程代码的单边 reward-shaping heuristic；后者只有在 current-sampling、精确 log-prob 且 current support 覆盖 reference 概率质量等条件下，才无偏估计 \(D_{KL}(current\|reference)\)。
-38. **“Kimi 用 \(\bar r\) 是精确算出了 \(\tau\log Z\)。”** 它是实践近似；有限 \(k\) 或较小 \(\tau\) 时 log-mean-exp 可与普通均值明显不同。
+36. **“Dr.GRPO 就是 leave-one-out。”** 它仍减含自身的组均值；在 iid 简化条件下只与 LOO 相差固定 $`(G-1)/G`$，但逐样本公式并不相同。
+37. **“clamp 正 log-ratio 与 $`e^d-d-1`$ 是同一个 KL estimator。”** 前者是课程代码的单边 reward-shaping heuristic；后者只有在 current-sampling、精确 log-prob 且 current support 覆盖 reference 概率质量等条件下，才无偏估计 $`D_{KL}(current\|reference)`$。
+38. **“Kimi 用 $`\bar r`$ 是精确算出了 $`\tau\log Z`$。”** 它是实践近似；有限 $`k`$ 或较小 $`\tau`$ 时 log-mean-exp 可与普通均值明显不同。
 
 ## 23. 公式卡与聚合审计表
 
 | 目的 | 公式 | 最先检查 |
 |---|---|---|
-| group mean | \(\bar r=G^{-1}\sum_i r_i\) | 同一 prompt 吗 |
-| population std | \(\sqrt{G^{-1}\sum_i(r_i-\bar r)^2}\) | 分母 \(G\) |
-| sample std | \(\sqrt{(G-1)^{-1}\sum_i(r_i-\bar r)^2}\) | 与代码一致吗 |
-| GRPO advantage | \((r_i-\bar r)/(\sigma+\epsilon)\) | 零方差、含自身 |
-| PPO ratio | \(\pi_\theta/\pi_{old}\) | old 版本 |
-| PPO token term | \(\min(\rho A,\operatorname{clip}(\rho)A)\) | \(A\) 正负 |
-| sampled log-ratio | \(g=\log\pi_\theta-\log\pi_{ref}\) | 单样本可正可负 |
-| p.14 one-sided shaping | \(\max(g,0)\) | heuristic，不是完整KL |
-| current\|\|reference KL estimate | \(e^d-d-1\) | \(d=-g\)，current采样、精确log-prob、support覆盖 |
-| leave-one-out | \(b_{-i}=(G-1)^{-1}\sum_{j\ne i}r_j\) | 不含当前样本 |
-| Dr.GRPO | \(G^{-1}\sum_i\sum_t\min(\rho A_i,\mathrm{clip}(\rho)A_i)\) | 无每条长度除数、无std，仍含自身mean |
-| Kimi logZ | \(\tau\log[k^{-1}\sum_j e^{r_j/\tau}]\) | \(\bar r\) 只是实践近似 |
-| Kimi 来源平方式 | \(L_{sq}^{source}=k^{-1}\sum_j a_j^2\) | 来源有限样本原式 |
-| 本文梯度缩放式 | \(\widetilde L_{sq}=L_{sq}^{source}/(2\tau)\) | 正数缩放；极小点相同，数值/梯度尺度不同 |
-| Kimi length | \(0.5-(l_i-l_{min})/(l_{max}-l_{min})\) | 等长除零 |
+| group mean | $`\bar r=G^{-1}\sum_i r_i`$ | 同一 prompt 吗 |
+| population std | $`\sqrt{G^{-1}\sum_i(r_i-\bar r)^2}`$ | 分母 $`G`$ |
+| sample std | $`\sqrt{(G-1)^{-1}\sum_i(r_i-\bar r)^2}`$ | 与代码一致吗 |
+| GRPO advantage | $`(r_i-\bar r)/(\sigma+\epsilon)`$ | 零方差、含自身 |
+| PPO ratio | $`\pi_\theta/\pi_{old}`$ | old 版本 |
+| PPO token term | $`\min(\rho A,\mathrm{clip}(\rho)A)`$ | $`A`$ 正负 |
+| sampled log-ratio | $`g=\log\pi_\theta-\log\pi_{ref}`$ | 单样本可正可负 |
+| p.14 one-sided shaping | $`\max(g,0)`$ | heuristic，不是完整KL |
+| current\|\|reference KL estimate | $`e^d-d-1`$ | $`d=-g`$，current采样、精确log-prob、support覆盖 |
+| leave-one-out | $`b_{-i}=(G-1)^{-1}\sum_{j\ne i}r_j`$ | 不含当前样本 |
+| Dr.GRPO | $`G^{-1}\sum_i\sum_t\min(\rho A_i,\mathrm{clip}(\rho)A_i)`$ | 无每条长度除数、无std，仍含自身mean |
+| Kimi logZ | $`\tau\log[k^{-1}\sum_j e^{r_j/\tau}]`$ | $`\bar r`$ 只是实践近似 |
+| Kimi 来源平方式 | $`L_{sq}^{source}=k^{-1}\sum_j a_j^2`$ | 来源有限样本原式 |
+| 本文梯度缩放式 | $`\widetilde L_{sq}=L_{sq}^{source}/(2\tau)`$ | 正数缩放；极小点相同，数值/梯度尺度不同 |
+| Kimi length | $`0.5-(l_i-l_{min})/(l_{max}-l_{min})`$ | 等长除零 |
 
 聚合审计顺序：
 
@@ -1375,16 +1375,16 @@ token term
 4. 【设计】数学答案 verifier 至少列出两个漏检面。
 5. 【手算】正确奖 1、格式奖 0.1；正确但格式错、错误但格式对各得多少？
 6. 【判断解释】reward 必须可微，policy gradient 才能训练吗？
-7. 【手算】两动作概率 \([0.25,0.75]\)，reward \([1,0]\)，期望 reward 是多少？
+7. 【手算】两动作概率 $`[0.25,0.75]`$，reward $`[1,0]`$，期望 reward 是多少？
 8. 【手算】Q7 中第一动作概率升到 0.30 后，期望 reward 增多少？
 9. 【解释】high variance 用人话是什么意思？
 10. 【判断解释】baseline 可以依赖 prompt 吗？可以依赖当前 sampled response 吗？
 11. 【手算】reward 1、baseline 0.8，advantage 是多少？baseline 0.1 时呢？
 12. 【定义】TRPO、PPO 的全称与共同直觉是什么？
 13. 【手算】old probability 0.2、current 0.24，ratio 是多少？
-14. 【手算】\(\epsilon=0.2\)，把 1.4、0.6、1.1 分别 clip。
-15. 【手算】\(A=2,\rho=1.4\)，算 PPO 两项和 min。
-16. 【手算】\(A=-2,\rho=0.6\)，算 PPO 两项和 min。
+14. 【手算】$`\epsilon=0.2`$，把 1.4、0.6、1.1 分别 clip。
+15. 【手算】$`A=2,\rho=1.4`$，算 PPO 两项和 min。
+16. 【手算】$`A=-2,\rho=0.6`$，算 PPO 两项和 min。
 17. 【错误诊断】“ratio 只要超界，一律使用 clipped ratio。”哪里错？
 18. 【分类】current、old、reference、value、reward 五角色分别做什么？
 19. 【判断解释】old 与 reference 是否可能数值相同？职责是否相同？
@@ -1392,33 +1392,33 @@ token term
 21. 【定义】GAE 是什么？本讲需要掌握到什么边界？
 22. 【填表】GRPO 对一个 prompt 的五个步骤是什么？PDF p.18 的 response-level 总览式与 p.23 的 token 实现式有什么不同？
 23. 【判断解释】GRPO group advantage 是 value function 吗？
-24. 【手算】rewards \([0,1,1,2]\) 的均值。
+24. 【手算】rewards $`[0,1,1,2]`$ 的均值。
 25. 【手算】Q24 的离均差、平方和、population variance。
 26. 【手算】Q24 的 population std 与四个 advantages。
 27. 【手算】Q24 的 sample variance/std 与首尾 advantages。
 28. 【判断解释】Q26 和 Q27 哪套一定正确？
-29. 【手算+判断解释】rewards \([1,1,1,1]\)、epsilon \(10^{-4}\)，advantages 是什么？完整更新是否一定为0？
-30. 【错误诊断】零方差时直接算 \(0/0\) 会怎样？
-31. 【手算】长度 \([2,1,2,1]\) 共有多少 token？
-32. 【手算】\(A=-1.4142,\rho=0.7,\epsilon=0.2\)，算两项和 min。
-33. 【手算】\(A=1.4142,\rho=1.3\)，算两项和 min。
+29. 【手算+判断解释】rewards $`[1,1,1,1]`$、epsilon $`10^{-4}`$，advantages 是什么？完整更新是否一定为0？
+30. 【错误诊断】零方差时直接算 $`0/0`$ 会怎样？
+31. 【手算】长度 $`[2,1,2,1]`$ 共有多少 token？
+32. 【手算】$`A=-1.4142,\rho=0.7,\epsilon=0.2`$，算两项和 min。
+33. 【手算】$`A=1.4142,\rho=1.3`$，算两项和 min。
 34. 【手算】§9 六 token 表的 response 1 token mean。
 35. 【手算】§9 四 response mean 再做 group mean。
 36. 【手算】§9 若改 global token mean，结果是多少？
 37. 【判断解释】Q35 与 Q36 符号不同是否说明有一个算错？
 38. 【手算】刚采样完、current=old 时 ratio 是多少？clip 是否起作用？
 39. 【解释】为何做多个 minibatch epochs 后 clip 才更常起作用？
-40. 【手算】对 \(k_3\) estimator，\(d=\log2\)，算 \(e^d-d-1\)。
-41. 【手算】Q40 乘 \(\beta=0.05\) 的 KL penalty。
-42. 【手算】KL estimates \([0.1,0.2,0.3]\) 的 sum 和 mean。
-43. 【判断解释】单 token log-ratio 必须非负吗？理论 KL 呢？\(k_3\) 无偏等式还需要什么 support 条件？
+40. 【手算】对 $`k_3`$ estimator，$`d=\log2`$，算 $`e^d-d-1`$。
+41. 【手算】Q40 乘 $`\beta=0.05`$ 的 KL penalty。
+42. 【手算】KL estimates $`[0.1,0.2,0.3]`$ 的 sum 和 mean。
+43. 【判断解释】单 token log-ratio 必须非负吗？理论 KL 呢？$`k_3`$ 无偏等式还需要什么 support 条件？
 44. 【推导】写出 state-dependent、action-independent baseline 的零期望四行证明。
-45. 【手算+判断解释】只研究 IID（independent and identically distributed，独立同分布）rollouts 的 mean-subtraction、忽略 std/clip/KL/长度时，\(G=4\) 会把 reward-gradient 缩放多少？“独立”和“同分布”各是什么意思？校正因子多少？为什么不能据此说完整 GRPO 只差这个常数？
-46. 【推导】把 \(r_i-\bar r\) 拆成含 \(r_i\) 与不含 \(r_i\) 两部分。
-47. 【手算】对 \([0,1,1,2]\) 算四个 leave-one-out baselines/advantages。
+45. 【手算+判断解释】只研究 IID（independent and identically distributed，独立同分布）rollouts 的 mean-subtraction、忽略 std/clip/KL/长度时，$`G=4`$ 会把 reward-gradient 缩放多少？“独立”和“同分布”各是什么意思？校正因子多少？为什么不能据此说完整 GRPO 只差这个常数？
+46. 【推导】把 $`r_i-\bar r`$ 拆成含 $`r_i`$ 与不含 $`r_i`$ 两部分。
+47. 【手算】对 $`[0,1,1,2]`$ 算四个 leave-one-out baselines/advantages。
 48. 【判断解释】为什么 group std 不能自动套合法 baseline 证明？
 49. 【判断解释】epsilon 能修复 group std 的统计偏差吗？
-50. 【手算】同 \(A=-1\)，长度 2 与 10，在每回答 token mean 下每 token 系数各多少？
+50. 【手算】同 $`A=-1`$，长度 2 与 10，在每回答 token mean 下每 token 系数各多少？
 51. 【手算】若统一除 10，Q50 两回答总系数各多少？
 52. 【判断解释】response 变长能否单独证明推理变强？
 53. 【分类】R1-Zero 的 accuracy reward 与 format reward 分别验证什么？
@@ -1428,15 +1428,15 @@ token term
 57. 【手算】accuracy 1、consistency 0.8、权重各 1，总 reward；consistency 1 时呢？
 58. 【判断解释】R1 中 PRM/MCTS 未成功能否证明它们永远无用？
 59. 【解释】distillation 与复制 teacher 权重有什么不同？
-60. 【手算】独立成功率 \(p=0.1\)，best-of-8 全失败概率和至少一次成功概率。
+60. 【手算】独立成功率 $`p=0.1`$，best-of-8 全失败概率和至少一次成功概率。
 61. 【判断解释】Kimi 的 best-of-8 与报告截图十次估难应如何记录？
-62. 【手算】Kimi \(k=2\) 例：\(r=[1,0],\tau=.5,\ell=[.2,-.2]\)。算样本 log-mean-exp 的 \(\tau\log Z\)、两个精确括号与本文缩放式 \(\widetilde L_{sq}\)；为什么此处它与来源 \(L_{sq}^{source}\) 数值巧合相同？
-63. 【手算+解释】Q62 改用 \(\bar r\) 近似，算两个 ascent 系数与 \(\widetilde L_{sq}\)；为何和Q62不同？
-64. 【手算】长度 \([100,200,300]\) 的三个 \(\lambda\)。
+62. 【手算】Kimi $`k=2`$ 例：$`r=[1,0],\tau=.5,\ell=[.2,-.2]`$。算样本 log-mean-exp 的 $`\tau\log Z`$、两个精确括号与本文缩放式 $`\widetilde L_{sq}`$；为什么此处它与来源 $`L_{sq}^{source}`$ 数值巧合相同？
+63. 【手算+解释】Q62 改用 $`\bar r`$ 近似，算两个 ascent 系数与 $`\widetilde L_{sq}`$；为何和Q62不同？
+64. 【手算】长度 $`[100,200,300]`$ 的三个 $`\lambda`$。
 65. 【填表】Q64 中正确/错误回答各拿怎样的 length reward？
 66. 【错误诊断】全组等长时直接使用长度公式有什么问题？Kimi报告的 fallback 是什么？
 67. 【判断解释】on-policy 是否意味着同一 rollout 可以无限复用？
-68. 【手算】长度 \([100,120,110,1000]\) 的有用 token、pad slots、利用率、浪费。
+68. 【手算】长度 $`[100,120,110,1000]`$ 的有用 token、pad slots、利用率、浪费。
 69. 【手算】每轮传 100 GB 权重、链路 20 GB/s，单向理想下界多少秒？
 70. 【手算】3995 prompts、每题 8 responses，共多少 responses？
 71. 【手算】Q70 每条 2048 token，共多少 generated tokens？
@@ -1457,21 +1457,21 @@ token term
 ### 25.1 第 1–20 题
 
 1. prompt 是题；response 是完整答案；token 是答案中的动作单位；group 是同一 prompt 的多回答；batch 是多 prompts/groups 的更新集合。
-2. responses \(=3\times8=24\)；tokens \(=24\times100=2400\)。
+2. responses $`=3\times8=24`$；tokens $`=24\times100=2400`$。
 3. 四格：真实对且通过=TP；真实错却通过=FP；真实对却拒绝=FN；真实错且拒绝=TN。**pass 不等于完整现实目标满足。**例如 parser 可误抓答案形成 FP；也可能因格式拒绝等价正确答案形成 FN。
 4. 例：只比末答案，漏错误中间推理；答案解析器可能接受格式漏洞。还可漏单位、证明完整性。
-5. 正确格式错：\(1+0=1\)；错误格式对：\(0+0.1=0.1\)。
-6. **不必。**reward 可是离散测试结果；梯度通过 \(\nabla\log\pi_\theta\) 回到 policy。
-7. \(0.25\times1+0.75\times0=0.25\)。
-8. 新期望 \(0.30\)；增加 \(0.30-0.25=0.05\)。
+5. 正确格式错：$`1+0=1`$；错误格式对：$`0+0.1=0.1`$。
+6. **不必。**reward 可是离散测试结果；梯度通过 $`\nabla\log\pi_\theta`$ 回到 policy。
+7. $`0.25\times1+0.75\times0=0.25`$。
+8. 新期望 $`0.30`$；增加 $`0.30-0.25=0.05`$。
 9. 同一真实目标重复采样，梯度估计忽高忽低，需要更多样本才能看清方向。
 10. 可依赖 prompt/state；不能依赖当前 sampled response/action，否则减项期望一般不为 0。
-11. \(1-0.8=0.2\)；\(1-0.1=0.9\)。
+11. $`1-0.8=0.2`$；$`1-0.1=0.9`$。
 12. TRPO：Trust Region Policy Optimization；PPO：Proximal Policy Optimization。共同直觉是一次别把策略推得太远。
-13. \(\rho=0.24/0.20=1.2\)。
-14. 区间 \([0.8,1.2]\)：1.4→1.2；0.6→0.8；1.1→1.1。
-15. 裸项 \(1.4\times2=2.8\)；clip 项 \(1.2\times2=2.4\)；min=2.4。
-16. 裸项 \(0.6\times(-2)=-1.2\)；clip 项 \(0.8\times(-2)=-1.6\)；min=\(-1.6\)。
+13. $`\rho=0.24/0.20=1.2`$。
+14. 区间 $`[0.8,1.2]`$：1.4→1.2；0.6→0.8；1.1→1.1。
+15. 裸项 $`1.4\times2=2.8`$；clip 项 $`1.2\times2=2.4`$；min=2.4。
+16. 裸项 $`0.6\times(-2)=-1.2`$；clip 项 $`0.8\times(-2)=-1.6`$；min=$`-1.6`$。
 17. min 比较的是乘 advantage 后的两项；负 advantage 会翻转大小关系。
 18. current 更新；old 提供本批 ratio 分母；reference 提供长期 KL 锚；value 预测回报；reward/verifier 打分。
 19. 可能在初始时相同；职责不同，old 随批次更新，reference 通常长期冻结。
@@ -1480,62 +1480,62 @@ token term
 ### 25.2 第 21–40 题
 
 21. GAE 是 Generalized Advantage Estimation，把多步时序差分按衰减混合。本讲只需知道它给 PPO 构造 token advantage，GRPO 用组相对分数省去 value。
-22. 同 prompt 采 \(G\) 条→verifier 打分→组内标准化→把 response advantage 给各 token→clip+KL 更新。p.18 总览式直接写整条 response 概率比、每 response 一项；p.23 为分析实现偏差，把它展开成每 token ratio 的内层和，原 GRPO 再除本条 \(|o_i|\)。二者不能无说明混成同一层级公式。
+22. 同 prompt 采 $`G`$ 条→verifier 打分→组内标准化→把 response advantage 给各 token→clip+KL 更新。p.18 总览式直接写整条 response 概率比、每 response 一项；p.23 为分析实现偏差，把它展开成每 token ratio 的内层和，原 GRPO 再除本条 $`|o_i|`$。二者不能无说明混成同一层级公式。
 23. **不是。**它不预测未来，只比较本次同题 group。
-24. \((0+1+1+2)/4=1\)。
-25. 离均差 \([-1,0,0,1]\)；平方 \([1,0,0,1]\)；和 2；population variance \(2/4=0.5\)。
-26. std \(=\sqrt{0.5}=0.7071\)；advantages 约 \([-1.4142,0,0,1.4142]\)。
-27. sample variance \(2/3=0.6667\)；std \(0.8165\)；首尾 \(\mp1/0.8165=\mp1.2247\)。
+24. $`(0+1+1+2)/4=1`$。
+25. 离均差 $`[-1,0,0,1]`$；平方 $`[1,0,0,1]`$；和 2；population variance $`2/4=0.5`$。
+26. std $`=\sqrt{0.5}=0.7071`$；advantages 约 $`[-1.4142,0,0,1.4142]`$。
+27. sample variance $`2/3=0.6667`$；std $`0.8165`$；首尾 $`\mp1/0.8165=\mp1.2247`$。
 28. 都可能是定义；课程 NumPy 实现用 population std。必须与代码的分母一致。
-29. 均值 1，分子全 0；\(0/(0+10^{-4})=0\)，所以 reward advantages 全 0。若 skip group，总更新0；若不skip且保留 \(\beta>0\) KL、current又偏离reference，KL项仍可能更新。
+29. 均值 1，分子全 0；$`0/(0+10^{-4})=0`$，所以 reward advantages 全 0。若 skip group，总更新0；若不skip且保留 $`\beta>0`$ KL、current又偏离reference，KL项仍可能更新。
 30. 得 NaN；后续 loss/gradient 可被污染。
-31. \(2+1+2+1=6\) token。
-32. clip ratio=0.8；裸 \(0.7(-1.4142)=-0.9899\)；clip \(0.8(-1.4142)=-1.1314\)；min=-1.1314。
-33. clip=1.2；裸 \(1.3(1.4142)=1.8385\)；clip \(1.2(1.4142)=1.6970\)；min=1.6970。
-34. \((-1.1314-1.5556)/2=-2.687/2=-1.3435\)。
-35. \((-1.3435+0+0+1.6970)/4=0.3535/4=0.088375\)。
-36. token 和 \(-1.1314-1.5556+1.6970=-0.9900\)；除 6 得 \(-0.1650\)。
+31. $`2+1+2+1=6`$ token。
+32. clip ratio=0.8；裸 $`0.7(-1.4142)=-0.9899`$；clip $`0.8(-1.4142)=-1.1314`$；min=-1.1314。
+33. clip=1.2；裸 $`1.3(1.4142)=1.8385`$；clip $`1.2(1.4142)=1.6970`$；min=1.6970。
+34. $`(-1.1314-1.5556)/2=-2.687/2=-1.3435`$。
+35. $`(-1.3435+0+0+1.6970)/4=0.3535/4=0.088375`$。
+36. token 和 $`-1.1314-1.5556+1.6970=-0.9900`$；除 6 得 $`-0.1650`$。
 37. **否。**二者优化的加权目标不同；先每 response 平均会让短长回答各占一票。
 38. ratio=1；第一次该点不触发 clip。
 39. current 更新后与 frozen old 不同，ratio 才离 1；后续 epoch 需要 clip 限幅。
-40. \(e^{\log2}-\log2-1=2-0.6931-1=0.3069\)。
+40. $`e^{\log2}-\log2-1=2-0.6931-1=0.3069`$。
 
 ### 25.3 第 41–60 题
 
-41. \(0.3069\times0.05=0.015345\)。
-42. sum \(=0.1+0.2+0.3=0.6\)；mean \(=0.6/3=0.2\)。
-43. 裸样本 \(g=\log\pi_\theta-\log\pi_{ref}\) 可正可负；其 current-sampling 期望 KL 非负。p.14 \(\max(g,0)\) 是单边 heuristic；\(e^d-d-1,d=-g\) 逐样本非负。要使其无偏等于 \(D_{KL}(current\|reference)\)，还需 current 采样、精确 log-prob，并让 current support 覆盖 reference 全部概率质量；最好双方在共同动作集上概率都为正。否则 \(\sum\pi_\theta(\pi_{ref}/\pi_\theta)\) 未必等于 1。
-44. \(\mathbb E[b\nabla\log\pi]=b\sum\pi\nabla\log\pi=b\sum\nabla\pi=b\nabla\sum\pi=b\nabla1=0\)。条件：给定 prompt 后 \(b\) 不看当前 action。
-45. IID 中，独立表示每条 rollout 不查看其他 rollout 的结果；同分布表示都来自同一 policy 和采样配置。缩放 \((4-1)/4=3/4=0.75\)；校正 \(4/3\)。这只适用于题干固定的 mean-subtraction 分析；随机 std 依赖当前 reward，clip 改变 surrogate，KL 与长度权重也加入其他项，因此完整 GRPO 不能用一个 \(4/3\) 全部校正。
-46. \(r_i-\bar r=\frac{G-1}{G}r_i-\frac1G\sum_{j\ne i}r_j\)。
-47. baselines \([4/3,1,1,2/3]\)；advantages \([-4/3,0,0,4/3]\)。
-48. std 包含 \(r_i\)，改变当前 action 会改分母；它不是 action-independent baseline。
+41. $`0.3069\times0.05=0.015345`$。
+42. sum $`=0.1+0.2+0.3=0.6`$；mean $`=0.6/3=0.2`$。
+43. 裸样本 $`g=\log\pi_\theta-\log\pi_{ref}`$ 可正可负；其 current-sampling 期望 KL 非负。p.14 $`\max(g,0)`$ 是单边 heuristic；$`e^d-d-1,d=-g`$ 逐样本非负。要使其无偏等于 $`D_{KL}(current\|reference)`$，还需 current 采样、精确 log-prob，并让 current support 覆盖 reference 全部概率质量；最好双方在共同动作集上概率都为正。否则 $`\sum\pi_\theta(\pi_{ref}/\pi_\theta)`$ 未必等于 1。
+44. $`\mathbb E[b\nabla\log\pi]=b\sum\pi\nabla\log\pi=b\sum\nabla\pi=b\nabla\sum\pi=b\nabla1=0`$。条件：给定 prompt 后 $`b`$ 不看当前 action。
+45. IID 中，独立表示每条 rollout 不查看其他 rollout 的结果；同分布表示都来自同一 policy 和采样配置。缩放 $`(4-1)/4=3/4=0.75`$；校正 $`4/3`$。这只适用于题干固定的 mean-subtraction 分析；随机 std 依赖当前 reward，clip 改变 surrogate，KL 与长度权重也加入其他项，因此完整 GRPO 不能用一个 $`4/3`$ 全部校正。
+46. $`r_i-\bar r=\frac{G-1}{G}r_i-\frac1G\sum_{j\ne i}r_j`$。
+47. baselines $`[4/3,1,1,2/3]`$；advantages $`[-4/3,0,0,4/3]`$。
+48. std 包含 $`r_i`$，改变当前 action 会改分母；它不是 action-independent baseline。
 49. **不能。**epsilon 只防除 0，不消除随机分母对 action 的依赖。
-50. 长 2：每 token \(-1/2=-0.5\)；长 10：每 token \(-1/10=-0.1\)。
-51. 都按每 token \(-1/10\)：短回答总 \(2(-0.1)=-0.2\)；长回答总 \(10(-0.1)=-1\)。
+50. 长 2：每 token $`-1/2=-0.5`$；长 10：每 token $`-1/10=-0.1`$。
+51. 都按每 token $`-1/10`$：短回答总 $`2(-0.1)=-0.2`$；长回答总 $`10(-0.1)=-1`$。
 52. **不能。**可能是优化长度偏差、base 模式被放大或任务需要更多字；须做长度控制与消融。
 53. accuracy 检最终正确/测试；format 检标签/格式。都不自动验证全过程真实。
 54. ORM 只看末答案；例如错误等式碰巧得到正确数字仍可得 1。
 55. **不是。**R1-Zero 是纯 RL 演示；R1 有 cold-start SFT、RL、后续 SFT/RLHF。
 56. V3-Base→cold-start SFT→reasoning RL→**收集/过滤 reasoning 与 non-reasoning 数据（数据步骤）**→SFT→一般 RLHF。链有六个节点，但只有带训练更新的节点才叫训练阶段；不能为凑“五阶段”偷偷删掉数据构造。
-57. \(1+0.8=1.8\)；一致性 1 时 \(1+1=2\)。
+57. $`1+0.8=1.8`$；一致性 1 时 $`1+1=2`$。
 58. **不能。**只说明其具体模型、数据、预算和实现未达预期。
 59. 蒸馏用 teacher 生成的数据/概率训练 student；不是复制权重，也不保证继承全部能力。
-60. 全失败 \(0.9^8\approx0.4305\)；至少一次成功 \(1-0.4305=0.5695\)。
+60. 全失败 $`0.9^8\approx0.4305`$；至少一次成功 $`1-0.4305=0.5695`$。
 
 ### 25.4 第 61–80 题
 
 61. 明写“PDF/口述 best-of-8；同页报告截图十次高温采样估 pass rate”，作为口径差异保留。
-62. \(\tau\log Z=.5\log[(e^2+1)/2]\approx.7169\)。括号 \(a_1=1-.7169-.5(.2)=.1831\)，\(a_2=0-.7169-.5(-.2)=-.6169\)。本文 \(\widetilde L_{sq}\) 的分母 \(2\tau k=2\)，所以 \(\widetilde L_{sq}=(.1831^2+.6169^2)/2\approx(.0335+.3806)/2=.2071\)。来源式是 \(L_{sq}^{source}=k^{-1}\sum a_j^2\)；这里 \(2\tau=1\)，所以除以 \(2\tau\) 没改数值，这是 \(\tau=.5\) 的巧合。
-63. \(\bar r=.5\)。ascent系数 \(c_1=(1-.5)-.5(.2)=.4\)，\(c_2=(0-.5)-.5(-.2)=-.4\)；\(\widetilde L_{sq}=(.4^2+(-.4)^2)/2=.16\)。不同是因为有限 \(\tau,k\) 时 \(\bar r\) 只是 \(\tau\log Z\) 的实践近似，不是恒等式。
-64. 分母 \(300-100=200\)：100→0.5；200→\(0.5-100/200=0\)；300→\(0.5-200/200=-0.5\)。
-65. 正确拿 \([0.5,0,-0.5]\)；错误拿 \(\min(0,\lambda)=[0,0,-0.5]\)。
-66. \(\max len-\min len=0\)，直接算会除 0；Kimi 报告的 fallback 是把该组所有 length reward 设为 0。其他实现的 skip 只能另标。
+62. $`\tau\log Z=.5\log[(e^2+1)/2]\approx.7169`$。括号 $`a_1=1-.7169-.5(.2)=.1831`$，$`a_2=0-.7169-.5(-.2)=-.6169`$。本文 $`\widetilde L_{sq}`$ 的分母 $`2\tau k=2`$，所以 $`\widetilde L_{sq}=(.1831^2+.6169^2)/2\approx(.0335+.3806)/2=.2071`$。来源式是 $`L_{sq}^{source}=k^{-1}\sum a_j^2`$；这里 $`2\tau=1`$，所以除以 $`2\tau`$ 没改数值，这是 $`\tau=.5`$ 的巧合。
+63. $`\bar r=.5`$。ascent系数 $`c_1=(1-.5)-.5(.2)=.4`$，$`c_2=(0-.5)-.5(-.2)=-.4`$；$`\widetilde L_{sq}=(.4^2+(-.4)^2)/2=.16`$。不同是因为有限 $`\tau,k`$ 时 $`\bar r`$ 只是 $`\tau\log Z`$ 的实践近似，不是恒等式。
+64. 分母 $`300-100=200`$：100→0.5；200→$`0.5-100/200=0`$；300→$`0.5-200/200=-0.5`$。
+65. 正确拿 $`[0.5,0,-0.5]`$；错误拿 $`\min(0,\lambda)=[0,0,-0.5]`$。
+66. $`\max len-\min len=0`$，直接算会除 0；Kimi 报告的 fallback 是把该组所有 length reward 设为 0。其他实现的 skip 只能另标。
 67. **否。**更新后 current 漂移，rollout 变 stale；要限制复用并监控 ratio。
-68. 有用 \(=100+120+110+1000=1330\)；slots \(=4\times1000=4000\)；利用率 \(1330/4000=33.25\%\)；浪费 2670。
-69. 理想下界 \(100/20=5\) 秒；未含同步和竞争。
-70. \(3995\times8=31{,}960\) responses。
-71. \(31{,}960\times2048=65{,}454{,}080\) tokens。
+68. 有用 $`=100+120+110+1000=1330`$；slots $`=4\times1000=4000`$；利用率 $`1330/4000=33.25\%`$；浪费 2670。
+69. 理想下界 $`100/20=5`$ 秒；未含同步和竞争。
+70. $`3995\times8=31{,}960`$ responses。
+71. $`31{,}960\times2048=65{,}454{,}080`$ tokens。
 72. 不冲突：3995 是课件精确值；4000 是口头近似。计算要声明所用值。
 73. **不保证。**课件图只支持特定任务/预算；长推理可浪费或走错。
 74. 多目标梯度可能冲突；风格/安全/通用偏好优化会改变原 math/code 分布。
@@ -1770,18 +1770,18 @@ token term
 ### 27.1 关键公式/图表的原分辨率核对
 
 - p.5：确认三行逻辑是高方差 policy gradient → 当前策略附近线性化的 TRPO → ratio clipping 的 PPO。
-- p.14：确认截图代码是 clamp(logprobs-ref_logprobs,min=0) 单边 shaping；它与 p.18 的 \(e^d-d-1\) estimator 分开讲。
+- p.14：确认截图代码是 clamp(logprobs-ref_logprobs,min=0) 单边 shaping；它与 p.18 的 $`e^d-d-1`$ estimator 分开讲。
 - p.18：确认原始截图片段写的是 **response-level** (pi(o_i|q)/pi_{old}(o_i|q))，所以 §7.3 没把它伪装成 token 内层求和。
 - p.20：确认代码是 `rewards.std() + 1e-4`；NumPy 默认 `ddof=0`，对应 population std，而不是 sample std。
-- p.23：确认 GRPO 的 \(1/|o_i|\) 与 std 被红色标出；Dr.GRPO 对照删除二者，保留 token sum、outer \(1/G\) 和含自身的 reward mean。
+- p.23：确认 GRPO 的 $`1/|o_i|`$ 与 std 被红色标出；Dr.GRPO 对照删除二者，保留 token sum、outer $`1/G`$ 和含自身的 reward mean。
 - p.24：确认五幅图分别是 reward、总长度、正确长度、错误长度、平均 benchmark；图只支持该实验中的曲线，不证明长度对能力的因果。
 - p.28–35：确认 R1-Zero 与 R1 是不同 pipeline；p.33 的 1K 是独立 s1 图，不能归入 R1；p.35 写 600k reasoning/non-verifiable 与 200k non-reasoning 的课程口径。
 - p.33：确认 1K、s1/s1-32B 属于独立 s1 样本效率图，不是 DeepSeek-R1 cold-start 数量。
 - p.37–38：确认 800k traces 属于蒸馏页；PRM/MCTS 位于“unsuccessful attempts”页，不能升级为永远无用。
 - p.41：确认课程 bullet 写 best-of-8，而嵌入报告文字谈十次高温估难；§16.3 保留冲突。
 - p.42：确认 Kimi 页同时展示 KL-regularized objective、nonparametric 最优关系、平方 surrogate 和 baselined PG。
-- p.43：确认 \(\lambda\) 从 0.5 到 -0.5，正确用 \(\lambda\)，错误用 \(\min(0,\lambda)\)，等长 fallback 全设0。
-- p.44：确认 \(p_i\propto1-success\_rate\)、代码新测试、数学800k RM与84.4/98.5 spot-check。
+- p.43：确认 $`\lambda`$ 从 0.5 到 -0.5，正确用 $`\lambda`$，错误用 $`\min(0,\lambda)`$，等长 fallback 全设0。
+- p.44：确认 $`p_i\propto1-success\_rate`$、代码新测试、数学800k RM与84.4/98.5 spot-check。
 - p.45–46：确认 on-policy inference、train/rollout framework 切换、长 CoT 不均衡是三项系统障碍。
 - p.51：确认数字是 **3995 examples**；p.53 的横轴/标记是不同 thinking budgets；p.54 的表说明 general RL 后并非所有 math/STEM 都上升。
 - p.56–60：确认 600 Billion 是 repository-level tokens，800k 是构造的 agent tasks；Git 泄漏页只用作防守性 reward-audit 案例。

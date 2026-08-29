@@ -260,7 +260,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 服务器例：站点最多 2 requests/s，你发 100 requests/s。
 
-- 超出倍数：\(100/2=50\)；
+- 超出倍数：$`100/2=50`$；
 - 可能造成额外费用和服务下降；
 - “我能绕过”不是“我应绕过”。
 
@@ -350,15 +350,15 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 数字例：某作者 2000 年创作，2050 年去世。只按一般规则：
 
-\[
+```math
 2050+70=2120.
-\]
+```
 
 不是从创作年算 75 年的 2075。若是 2000 年发表的 work made for hire，候选到期年：
 
-\[
+```math
 2000+95=2095,\qquad 2000+120=2120,
-\]
+```
 
 取较早的 2095。真实期限仍需查作品类型、首次发表、作者身份和历史规则。
 
@@ -472,9 +472,9 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 - page fetch 数：实际下载了多少次页面；
 - unique document 数：处理和去重后还剩多少不同文档。
 
-例：frontier 有 100 个 URL，其中 10 个失败、20 个 URL 返回相同模板页。则成功 fetch 是 \(100-10=90\)，但 unique document 最多 \(90-20+1=71\)。为什么加 1？20 个相同副本会留下 1 个代表，不是全删掉。
+例：frontier 有 100 个 URL，其中 10 个失败、20 个 URL 返回相同模板页。则成功 fetch 是 $`100-10=90`$，但 unique document 最多 $`90-20+1=71`$。为什么加 1？20 个相同副本会留下 1 个代表，不是全删掉。
 
-视频 [33:32](https://www.youtube.com/watch?v=-qm0ln33G24&t=2012s) 提到某次 crawl 为数百 TB。**TB（terabyte）**在十进制口径是 \(10^{12}\) bytes；若论文写 TiB，则 \(1\text{ TiB}=2^{40}\) bytes。看到数字先查单位，不能把 TB 与 token 数相加。
+视频 [33:32](https://www.youtube.com/watch?v=-qm0ln33G24&t=2012s) 提到某次 crawl 为数百 TB。**TB（terabyte）**在十进制口径是 $`10^{12}`$ bytes；若论文写 TiB，则 $`1\text{ TiB}=2^{40}`$ bytes。看到数字先查单位，不能把 TB 与 token 数相加。
 
 ### 7.2 WARC、WAT、WET 分别保留什么
 
@@ -516,17 +516,17 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 若每页模板有 8 个词、正文 12 个词，抓 100 万页：模板词为
 
-\[
+```math
 8\times1{,}000{,}000=8{,}000{,}000,
-\]
+```
 
 正文词为
 
-\[
+```math
 12\times1{,}000{,}000=12{,}000{,}000.
-\]
+```
 
-不去模板时，\(8/(8+12)=40\%\) 的训练词都可能是重复导航。视频 [36:01](https://www.youtube.com/watch?v=-qm0ln33G24&t=2161s) 对比 extraction 工具；DCLM 实验也说明 extraction 选择会改变下游结果。这里的因果解释只适用于被比较的 pipeline，不是说某工具永远最好。
+不去模板时，$`8/(8+12)=40\%`$ 的训练词都可能是重复导航。视频 [36:01](https://www.youtube.com/watch?v=-qm0ln33G24&t=2161s) 对比 extraction 工具；DCLM 实验也说明 extraction 选择会改变下游结果。这里的因果解释只适用于被比较的 pipeline，不是说某工具永远最好。
 
 ### 7.4 Raw 也已经被选择过
 
@@ -595,7 +595,7 @@ GitHub 官方说明：公开仓库允许平台用户查看和 fork；若没有 l
 
 ### 8.5 Fork 去重小例
 
-原仓库有文件 A、B、C；3 个 fork 都没有改动。按仓库计共有 \(4\times3=12\) 个文件记录，但 unique content 只有 3 份。
+原仓库有文件 A、B、C；3 个 fork 都没有改动。按仓库计共有 $`4\times3=12`$ 个文件记录，但 unique content 只有 3 份。
 
 后来 fork 1 修改 C→C1：unique content 变 A、B、C、C1，共 4 份，而不是 12。若不去重，热门仓库和 fork 网络会被过度加权。
 
@@ -626,7 +626,7 @@ GitHub 官方说明：公开仓库允许平台用户查看和 fork；若没有 l
 
 【课程内容，源码 330–350；视频 [45:29](https://www.youtube.com/watch?v=-qm0ln33G24&t=2729s)】BERT 使用 English Wikipedia 与 BooksCorpus。课程强调“sequence 是连续 document 片段，而不是互不相关的句子”，因为上下文结构影响预训练任务。
 
-BooksCorpus 来自 Smashwords 上免费自出版书，论文报告约 7000 本、985M words。**M（million）**是 \(10^6\)，所以 985M words 是 \(985\times10^6=985{,}000{,}000\) words。免费价格不等于 public domain；后续下架与 ToS 争议说明必须记录取得方式和授权口径。
+BooksCorpus 来自 Smashwords 上免费自出版书，论文报告约 7000 本、985M words。**M（million）**是 $`10^6`$，所以 985M words 是 $`985\times10^6=985{,}000{,}000`$ words。免费价格不等于 public domain；后续下架与 ToS 争议说明必须记录取得方式和授权口径。
 
 视频 [46:02](https://www.youtube.com/watch?v=-qm0ln33G24&t=2762s) 的口述容易让人误听成“free 就 legally allowed”。正确拆法是：价格、访问权、copyright、license、ToS 分别判断。
 
@@ -670,9 +670,9 @@ Reddit 用户群体
 
 保留比例按 token 粗算：
 
-\[
+```math
 156\text{B}/1400\text{B}=0.1114\approx11.14\%.
-\]
+```
 
 也就是约 88.86% token 没进入结果。但这不是“删掉的都坏”：
 
@@ -686,9 +686,9 @@ Reddit 用户群体
 
 【课程内容+论文核对，源码 407–418；视频 [53:30](https://www.youtube.com/watch?v=-qm0ln33G24&t=3210s)】课程把 GPT-3 的多个来源过度压成“570GB、约400B”。按 [GPT-3 原论文 Table 2](https://arxiv.org/abs/2005.14165)，**570GB 与约 410B tokens 只对应 filtered Common Crawl**；其余 pool 还含 WebText2 约19B、Books1约12B、Books2约55B、Wikipedia约3B。合计：
 
-\[
+```math
 410+19+12+55+3=499\text{B pool tokens}.
-\]
+```
 
 GPT-3 实际训练消费 300B token positions，并按 mixture weights 重采样，并非把 499B pool 每个 token 恰好看一次。
 
@@ -717,9 +717,9 @@ Common Crawl quality classifier 的 positives 来自 WebText、Wikipedia、books
 
 【课程内容，源码 421–465；视频 [54:56](https://www.youtube.com/watch?v=-qm0ln33G24&t=3296s)】The Pile 是对 GPT-3 私有数据描述的一种开放回应：志愿者整理 22 个 domains，报告约 **825 GiB** text、约 275B tokens。GiB 是二进制单位：
 
-\[
+```math
 825\times2^{30}\text{ bytes}/10^9\approx885.84\text{ GB},
-\]
+```
 
 即约 886 个十进制 GB，不能写成 825GB。其价值不只是大，而是把 component（组成部分）明确列出，让研究者能审计和重混。
 
@@ -774,9 +774,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 若 pool 有 2.5T tokens：
 
-\[
+```math
 300\text{B}/2500\text{B}=0.12=12\%.
-\]
+```
 
 这说明：**dataset size** 是可选池规模，**training tokens** 是训练真正抽取的 token 次数，两者不是同一个数。可能重采样，也可能只采一部分。
 
@@ -800,11 +800,11 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 若从 1T 粗略缩到 627B，保留率：
 
-\[
+```math
 627/1000=0.627=62.7\%,
-\]
+```
 
-删除率约 \(37.3\%\)。但不能说 37.3% 全是重复，因为版本、过滤和单位口径也可能影响数字。
+删除率约 $`37.3\%`$。但不能说 37.3% 全是重复，因为版本、过滤和单位口径也可能影响数字。
 
 **Replication（复现）**是根据公开 recipe 独立构造近似数据；URL 的内容会变、crawl snapshot 不同、私有 books 不可得、工具版本不同，所以它通常不可能与原数据逐 byte 相同。
 
@@ -827,9 +827,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 公开比例粗算：
 
-\[
+```math
 600\text{B}/5000\text{B}=12\%.
-\]
+```
 
 标题“web data is all you need”只能读成：在论文的模型、预算、过滤和 benchmarks 下，高质量 web-only corpus 有竞争力。它不能推出 books/code/science 永远没价值。
 
@@ -841,9 +841,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 95 dumps 不等于 95 倍 unique data。若每个 dump 100 documents、相邻 dump 80% 重叠：两个 dump 的 unique 数不是 200，而是
 
-\[
+```math
 100+(100-80)=120.
-\]
+```
 
 跨 snapshot dedup 是否做、按哪一级做，会强烈影响规模与时间分布。
 
@@ -877,9 +877,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 保留率：
 
-\[
+```math
 3.8/240=0.015833\approx1.58\%.
-\]
+```
 
 也就是约 98.42% pool token 没进入 baseline。保留少不证明保留的一定无错，也不证明删除的一定没价值。
 
@@ -892,9 +892,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 总训练例数约
 
-\[
+```math
 200{,}000+200{,}000=400{,}000.
-\]
+```
 
 若二分类器输出 score 0.82，含义是“按该模型和训练集，它更像 positives”，不是“82% 事实正确”。视频 [66:28](https://www.youtube.com/watch?v=-qm0ln33G24&t=3988s) 展示 ELI5 风格，[66:59](https://www.youtube.com/watch?v=-qm0ln33G24&t=4019s) 提到线性 classifier。
 
@@ -930,13 +930,13 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 | 留下 | TP=35 | FP=15 |
 | 删除 | FN=5 | TN=45 |
 
-\[
+```math
 \text{precision}=35/(35+15)=70\%,
-\]
+```
 
-\[
+```math
 \text{recall}=35/(35+5)=87.5\%.
-\]
+```
 
 **Precision（精确率）**问“所有留下的文档里，多少真的有用”；**recall（召回率）**问“所有真的有用的文档里，多少被留下”。这里 false positive 是误留坏文档，false negative 是误删好文档。对低资源语言，少量 FN 就可能删掉很大比例的可用语料。
 
@@ -960,9 +960,9 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 若 10T token pool 留 10%：
 
-\[
+```math
 10\text{T}\times0.10=1\text{T tokens}.
-\]
+```
 
 若目标训练 6T、又不想重复 6 epochs，就需要更多可用 token，或接受重采样/合成的代价。**Epoch（轮）**是“把所定义的训练集平均看一遍”的口径；1T-token 数据抽 6T token positions，粗略就是 6 epochs，但加权 mixture 下各 component 的遍数会不同。
 
@@ -977,11 +977,11 @@ Nemotron-CC 最终 raw web input 是 **99 个 Common Crawl snapshots**，不是�
 
 然后把这些过滤/分类信号应用到 99 个 Common Crawl snapshots，并结合合成改写等步骤形成 Nemotron-CC。要分清“训练 classifier 的参考文档”和“最终被处理的 raw corpus”。
 
-例：教育分 \(e=0.8\)，DCLM 分 \(d=0.6\)。若教学规则取平均：
+例：教育分 $`e=0.8`$，DCLM 分 $`d=0.6`$。若教学规则取平均：
 
-\[
+```math
 (e+d)/2=(0.8+0.6)/2=0.7.
-\]
+```
 
 若阈值 0.65 则留；若取最小值 (min(e,d)=0.6) 则删。**组合规则本身也是 recipe**，不能只写“用了两个 classifier”。
 
@@ -1008,9 +1008,9 @@ Nemotron-CC 最终 raw web input 是 **99 个 Common Crawl snapshots**，不是�
 
 课程报告 Nemotron-CC 6.3T tokens，其中 HQ subset 1.1T。HQ 占比：
 
-\[
+```math
 1.1/6.3\approx0.1746=17.46\%.
-\]
+```
 
 视频 [69:30](https://www.youtube.com/watch?v=-qm0ln33G24&t=4170s) 对比 Llama 3 15T 和课程口述 Qwen3 36T；这些只能表示课程当时报告口径，不能当“今天最大模型必须训练多少 token”的规则。
 
@@ -1025,9 +1025,9 @@ Nemotron-CC 最终 raw web input 是 **99 个 Common Crawl snapshots**，不是�
 
 课程把数字四舍五入为“137M repositories、51B files、5B unique”；[The Stack 原论文](https://arxiv.org/abs/2211.15533)更精确的口径约为 51.76B file occurrences、5.28B unique files。按论文口径：
 
-\[
+```math
 5.28/51.76\approx0.1020=10.20\%
-\]
+```
 
 文件内容 unique；约 89.80% file occurrences 与别处重复。这里的 “unique” 受规范化/hash 定义影响，不是永恒真值。
 
@@ -1149,7 +1149,7 @@ B = "hello cat"
 
 ### 17.2 为什么重复会改变训练权重
 
-数据有 A、B、C 三篇；A 被复制 8 次。共 10 records：A 类占 \(8/10=80\%\)，B、C 各 10%。若 exact dedup 后各留一份，三者各 \(1/3=33.33\%\)。
+数据有 A、B、C 三篇；A 被复制 8 次。共 10 records：A 类占 $`8/10=80\%`$，B、C 各 10%。若 exact dedup 后各留一份，三者各 $`1/3=33.33\%`$。
 
 去重不是只省磁盘；它改变 sampling probability。反过来，同一个定义或版权声明的合理重复也可能被删，需按用途选择粒度。
 
@@ -1157,19 +1157,19 @@ B = "hello cat"
 
 把 document 切成 shingles（连续 token 片段）。为方便手算，用 token set：
 
-\[
+```math
 A=\{\text{cat,sits,on,mat}\},
-\]
+```
 
-\[
+```math
 B=\{\text{cat,sits,near,mat}\}.
-\]
+```
 
 交集有 cat、sits、mat，共 3；并集有 cat、sits、on、near、mat，共 5。**Jaccard similarity（杰卡德相似度）**：
 
-\[
+```math
 J(A,B)=\frac{|A\cap B|}{|A\cup B|}=\frac35=0.6.
-\]
+```
 
 阈值 0.8 时不算 near duplicate；阈值 0.5 时算。阈值是 precision/recall tradeoff，不是数学给出的唯一答案。
 
@@ -1177,13 +1177,13 @@ J(A,B)=\frac{|A\cap B|}{|A\cup B|}=\frac35=0.6.
 
 **Hash（哈希）**是把输入按稳定规则映射到一个数字或桶位置的函数：同一输入、同一算法与 seed 应得到同一输出；不同输入仍可能得到同一输出，这叫 **collision（碰撞）**。它是短指纹/索引，不是“唯一身份证”。
 
-直接比较 10 亿文档两两 Jaccard 需要约 \(10^{18}\) 对，做不起。**MinHash** 用多个随机 hash 排序，每个排序只保存集合中最小 hash 的元素，形成短 signature（签名）。两个集合的 signature 相等比例估计 Jaccard。
+直接比较 10 亿文档两两 Jaccard 需要约 $`10^{18}`$ 对，做不起。**MinHash** 用多个随机 hash 排序，每个排序只保存集合中最小 hash 的元素，形成短 signature（签名）。两个集合的 signature 相等比例估计 Jaccard。
 
 极小例，集合：
 
-\[
+```math
 A=\{a,b,c\},\qquad B=\{b,c,d\}.
-\]
+```
 
 两个假想 hash 排序：
 
@@ -1192,7 +1192,7 @@ A=\{a,b,c\},\qquad B=\{b,c,d\}.
 | h1 | a,b,c,d | a | b | 否 |
 | h2 | c,d,b,a | c | c | 是 |
 
-2 个位置中 1 个相同，估计 Jaccard 为 \(1/2=0.5\)。真实 Jaccard 是交集 \(\{b,c\}\) 两个、并集四个，也是 \(2/4=0.5\)；这里只是碰巧精确。signature 越短，随机误差越大。
+2 个位置中 1 个相同，估计 Jaccard 为 $`1/2=0.5`$。真实 Jaccard 是交集 $`\{b,c\}`$ 两个、并集四个，也是 $`2/4=0.5`$；这里只是碰巧精确。signature 越短，随机误差越大。
 
 **LSH（Locality-Sensitive Hashing，局部敏感哈希）**把相似 signatures 更可能放进同一候选桶，减少需要精确比较的 pairs。它可能漏掉 near duplicate，也可能产生候选误报。
 
@@ -1266,13 +1266,13 @@ C 其实没加入，这是 **false positive（假阳性）**。标准 Bloom filt
 
 一个 English classifier 对标准美式英语 recall 98%，对某方言 recall 70%。两组各有 1000 篇好文：
 
-\[
+```math
 \text{标准英语保留}=1000\times0.98=980,
-\]
+```
 
-\[
+```math
 \text{方言保留}=1000\times0.70=700.
-\]
+```
 
 即使原数据同量，过滤后变成 980:700，方言少 280 篇。分类器不是只提高“质量”，还重写 population distribution。
 
@@ -1542,50 +1542,50 @@ Manifest 不是为了“填表好看”。当作者要求撤回 `source=a` 时�
 
 ### 23.1 大小单位
 
-- \(1\text{ KB}=1000\) bytes，\(1\text{ MB}=10^6\) bytes，\(1\text{ GB}=10^9\) bytes，\(1\text{ TB}=10^{12}\) bytes。
-- \(1\text{ KiB}=1024\) bytes，\(1\text{ MiB}=2^{20}\) bytes，\(1\text{ GiB}=2^{30}\) bytes，\(1\text{ TiB}=2^{40}\) bytes。
-- B 可能表示 billion（\(10^9\)）或 byte 的符号 B；由上下文判断。`156B tokens` 是 156 billion tokens，`156 GB` 是 bytes。
+- $`1\text{ KB}=1000`$ bytes，$`1\text{ MB}=10^6`$ bytes，$`1\text{ GB}=10^9`$ bytes，$`1\text{ TB}=10^{12}`$ bytes。
+- $`1\text{ KiB}=1024`$ bytes，$`1\text{ MiB}=2^{20}`$ bytes，$`1\text{ GiB}=2^{30}`$ bytes，$`1\text{ TiB}=2^{40}`$ bytes。
+- B 可能表示 billion（$`10^9`$）或 byte 的符号 B；由上下文判断。`156B tokens` 是 156 billion tokens，`156 GB` 是 bytes。
 - document、word、character、token、byte 是五种单位，不能直接加减。
 
 例：3GB 十进制 bytes：
 
-\[
+```math
 3\times10^9=3{,}000{,}000{,}000\text{ bytes}.
-\]
+```
 
 若粗假设平均 4 bytes/token，才可估：
 
-\[
+```math
 3{,}000{,}000{,}000/4=750{,}000{,}000\text{ tokens}.
-\]
+```
 
 这只是特定编码/文本的估计。
 
 ### 23.2 保留率、删除率
 
-\[
+```math
 \text{keep rate}=\frac{\text{kept}}{\text{input}},\qquad
 \text{remove rate}=1-\text{keep rate}.
-\]
+```
 
-240T→3.8T：keep \(=3.8/240=1.583\%\)，remove \(=98.417\%\)。
+240T→3.8T：keep $`=3.8/240=1.583\%`$，remove $`=98.417\%`$。
 
 ### 23.3 Jaccard
 
-\[
+```math
 J(A,B)=\frac{|A\cap B|}{|A\cup B|}.
-\]
+```
 
-交集 6、并集 10，\(J=6/10=0.6\)。分母不是 \(|A|+|B|\)，因为交集会被重复算。
+交集 6、并集 10，$`J=6/10=0.6`$。分母不是 $`|A|+|B|`$，因为交集会被重复算。
 
 ### 23.4 Classification metrics
 
-\[
+```math
 \text{precision}=\frac{TP}{TP+FP},\qquad
 \text{recall}=\frac{TP}{TP+FN}.
-\]
+```
 
-若 TP=30、FP=10、FN=20：precision \(=30/40=75\%\)，recall \(=30/50=60\%\)。
+若 TP=30、FP=10、FN=20：precision $`=30/40=75\%`$，recall $`=30/50=60\%`$。
 
 ### 23.5 Mixture 与 epoch
 
@@ -1593,11 +1593,11 @@ J(A,B)=\frac{|A\cap B|}{|A\cup B|}.
 
 component (i) 的期望 token 数：
 
-\[
+```math
 T_i=w_iT,
-\]
+```
 
-其中 \(w_i\) 是 mixture probability，总和为 1；\(T\) 是总训练 tokens。若 \(T=1\text{T}\)、books 权重 0.2，则期望 books tokens \(=0.2\text{T}=200\text{B}\)。
+其中 $`w_i`$ 是 mixture probability，总和为 1；$`T`$ 是总训练 tokens。若 $`T=1\text{T}`$、books 权重 0.2，则期望 books tokens $`=0.2\text{T}=200\text{B}`$。
 
 视频 [79:59](https://www.youtube.com/watch?v=-qm0ln33G24&t=4799s) 回到 live services→raw→processed 链；[80:31](https://www.youtube.com/watch?v=-qm0ln33G24&t=4831s) 提问怎样从巨大 pool 选训练 tokens；[81:00](https://www.youtube.com/watch?v=-qm0ln33G24&t=4860s) 强调选择会显著改变结果；[81:30](https://www.youtube.com/watch?v=-qm0ln33G24&t=4890s) 预告下一讲会进一步讨论 classifier/rules/filtering。[81:52](https://www.youtube.com/watch?v=-qm0ln33G24&t=4912s) 是人工字幕最后 cue。
 
@@ -1644,7 +1644,7 @@ T_i=w_iT,
 34. 【分类】在同一 quality task 中，有用的 API reference 被 classifier 删除，是 TP/FP/FN/TN 哪格？
 35. 【设计】怎样检测 DCLM-like classifier 是否伤害低资源语言？
 36. 【手算】10T pool 留 10%，剩多少 tokens？
-37. 【手算】ensemble 分数 \(e=0.8,d=0.6\)，简单平均是多少？阈值 0.65 留不留？
+37. 【手算】ensemble 分数 $`e=0.8,d=0.6`$，简单平均是多少？阈值 0.65 留不留？
 38. 【判断解释】synthetic rephrasing 增加了哪四项 provenance？
 39. 【手算】Nemotron-CC 6.3T 中 HQ 1.1T，占比多少？
 40. 【手算】The Stack 原论文约 51.76B file occurrences、5.28B unique，unique 比例多少？
@@ -1698,47 +1698,47 @@ T_i=w_iT,
 
 1. source 是 Wikipedia live/dump 的上游来源；raw copy 是某日期下载的 XML/WARC；processed dataset 是抽正文、按语言过滤、去重并版本化后的 records。三者不能同名混用。
 2. 只证明技术 access。ToS 是否允许、作品 license/copyright、privacy/consent 都没有由“能打开”推出。
-3. 成功页 \(=100-10=90\)。20 个相同副本只留 1 个，少 \(20-1=19\) 个，所以 \(90-19=71\) unique documents。
-4. \(3.5\times10^{12}=3{,}500{,}000{,}000{,}000\) bytes。题目写 TB，不用 \(2^{40}\)。
+3. 成功页 $`=100-10=90`$。20 个相同副本只留 1 个，少 $`20-1=19`$ 个，所以 $`90-19=71`$ unique documents。
+4. $`3.5\times10^{12}=3{,}500{,}000{,}000{,}000`$ bytes。题目写 TB，不用 $`2^{40}`$。
 5. WARC→原始 crawl/HTTP response；WAT→从 WARC 算的 metadata/links；WET→抽取 plaintext。WET 最小但最有损。
-6. 模板 \(=8\times1{,}000{,}000=8{,}000{,}000\) words。总 words \(=(8+12)\times1{,}000{,}000=20{,}000{,}000\)。占比 \(8/20=40\%\)。
+6. 模板 $`=8\times1{,}000{,}000=8{,}000{,}000`$ words。总 words $`=(8+12)\times1{,}000{,}000=20{,}000{,}000`$。占比 $`8/20=40\%`$。
 7. WET 已丢 HTML tags、layout、图片、脚本和部分结构；多个 HTML 页面可抽成同一文字，逆映射不是唯一。
 8. Dump 降低服务器负担、版本更清楚、少 UI 噪声、易校验。它没自动解决 member license、copyright、PII、偏差和质量。
 9. 任三项：保存 revision/time/hash；与前后 dumps 比异常；抽查临近 cutoff 的大改；高风险事实核来源；隔离异常账号/批量修改。不能写攻击步骤。
-10. 原 repo 加 3 forks 共 \(4\times3=12\) occurrences；因 forks 未改，unique content 仍 3。
+10. 原 repo 加 3 forks 共 $`4\times3=12`$ occurrences；因 forks 未改，unique content 仍 3。
 11. 默认 copyright。Public 只让人查看/fork 的平台使用口径，不等于一个 permissive open-source license。
 12. Metadata 是题名/作者/摘要等；PDF 是渲染版；LaTeX source 是结构化源文件/宏/引用。对象和许可可不同。
 13. 不能。价格为 0 只说明不收费，不说明 copyright、license、ToS 或再利用授权。
 14. 第一层：哪些 Reddit 用户发哪些 links；第二层：哪些用户给 karma。还叠加网站可下载/可解析偏差。
-15. \(1.4\text{T}=1400\text{B}\)。keep \(=156/1400=0.11143=11.14\%\)；remove \(=100-11.14=88.86\%\)。
+15. $`1.4\text{T}=1400\text{B}`$。keep $`=156/1400=0.11143=11.14\%`$；remove $`=100-11.14=88.86\%`$。
 16. FN：它实际有用（positive），规则却预测删除（predicted negative）。
-17. web \(=1000\times0.6=600\)；books \(=1000\times0.4=400\) tokens。
+17. web $`=1000\times0.6=600`$；books $`=1000\times0.4=400`$ tokens。
 18. 0.82 是在特定 positives/negatives、features 和校准下的模型 score，通常只表示更像正样本；事实正确未被逐条标成目标。
-19. 四域等 bytes：每域 \(100/(4\times100)=25\%\)。若按 tokens/records 加权，比例可能变。
+19. 四域等 bytes：每域 $`100/(4\times100)=25\%`$。若按 tokens/records 加权，比例可能变。
 20. Lineage/provenance。要沿 Books3→Pile→下游追上游来源；换一个 bundle 名不会切断风险。
 
 ### 25.2 第 21–40 题
 
 21. 它改变模型看到的 answer 顺序、正负例权重和对话因果；高票答案更靠前。必须记录是按时间、score 还是 accepted flag 排。
-22. \(300\text{B}/2500\text{B}=0.12=12\%\)。
+22. $`300\text{B}/2500\text{B}=0.12=12\%`$。
 23. 10.5TB 是 corpus bytes；300B 是训练 token positions。编码单位不同，且训练只抽一部分/可重采样，不能说“完整一遍”。
 24. 示例：web→CCNet Common Crawl+reference filtering；code→GitHub+permissive/manual filter；paper→arXiv+去 comment/展开 macro；Q&A→Stack Exchange+按 score 排 answers。
-25. \(627/1000=62.7\%\) keep；remove \(=37.3\%\)。不能把全部删除都归因 near duplicates，除非口径完全一致。
+25. $`627/1000=62.7\%`$ keep；remove $`=37.3\%`$。不能把全部删除都归因 near duplicates，除非口径完全一致。
 26. URL 内容和 crawl 时间变；私有 component 不可得；工具/阈值版本不同；随机 dedup/过滤和下载失败不同。
-27. \(600/5000=0.12=12\%\)。
+27. $`600/5000=0.12=12\%`$。
 28. 它是特定论文在特定模型、预算、过滤和 benchmarks 下的经验结果；不覆盖所有任务、语言、法域与 future models。
-29. 第一 crawl 100；第二新增 \(100-80=20\)；总 \(100+20=120\) unique。
+29. 第一 crawl 100；第二新增 $`100-80=20`$；总 $`100+20=120`$ unique。
 30. 不能。ODC-By 可能只覆盖 collection arrangement；member unknown 需单独核权或隔离。
-31. keep \(=3.8/240=0.015833=1.58\%\)；remove \(=98.42\%\)。
-32. 总 examples \(=200K+200K=400K\)。正类比例 \(200/400=50\%\)。
-33. precision \(=35/(35+15)=35/50=70\%\)，问“留下的里面多少真有用”；recall \(=35/(35+5)=35/40=87.5\%\)，问“全部真有用的里面留下多少”。
+31. keep $`=3.8/240=0.015833=1.58\%`$；remove $`=98.42\%`$。
+32. 总 examples $`=200K+200K=400K`$。正类比例 $`200/400=50\%`$。
+33. precision $`=35/(35+15)=35/50=70\%`$，问“留下的里面多少真有用”；recall $`=35/(35+5)=35/40=87.5\%`$，问“全部真有用的里面留下多少”。
 34. FN：实际 useful（positive），却被分类器判为删除（predicted negative）。
 35. 分语言建立人工标注 audit set；分别算 precision/recall；固定阈值比较保留率；检查方言/短文/混合语言；对错误样本人工归因；做阈值和下游 ablation。
-36. \(10\text{T}\times0.10=1\text{T}\) tokens。
-37. \((0.8+0.6)/2=0.7\)。\(0.7\ge0.65\)，按此规则留下。
+36. $`10\text{T}\times0.10=1\text{T}`$ tokens。
+37. $`(0.8+0.6)/2=0.7`$。$`0.7\ge0.65`$，按此规则留下。
 38. 至少：teacher model/version、input source、prompt/template、sampling 参数；还应记过滤、生成日期、输出 terms/license。
-39. \(1.1/6.3=0.174603\approx17.46\%\)。
-40. \(5.28/51.76\approx0.1020=10.20\%\)。其余约 \(100\%-10.20\%=89.80\%\) occurrences 不一定全是同一种重复，但数字显示复制规模大。
+39. $`1.1/6.3=0.174603\approx17.46\%`$。
+40. $`5.28/51.76\approx0.1020=10.20\%`$。其余约 $`100\%-10.20\%=89.80\%`$ occurrences 不一定全是同一种重复，但数字显示复制规模大。
 
 ### 25.3 第 41–60 题
 
@@ -1749,26 +1749,26 @@ T_i=w_iT,
 45. Collection license 可覆盖 selection/arrangement；member work 的 copyright/license 属于原作者。两层权利主体和条件不同。
 46. 不应写“无来源”。应记录 teacher、prompt、input documents 和生成设置；不透明也要作为 known gap 明写。
 47. 大小写、空格、标点、HTML 去除会改变 equality。同两 bytes 可不同规范化；不同 bytes 也可被规范化成同文。
-48. 去重前 A \(=8/10=80\%\)。去重后 A/B/C 各一份，A \(=1/3=33.33\%\)。
-49. 交集 3，包含 cat/sits/mat；并集 5，包含 cat/sits/on/near/mat；\(J=3/5=0.6\)。
-50. \(6/8=0.75\)。这是估计，不是精确计算集合交并。
+48. 去重前 A $`=8/10=80\%`$。去重后 A/B/C 各一份，A $`=1/3=33.33\%`$。
+49. 交集 3，包含 cat/sits/mat；并集 5，包含 cat/sits/on/near/mat；$`J=3/5=0.6`$。
+50. $`6/8=0.75`$。这是估计，不是精确计算集合交并。
 51. 只抽有限随机 hash/signature；不同随机排序会有抽样波动。signature 越长通常方差越小。
 52. Bloom false positive。去重系统会把一个真正新文档误判“见过”，从而误删。
-53. 通常更少。要求 \(J\ge0.9\) 比 \(J\ge0.7\) 更严格，只有更相似的 pair 才判重。
+53. 通常更少。要求 $`J\ge0.9`$ 比 $`J\ge0.7`$ 更严格，只有更相似的 pair 才判重。
 54. 任六项：normalization、unit(document/paragraph)、shingle size、hash/signature length、LSH 参数、similarity threshold、跨 dump/split 范围、代表保留规则、抽样误差审计。
 55. 不能。姓名+ticket 可能组合识别个人；还需上下文和其他 metadata 检查。
-56. 第一语言留下 \(1000\times0.98=980\)，FN为 \(1000-980=20\)；第二留下 \(1000\times0.70=700\)，FN为 \(1000-700=300\)；留下量相差 \(980-700=280\) 篇。
+56. 第一语言留下 $`1000\times0.98=980`$，FN为 $`1000-980=20`$；第二留下 $`1000\times0.70=700`$，FN为 $`1000-700=300`$；留下量相差 $`980-700=280`$ 篇。
 57. 词表只匹配表面词形，不理解引用、否定、研究/防御语境和群体自称，因此会把实际无毒且有用的文本删除。先固定 label contract：①在 quality task 中，该文本实际有用（actual positive），却被判为删除（predicted negative），所以是 **FN**；②在 toxicity-removal task 中，该文本实际无毒（actual negative），却被判为删除（predicted positive），所以是 **FP**。物理错误相同，但正类定义不同，四格名称就不同；不能裸写“误删产生 FN”。
 58. 任四项：保存 snapshot/hash；前后版本差异；异常来源/速率聚类；高风险多源核对；quarantine；小模型 ablation；撤回与 incident response。
 59. 不同时绿。CC-BY 可能解决一部分 copyright permission 并要求署名；手机号仍有 privacy/consent 风险。
-60. \(3\times10^9/4=0.75\times10^9=750{,}000{,}000\) tokens。不同语言、UTF-8、标点和 tokenizer 的 bytes/token 不同，所以只是估算。
+60. $`3\times10^9/4=0.75\times10^9=750{,}000{,}000`$ tokens。不同语言、UTF-8、标点和 tokenizer 的 bytes/token 不同，所以只是估算。
 
 ### 25.4 第 61–80 题
 
-61. keep \(=3.8/240=1.5833\%\)。remove \(=100-1.5833=98.4167\%\approx98.42\%\)。
-62. precision \(=30/(30+10)=75\%\)，问“所有被删文本中多少真含PII”；recall \(=30/(30+20)=60\%\)，问“所有含PII文本中删除多少”。FN 是含 PII 却被保留，构成隐私泄漏风险。
-63. \(300\text{B}/100\text{B}=3\) epochs 的粗口径。weighted sampling 时各 component 的实际遍数不同。
-64. \(1\text{T}\times0.2=0.2\text{T}=200\text{B}\) tokens。
+61. keep $`=3.8/240=1.5833\%`$。remove $`=100-1.5833=98.4167\%\approx98.42\%`$。
+62. precision $`=30/(30+10)=75\%`$，问“所有被删文本中多少真含PII”；recall $`=30/(30+20)=60\%`$，问“所有含PII文本中删除多少”。FN 是含 PII 却被保留，构成隐私泄漏风险。
+63. $`300\text{B}/100\text{B}=3`$ epochs 的粗口径。weighted sampling 时各 component 的实际遍数不同。
+64. $`1\text{T}\times0.2=0.2\text{T}=200\text{B}`$ tokens。
 65. 不应继续 bulk download。Robots 只是一个信号；明确 ToS 红灯需停止或取得授权/法律审查，不能用技术可访问覆盖合同层。
 66. 不自动。原著与译文是不同表达；现代译者可能对译文有新 copyright。应核具体 edition、法域和许可。
 67. 它只在特定 parties、claims、evidence 和 record 上裁判；不同 acquisition、作品、输出和市场证据可能改变结果。

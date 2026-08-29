@@ -97,33 +97,23 @@ grid 分成 blocks/CTAs，block 分成 threads
 
 1. 128 threads/block、160 registers/thread：
 
-   $$
-   128\times160=20,480\ \text{registers/block}.
-   $$
+   $`128\times160=20,480\ \text{registers/block}.`$
 
 2. 一个 SM 有 65,536 registers：
 
-   $$
-   \left\lfloor\frac{65,536}{20,480}\right\rfloor=3\ \text{blocks}.
-   $$
+   $`\left\lfloor\frac{65,536}{20,480}\right\rfloor=3\ \text{blocks}.`$
 
-3. 每 block 有 $128/32=4$ warps，所以 resident warps 为：
+3. 每 block 有 $`128/32=4`$ warps，所以 resident warps 为：
 
-   $$
-   3\times4=12.
-   $$
+   $`3\times4=12.`$
 
 4. 硬件最多 64 resident warps：
 
-   $$
-   \text{warp occupancy}=\frac{12}{64}=0.1875=18.75\%.
-   $$
+   $`\text{warp occupancy}=\frac{12}{64}=0.1875=18.75\%.`$
 
 5. 32 个 thread 各连续读一个 FP32（32-bit floating point，32 位浮点数）：
 
-   $$
-   32\ \text{threads}\times4\ \text{bytes/thread}=128\ \text{bytes},
-   $$
+   $`32\ \text{threads}\times4\ \text{bytes/thread}=128\ \text{bytes},`$
 
    理想化情况下正好装进一个 128-byte HBM transaction。
 
@@ -219,11 +209,9 @@ thread 7 处理第 7 项：80→81
 - `TB/s` 是 terabytes per second（每秒万亿字节量级），表示带宽，不是容量；
 - 65,536 个 32-bit register 的字节数是：
 
-  $$
-  65,536\times4=262,144\ \text{bytes}=256\ \text{KiB}.
-  $$
+  $`65,536\times4=262,144\ \text{bytes}=256\ \text{KiB}.`$
 
-  这里 $1\ \text{KiB}=1,024$ bytes。它解释了源码 occupancy 例的 65,536 registers 与表中“256 KB”为什么能对上。
+  这里 $`1\ \text{KiB}=1,024`$ bytes。它解释了源码 occupancy 例的 65,536 registers 与表中“256 KB”为什么能对上。
 
 这些数依赖具体 SKU、配置和测量方法。一般规律是“越靠近计算单元，容量通常越小、访问越快”，而不是必须背某个型号的 TB/s。老师在 [02:32](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=152s) 按带宽从 registers 讲到 HBM，并在 [02:59](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=179s) 总结“大而远较慢，小而近较快”。
 
@@ -231,17 +219,17 @@ thread 7 处理第 7 项：80→81
 
 **Arithmetic intensity（算术强度）**回答：“每从指定存储层搬 1 byte，做多少次浮点运算？”
 
-$$
+```math
 I=\frac{F}{Q}.
-$$
+```
 
 符号与单位：
 
-- $I$：arithmetic intensity，单位 FLOPs/byte；
-- $F$：这段工作完成的 **FLOPs（floating-point operations，浮点运算次数）**；
-- $Q$：针对某个明确存储边界的数据流量，单位 bytes。
+- $`I`$：arithmetic intensity，单位 FLOPs/byte；
+- $`F`$：这段工作完成的 **FLOPs（floating-point operations，浮点运算次数）**；
+- $`Q`$：针对某个明确存储边界的数据流量，单位 bytes。
 
-必须说清 $Q$ 是 HBM↔chip、shared↔register，还是别的层。只写“搬了多少”而不说层级，公式不完整。
+必须说清 $`Q`$ 是 HBM↔chip、shared↔register，还是别的层。只写“搬了多少”而不说层级，公式不完整。
 
 **【补充例子】**32 个 FP32 数，每个做一次乘法和一次加法，再写回。每元素：
 
@@ -251,25 +239,25 @@ $$
 
 32 个元素：
 
-$$
+```math
 F=32\times2=64\ \text{FLOPs},
-$$
+```
 
-$$
+```math
 Q_{HBM}=32\times(4+4)=256\ \text{bytes}.
-$$
+```
 
 所以：
 
-$$
+```math
 I_{HBM}=\frac{64}{256}=0.25\ \text{FLOPs/byte}.
-$$
+```
 
 若把两个逐元素操作拆成两个 kernels，中间结果还要写回并重读 HBM：每元素流量可能从 8 bytes 增到 16 bytes，工作仍为 2 FLOPs：
 
-$$
+```math
 I_{HBM}=\frac{2}{16}=0.125\ \text{FLOPs/byte}.
-$$
+```
 
 Fusion（融合）把两步留在一个 kernel 内，有机会消掉中间 HBM 往返，把强度从 0.125 提回 0.25。后续 GeLU 会把这个直觉落到真实代码。
 
@@ -341,17 +329,17 @@ Grid
              global item 24 25 26 27 28 29 30 31
 ```
 
-若每 block 有 $B_t=8$ threads，block ID 为 $b$，block 内 thread ID 为 $r$，常见的一维全局索引是：
+若每 block 有 $`B_t=8`$ threads，block ID 为 $`b`$，block 内 thread ID 为 $`r`$，常见的一维全局索引是：
 
-$$
+```math
 i=bB_t+r.
-$$
+```
 
 逐个代数：
 
-- block 0、thread 5：$i=0\times8+5=5$；
-- block 1、thread 5：$i=1\times8+5=13$；
-- block 3、thread 7：$i=3\times8+7=31$。
+- block 0、thread 5：$`i=0\times8+5=5`$；
+- block 1、thread 5：$`i=1\times8+5=13`$；
+- block 3、thread 7：$`i=3\times8+7=31`$。
 
 这个 8-thread block 只是为了把全部 ID 写完；真实 NVIDIA GPU 常把 block thread 数设成 32 的倍数，否则最后一个 warp 会有许多 inactive lanes（不工作的通道）。
 
@@ -388,7 +376,7 @@ thread B 从 HBM 读部分结果 → 继续计算 → 再写 HBM
 
 - 正确：一个普通 block 执行时驻留在一个 SM 上；
 - 正确：一个 SM 在资源允许时可同时驻留多个 blocks；
-- 错误：grid 中第 $b$ 个 block 永远固定属于第 $b$ 个 SM。
+- 错误：grid 中第 $`b`$ 个 block 永远固定属于第 $`b`$ 个 SM。
 
 视频课堂问答 [20:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1219s) 讨论能否让 blocks 分享 SM。**Tensor Core（张量核心）**是 NVIDIA GPU 中专门加速小矩阵乘加的计算单元。答案的关键不是“一律不行”，而是资源：若一个 block 已吃满 Tensor Cores/registers/shared memory，再放一个也不会加速；若资源允许，硬件本来就可以让多个 blocks resident。
 
@@ -425,9 +413,9 @@ threads 96–127 → warp 3
 
 因此：
 
-$$
+```math
 \text{warps/block}=\frac{\text{threads/block}}{32}
-$$
+```
 
 只在 threads/block 是 32 的倍数时为整数。64 threads 是 2 warps；128 threads 是 4 warps。课程在 [09:09](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=549s) 定义 warp，并在 [09:31](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=571s) 说明 lockstep。
 
@@ -453,23 +441,23 @@ else:
 
 若 A/B 各只有一条等成本指令，总 lane-slots 容量是：
 
-$$
+```math
 2\ \text{slots}\times32\ \text{lanes}=64.
-$$
+```
 
 真正 active 的 lane-slots：
 
-$$
+```math
 8\times1+24\times1=32.
-$$
+```
 
 这个极简分支的平均 lane 利用率：
 
-$$
+```math
 \frac{32}{64}=0.5=50\%.
-$$
+```
 
-没有 divergence 且全部 lanes 走同一条 1-instruction 路径时，只需 1 个 issue slot，利用率为 $32/32=100\%$。所以 divergence 的损失不是“答案错了”，而是同一个 warp 的不同路径要分别执行。
+没有 divergence 且全部 lanes 走同一条 1-instruction 路径时，只需 1 个 issue slot，利用率为 $`32/32=100\%`$。所以 divergence 的损失不是“答案错了”，而是同一个 warp 的不同路径要分别执行。
 
 ### 3.3 分支长度不同时怎样算
 
@@ -482,21 +470,21 @@ slots 4–8：执行 B1...B5；每个 slot 有 24 lanes active
 
 总 capacity：
 
-$$
+```math
 32\times(3+5)=256\ \text{lane-slots}.
-$$
+```
 
 有效 active lane-slots：
 
-$$
+```math
 8\times3+24\times5=24+120=144.
-$$
+```
 
 平均利用率：
 
-$$
+```math
 \frac{144}{256}=0.5625=56.25\%.
-$$
+```
 
 不能只看“8 对 24”就断言永远 50%；还要看每条 branch path 有多少实际指令。这里的“slot”是帮助计数的简化，不表示每条真实 GPU 指令都恰好只需一个物理 clock cycle。
 
@@ -535,11 +523,11 @@ later：warp A 的数据到达 → 再调度 A
 
 **Occupancy（占用率）**这个词必须带限定。本节首先说 **warp occupancy**：
 
-$$
+```math
 \text{warp occupancy}
 =\frac{\text{resident warps per SM}}
 {\text{hardware maximum resident warps per SM}}.
-$$
+```
 
 `resident` 是“资源已经分配、可被调度”，不等于每个时刻都正在发指令。Occupancy 也不是 FLOP/s，不直接等于利用率或速度。
 
@@ -576,70 +564,70 @@ warp size              = 32 threads/warp
 
 第一步，一个 block 要多少 registers：
 
-$$
+```math
 R_{block}
 =128\ \text{threads/block}
 \times160\ \text{registers/thread}
 =20,480\ \text{registers/block}.
-$$
+```
 
 单位中的 `threads` 相消，留下 registers/block。
 
 第二步，register 容量最多放几个完整 blocks：
 
-$$
+```math
 B_{resident}
 =\left\lfloor\frac{65,536}{20,480}\right\rfloor.
-$$
+```
 
 逐个试：
 
-$$
+```math
 20,480\times3=61,440\le65,536,
-$$
+```
 
-$$
+```math
 20,480\times4=81,920>65,536.
-$$
+```
 
 所以：
 
-$$
+```math
 B_{resident}=3\ \text{blocks/SM}.
-$$
+```
 
 此时剩余 registers：
 
-$$
+```math
 65,536-61,440=4,096,
-$$
+```
 
 不够再放需要 20,480 registers 的第 4 个 block。
 
 第三步，一个 128-thread block 有多少 warps：
 
-$$
+```math
 \frac{128\ \text{threads/block}}
 {32\ \text{threads/warp}}
 =4\ \text{warps/block}.
-$$
+```
 
 第四步，3 blocks 有多少 resident warps：
 
-$$
+```math
 3\ \text{blocks/SM}\times4\ \text{warps/block}
 =12\ \text{warps/SM}.
-$$
+```
 
 第五步，除以硬件最大 64 warps/SM：
 
-$$
+```math
 \text{occupancy}
 =\frac{12}{64}
 =\frac{3}{16}
 =0.1875
 =18.75\%.
-$$
+```
 
 视频在 [13:20](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=800s) 逐步口算 registers/block、3 blocks、12 warps，并口头约成 18%；精确值是 18.75%。
 
@@ -647,23 +635,23 @@ $$
 
 **【补充检查】**错误地取 64 threads/block：
 
-$$
+```math
 64\times160=10,240\ \text{registers/block},
-$$
+```
 
-$$
+```math
 \left\lfloor\frac{65,536}{10,240}\right\rfloor=6\ \text{blocks},
-$$
+```
 
-$$
+```math
 64/32=2\ \text{warps/block},
-$$
+```
 
-$$
+```math
 6\times2=12\ \text{warps},
 \qquad
 12/64=18.75\%.
-$$
+```
 
 这个例子碰巧仍得到 12 warps，所以只看最终百分比发现不了前置不一致；但 resident blocks 是 6 而不是 3，后续 block 上限、shared-memory 用量和同步行为都可能不同。正确推导必须跟实际变量。
 
@@ -689,7 +677,7 @@ occupancy 是否足以隐藏 latency？
 
 | 名称 | 问题 | 典型公式/数字 |
 |---|---|---|
-| warp occupancy | 单个 SM resident 了多少 warps？ | 本例 $12/64=18.75\%$ |
+| warp occupancy | 单个 SM resident 了多少 warps？ | 本例 $`12/64=18.75\%`$ |
 | block residency | 单个 SM 同时能容纳多少 blocks？ | 本例受 registers 限制为 3 |
 | wave utilization / wave quantization | 整个 grid 的最后一波是否填满所有 SM slots？ | 160 blocks 对 148 SMs 的尾波 |
 
@@ -701,37 +689,37 @@ occupancy 是否足以隐藏 latency？
 
 第一波：
 
-$$
+```math
 \min(160,148)=148\ \text{blocks}.
-$$
+```
 
 剩余：
 
-$$
+```math
 160-148=12\ \text{blocks}.
-$$
+```
 
 第二波只用 12 个 SM slots，尾波瞬时 slot utilization：
 
-$$
+```math
 \frac{12}{148}
 \approx0.081081
 =8.11\%.
-$$
+```
 
 若所有 blocks 耗时完全相同，两波共提供的 slots 为：
 
-$$
+```math
 2\times148=296\ \text{block-slots}.
-$$
+```
 
 真正使用 160 个，跨两波的平均 slot utilization：
 
-$$
+```math
 \frac{160}{296}
 \approx0.54054
 =54.05\%.
-$$
+```
 
 这不是说整个 GPU 一定只有 54.05% compute utilization：真实 SM 可同时 resident 多个 blocks，blocks 时长不必相同，还有 memory/tensor-core 限制。本例只隔离“尾波”这一种损失。
 
@@ -754,20 +742,20 @@ HBM coalescing：发生在 warp 向 global/HBM 地址发起 load/store
 
 **【课程代码｜行 114–125｜视频 [14:24](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=864s)】**教学模型中 shared memory 有 32 个 banks，每个 bank 每个 clock 可服务一个 32-bit（4-byte）word。地址按连续 4-byte word 轮流映射到 banks：
 
-$$
-\operatorname{bank}(a)
+```math
+\mathrm{bank}(a)
 =\left(\frac{a}{4}\right)\bmod32,
-$$
+```
 
 其中：
 
-- $a$：从一个 4-byte 对齐基址开始算的 byte address；
-- $a/4$：这是第几个 32-bit word；
+- $`a`$：从一个 4-byte 对齐基址开始算的 byte address；
+- $`a/4`$：这是第几个 32-bit word；
 - `mod 32`：除以 32 后取余数，结果为 bank 0–31。
 
 例如：
 
-| byte address $a$ | word index $a/4$ | bank |
+| byte address $`a`$ | word index $`a/4`$ | bank |
 |---:|---:|---:|
 | 0 | 0 | 0 |
 | 4 | 1 | 1 |
@@ -779,13 +767,13 @@ $$
 
 ### 5.3 路由表一：连续 FP32，无 bank conflict
 
-假设 warp lane $i$ 访问 FP32 word $i$，byte address 为 $4i$：
+假设 warp lane $`i`$ 访问 FP32 word $`i`$，byte address 为 $`4i`$：
 
-$$
-\operatorname{bank}(4i)
+```math
+\mathrm{bank}(4i)
 =\left(\frac{4i}{4}\right)\bmod32
 =i\bmod32=i.
-$$
+```
 
 完整路由：
 
@@ -799,14 +787,14 @@ bank:  0  1  2  3  4  ... 28 29 30 31
 
 ### 5.4 路由表二：stride 32 FP32，32-way conflict
 
-**Stride（步长）**是相邻 thread 地址相差多少个元素。Stride 32 表示 lane $i$ 访问 word $32i$，byte address 为 $4\times32i=128i$：
+**Stride（步长）**是相邻 thread 地址相差多少个元素。Stride 32 表示 lane $`i`$ 访问 word $`32i`$，byte address 为 $`4\times32i=128i`$：
 
-$$
-\operatorname{bank}(128i)
+```math
+\mathrm{bank}(128i)
 =\left(\frac{128i}{4}\right)\bmod32
 =(32i)\bmod32
 =0.
-$$
+```
 
 完整模式：
 
@@ -858,18 +846,18 @@ row xor col = 10₂
 
 **【课程代码｜行 126–131｜视频 [16:53](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1013s)】****Memory coalescing（内存合并访问）**是把一个 warp 的邻近 global-memory 请求合并成少量 transaction（事务）。课程用 128-byte cache line/transaction 做教学模型。
 
-在这个模型中，byte address $a$ 所在的 128-byte line 编号是：
+在这个模型中，byte address $`a`$ 所在的 128-byte line 编号是：
 
-$$
-\operatorname{line}(a)
+```math
+\mathrm{line}(a)
 =\left\lfloor\frac{a}{128}\right\rfloor.
-$$
+```
 
 Line 0 覆盖 byte 0–127，line 1 覆盖 128–255，依次类推。
 
 ### 5.8 连续且对齐：一个 transaction，100% 有效载荷
 
-32 lanes 连续读取 FP32，lane $i$ 读 byte address $4i$：
+32 lanes 连续读取 FP32，lane $`i`$ 读 byte address $`4i`$：
 
 ```text
 lane 0  → bytes 0–3
@@ -880,18 +868,18 @@ lane 31 → bytes 124–127
 
 全部落在 line 0。请求有用 bytes：
 
-$$
+```math
 32\times4=128\ \text{bytes}.
-$$
+```
 
 移动一个 128-byte transaction：
 
-$$
+```math
 \text{load efficiency}
 =\frac{128\ \text{useful bytes}}
 {128\ \text{transferred bytes}}
 =100\%.
-$$
+```
 
 视频 [17:05](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1025s) 说明 warp 请求被组合进 128-byte transaction；[17:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1054s) 展示连续访问的 full coalescing。
 
@@ -908,41 +896,41 @@ lane 31 → bytes 128–131  （line 1）
 
 有用数据仍为 128 bytes，但覆盖两个 128-byte lines。按课程简化模型，搬运：
 
-$$
+```math
 2\times128=256\ \text{bytes}.
-$$
+```
 
 有效比例：
 
-$$
+```math
 \frac{128}{256}=0.5=50\%.
-$$
+```
 
 真实 GPU cache/**memory sector（内存扇区，即一个较大 cache line 或 memory transaction 内可单独搬运、记账的较小数据分片）**可能让细节不同；这个例子只教“连续还不够，对齐也影响 transaction 数”。
 
 ### 5.10 Stride 32：32 个 lines，只用每条 4 bytes
 
-复用刚才 stride-32 FP32 地址：$0,128,256,\ldots,3968$。每个 lane 恰落到不同 128-byte line：
+复用刚才 stride-32 FP32 地址：$`0,128,256,\ldots,3968`$。每个 lane 恰落到不同 128-byte line：
 
-$$
+```math
 32\ \text{transactions}\times128\ \text{bytes}
 =4,096\ \text{transferred bytes}.
-$$
+```
 
 有用数据：
 
-$$
+```math
 32\times4=128\ \text{useful bytes}.
-$$
+```
 
 教学有效比例：
 
-$$
+```math
 \frac{128}{4,096}
 =\frac1{32}
 =0.03125
 =3.125\%.
-$$
+```
 
 这同一地址模式在 shared memory 上产生 bank conflict，在 HBM 上产生 uncoalesced transactions，但机制仍不同。视频 [17:49](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1069s) 用“沿列访问会抓取许多没用数据”说明后者，并在 [18:04](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1084s) 明确说两者相似却属于不同约束。
 
@@ -1092,57 +1080,57 @@ def benchmark(run, num_warmups: int = 1, num_trials: int = 3) -> float:
 
 均值：
 
-$$
+```math
 \bar t=\frac{t_1+t_2+\cdots+t_n}{n}.
-$$
+```
 
 **【补充例子】**四次时间 `[1,1,1,5] ms`：
 
-$$
+```math
 \bar t=\frac{1+1+1+5}{4}=\frac8{4}=2\ \text{ms}.
-$$
+```
 
 Population variance（把这四次当整组数据的总体方差）：
 
-$$
+```math
 \sigma^2
 =\frac{(1-2)^2+(1-2)^2+(1-2)^2+(5-2)^2}{4}.
-$$
+```
 
 逐项：
 
-$$
+```math
 =\frac{1+1+1+9}{4}
 =\frac{12}{4}
 =3\ \text{ms}^2.
-$$
+```
 
 Standard deviation（标准差）：
 
-$$
+```math
 \sigma=\sqrt3\approx1.732\ \text{ms}.
-$$
+```
 
 Median（中位数）是排序后的中间值。偶数个样本取中间两个平均：
 
-$$
-\operatorname{median}([1,1,1,5])
+```math
+\mathrm{median}([1,1,1,5])
 =\frac{1+1}{2}=1\ \text{ms}.
-$$
+```
 
 这个 5 ms outlier（离群值）把 mean 从常见的 1 ms 拉到 2 ms；median 仍为 1 ms。因此可靠报告常同时给 median、**p95（95th percentile，第 95 百分位：约 95% 的样本不超过这个值）**、分布或误差条。同一段视频口头也提到更严谨时应看完整 distribution/p95；这不是课程代码默认实现。
 
-### 6.6 小矩阵为什么看不出 $n^3$
+### 6.6 小矩阵为什么看不出 $`n^3`$
 
-**【课程代码｜行 167–176｜视频 [25:45](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1545s)】**方阵 matmul 的算术量随维度约按 $n^3$ 增长，但视频曲线中较小维度的时间近似常数，约到 2,000 维才显出增长。
+**【课程代码｜行 167–176｜视频 [25:45](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1545s)】**方阵 matmul 的算术量随维度约按 $`n^3`$ 增长，但视频曲线中较小维度的时间近似常数，约到 2,000 维才显出增长。
 
-原因不是数学从 $n^3$ 变成 $n^0$，而是小工作无法填满 GPU，launch、调度、固定延迟等占比大：
+原因不是数学从 $`n^3`$ 变成 $`n^0`$，而是小工作无法填满 GPU，launch、调度、固定延迟等占比大：
 
 ```text
 粗略总时间 = 固定开销 + n³ 工作 / 实际吞吐
 ```
 
-若固定开销是 10 微秒，而小 matmul 主计算只需 1 微秒：总计约 11 微秒；主计算翻 4 倍变 4 微秒，总计 14 微秒，没有按 4 倍明显增长。工作足够大后，$n^3$ 项才主导。
+若固定开销是 10 微秒，而小 matmul 主计算只需 1 微秒：总计约 11 微秒；主计算翻 4 倍变 4 微秒，总计 14 微秒，没有按 4 倍明显增长。工作足够大后，$`n^3`$ 项才主导。
 
 ### 6.7 Profile 看见的是底层实际 kernels
 
@@ -1200,28 +1188,28 @@ cutlass3x_sm100_simt_sgemm_f32_f32_f32_f32_f32_64x64x16_...
 
 课程代码使用常见的 tanh 近似：
 
-$$
-\operatorname{GeLU}(x)
+```math
+\mathrm{GeLU}(x)
 \approx
 \frac12x\left[1+\tanh\left(
 \sqrt{\frac{2}{\pi}}
 \left(x+0.044715x^3\right)
 \right)\right].
-$$
+```
 
 先逐个解释符号：
 
-- $x$：一个输入数字。tensor 有多少元素，就对多少个 $x$ 各算一次；
-- $x^3=x\times x\times x$；
-- $\pi\approx3.14159265$；
-- $\sqrt{2/\pi}\approx0.79788456$；$\sqrt z$ 是平方后等于 $z$ 的非负数；
-- $\tanh(a)$：hyperbolic tangent（双曲正切），把任意实数压到 $(-1,1)$；本讲不要求推导它，只需会按计算器的 `tanh` 键；
-- $\approx$：近似相等。这是 exact GeLU 的常用近似，不是代数恒等式；
-- 最外面的 $\frac12x$ 让正数大多保留、负数大多压小，但不像 ReLU 那样把所有负数直接变成 0。
+- $`x`$：一个输入数字。tensor 有多少元素，就对多少个 $`x`$ 各算一次；
+- $`x^3=x\times x\times x`$；
+- $`\pi\approx3.14159265`$；
+- $`\sqrt{2/\pi}\approx0.79788456`$；$`\sqrt z`$ 是平方后等于 $`z`$ 的非负数；
+- $`\tanh(a)`$：hyperbolic tangent（双曲正切），把任意实数压到 $`(-1,1)`$；本讲不要求推导它，只需会按计算器的 `tanh` 键；
+- $`\approx`$：近似相等。这是 exact GeLU 的常用近似，不是代数恒等式；
+- 最外面的 $`\frac12x`$ 让正数大多保留、负数大多压小，但不像 ReLU 那样把所有负数直接变成 0。
 
 把长式子拆成小步：
 
-$$
+```math
 \begin{aligned}
 u&=x^3,\\
 v&=x+0.044715u,\\
@@ -1229,95 +1217,95 @@ a&=0.79788456v,\\
 t&=\tanh(a),\\
 y&=0.5x(1+t).
 \end{aligned}
-$$
+```
 
 这是数学步骤，不等于承诺 GPU 一定启动五个或九个 kernels。kernel 是否融合，要看 eager/builtin/compiler、版本、dtype、shape 和硬件，§7.4 会单独说。
 
-### 7.2 手算 $x=0$
+### 7.2 手算 $`x=0`$
 
 **【课程内容 + 补充手算｜视频 [30:32](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=1832s)】**
 
-$$
+```math
 x^3=0^3=0.
-$$
+```
 
-$$
+```math
 v=0+0.044715\times0=0.
-$$
+```
 
-$$
+```math
 a=0.79788456\times0=0.
-$$
+```
 
-$$
+```math
 \tanh(0)=0.
-$$
+```
 
 所以：
 
-$$
-\operatorname{GeLU}(0)
+```math
+\mathrm{GeLU}(0)
 \approx0.5\times0\times(1+0)=0.
-$$
+```
 
-### 7.3 手算 $x=1$ 与 $x=-1$
+### 7.3 手算 $`x=1`$ 与 $`x=-1`$
 
-**【补充】**先算 $x=1$：
+**【补充】**先算 $`x=1`$：
 
-$$
+```math
 x^3=1.
-$$
+```
 
-$$
+```math
 v=1+0.044715\times1=1.044715.
-$$
+```
 
-$$
+```math
 a=0.79788456\times1.044715
 \approx0.83356197.
-$$
+```
 
 计算器输入 `tanh(0.83356197)`：
 
-$$
+```math
 t\approx0.68238398.
-$$
+```
 
 最后：
 
-$$
+```math
 y=0.5\times1\times(1+0.68238398)
 =0.84119199.
-$$
+```
 
-再算 $x=-1$：
+再算 $`x=-1`$：
 
-$$
+```math
 x^3=(-1)^3=-1,
-$$
+```
 
-$$
+```math
 v=-1+0.044715\times(-1)=-1.044715,
-$$
+```
 
-$$
+```math
 a=0.79788456\times(-1.044715)
 \approx-0.83356197,
-$$
+```
 
-$$
+```math
 t=\tanh(-0.83356197)
 \approx-0.68238398.
-$$
+```
 
 于是：
 
-$$
+```math
 y=0.5\times(-1)\times(1-0.68238398)
 \approx-0.15880801.
-$$
+```
 
-检查直觉：正的 1 变成约 0.841；负的 $-1$ 只留下约 $-0.159$。GeLU 不是“所有负数归零”。
+检查直觉：正的 1 变成约 0.841；负的 $`-1`$ 只留下约 $`-0.159`$。GeLU 不是“所有负数归零”。
 
 ### 7.4 一行 PyTorch 为什么可能变成多个 kernels
 
@@ -1387,13 +1375,13 @@ Fusion 常见边界包括：
 - 一个过大的融合 kernel 可能寄存器压力过高，反而降低 occupancy；
 - 数值语义必须被保留，不能为省流量任意改运算顺序。
 
-### 7.6 $N=16{,}384$、FP32 的教学流量账
+### 7.6 $`N=16{,}384`$、FP32 的教学流量账
 
 **【补充】**下面依据课程 fusion 直觉做流量推导。设输入是一维 tensor：
 
-$$
+```math
 N=16{,}384,
-$$
+```
 
 每个元素用 FP32，即 4 bytes。
 
@@ -1401,54 +1389,54 @@ $$
 
 元素传输次数：
 
-$$
+```math
 N\ \text{reads}+N\ \text{writes}=2N.
-$$
+```
 
 代入：
 
-$$
+```math
 2\times16{,}384=32{,}768\ \text{element-transfers}.
-$$
+```
 
 换成 bytes：
 
-$$
+```math
 32{,}768\times4
 =131{,}072\ \text{bytes}.
-$$
+```
 
-因为 $1\ \text{KiB}=1{,}024\ \text{bytes}$：
+因为 $`1\ \text{KiB}=1{,}024\ \text{bytes}`$：
 
-$$
+```math
 131{,}072/1{,}024=128\ \text{KiB}.
-$$
+```
 
 这里的 **element-transfer** 是“搬一个 tensor 元素一次”；不是“执行一个 FLOP”，也不是“一条 128-byte memory transaction”。
 
 再做一个醒目标成“教学模型”的对照。若假设九个概念 pointwise stages 都各自：
 
-1. 读一个 $N$ 元素缓冲区；
-2. 写一个 $N$ 元素中间缓冲区；
+1. 读一个 $`N`$ 元素缓冲区；
+2. 写一个 $`N`$ 元素中间缓冲区；
 
 那么：
 
-$$
+```math
 9\times2N=18N
-$$
+```
 
 次 element-transfers。换成 bytes：
 
-$$
+```math
 18\times16{,}384\times4
 =1{,}179{,}648\ \text{bytes}
 =1{,}152\ \text{KiB}.
-$$
+```
 
-这个 $1{,}152$ KiB **不是实测值，也不是严格上界**：
+这个 $`1{,}152`$ KiB **不是实测值，也不是严格上界**：
 
 - 二元运算可能需要读两个数组，所以模型会少算某些读；
-- 同一个 $x$ 在一个 kernel 内可能只 load 一次，所以按操作数数读又可能多算；
+- 同一个 $`x`$ 在一个 kernel 内可能只 load 一次，所以按操作数数读又可能多算；
 - L1/L2 cache 可能命中，逻辑读不全变成 HBM traffic；
 - 编译器可能只融合其中一部分；
 - profiler 才能告诉你实际 kernel 列表，硬件 counter 才能估计实际 HBM bytes。
@@ -1459,7 +1447,7 @@ $$
 
 **【课程视频｜[35:03](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2103s)–[36:34](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2194s)】**每次 kernel launch 都有近似固定的准备成本：CPU/runtime 把工作入队、GPU 接收并调度、建立执行所需状态。它叫 **launch overhead（启动开销）**。
 
-教学例：若每个极小 kernel 真计算只需 $1\ \mu s$，启动固定花 $5\ \mu s$：
+教学例：若每个极小 kernel 真计算只需 $`1\ \mu s`$，启动固定花 $`5\ \mu s`$：
 
 ```text
 9 个小 kernel：9 × (5 + 1) = 54 μs
@@ -1525,19 +1513,19 @@ GPU 上的 Triton device kernel
 
 ### 8.4 Grid 与 program instance
 
-**【课程代码｜行 343–347｜视频 [41:07](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2467s)】**Triton 的 **grid** 指定要启动多少个 program instances。若一维输入有 $N$ 个元素、每个 program 最多处理 $B$ 个：
+**【课程代码｜行 343–347｜视频 [41:07](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=2467s)】**Triton 的 **grid** 指定要启动多少个 program instances。若一维输入有 $`N`$ 个元素、每个 program 最多处理 $`B`$ 个：
 
-$$
+```math
 \text{num\_programs}=\left\lceil\frac NB\right\rceil.
-$$
+```
 
-$\lceil z\rceil$ 是 ceiling（向上取整）：只要还有余数，就再开一个 program。
+$`\lceil z\rceil`$ 是 ceiling（向上取整）：只要还有余数，就再开一个 program。
 
-例：$N=10,B=8$：
+例：$`N=10,B=8`$：
 
-$$
+```math
 10/8=1.25,
-$$
+```
 
 向上取整为 2，所以 grid 是 `(2,)`：
 
@@ -1660,11 +1648,11 @@ def triton_gelu(x: torch.Tensor) -> torch.Tensor:
 
 课程源码为了展示等价的 tanh，会用指数恒等式：
 
-$$
+```math
 \tanh(a)=\frac{e^{2a}-1}{e^{2a}+1}.
-$$
+```
 
-$e\approx2.71828$ 是自然指数的底，`tl.exp(z)` 算 $e^z$。这条替换不改变本节的索引重点。
+$`e\approx2.71828`$ 是自然指数的底，`tl.exp(z)` 算 $`e^z`$。这条替换不改变本节的索引重点。
 
 ### 9.2 Wrapper：输入检查和输出分配
 
@@ -1702,9 +1690,9 @@ triton_gelu_kernel[(num_blocks,)](
 
 - `cdiv(a,b)` 是 ceiling division（向上取整除法）：
 
-$$
-\operatorname{cdiv}(a,b)=\left\lceil\frac ab\right\rceil.
-$$
+```math
+\mathrm{cdiv}(a,b)=\left\lceil\frac ab\right\rceil.
+```
 
 - `triton_gelu_kernel[(num_blocks,)]` 的方括号不是普通 Python 数组索引，而是 Triton launch syntax（启动语法）；`(num_blocks,)` 是一维 grid。
 - 圆括号里的 `x,y,num_elements` 是运行时参数。
@@ -1712,9 +1700,9 @@ $$
 
 例：`num_elements=2050, block_size=1024`：
 
-$$
+```math
 2050/1024=2.001953125,
-$$
+```
 
 向上取整得到 3 个 programs。最后一个 program 只有 offsets 2048、2049 有效，其余候选位置必须 mask。
 
@@ -1737,7 +1725,7 @@ mask = offsets < num_elements
 4. 加 `start`，把局部编号变成全局 offsets。
 5. `offsets < num_elements` 对每一项比较，产生布尔 mask；`True` 可访问，`False` 不可访问。
 
-### 9.5 $N=10,B=8$：两个 programs 全部列出
+### 9.5 $`N=10,B=8`$：两个 programs 全部列出
 
 **【补充】**设输入：
 
@@ -1750,10 +1738,10 @@ num_blocks = ceil(10/8) = 2
 
 Program 0：
 
-$$
+```math
 pid=0,
 \quad start=0\times8=0.
-$$
+```
 
 | lane-like 向量位置 | offset | `offset < 10` | load | store |
 |---:|---:|---:|---|---|
@@ -1768,10 +1756,10 @@ $$
 
 Program 1：
 
-$$
+```math
 pid=1,
 \quad start=1\times8=8.
-$$
+```
 
 | lane-like 向量位置 | offset | `offset < 10` | load | store |
 |---:|---:|---:|---|---|
@@ -1819,7 +1807,7 @@ offset 8 -> byte address 1000 + 8×4 = 1032
 
 **【课程代码｜行 323–329、379–390】**课程先用 PyTorch reference 检查 Triton 输出。最小核对：
 
-| $x$ | $a=0.79788456(x+0.044715x^3)$ | $\tanh(a)$ | $0.5x(1+\tanh(a))$ |
+| $`x`$ | $`a=0.79788456(x+0.044715x^3)`$ | $`\tanh(a)`$ | $`0.5x(1+\tanh(a))`$ |
 |---:|---:|---:|---:|
 | 0 | 0 | 0 | 0 |
 | 1 | 0.83356197 | 0.68238398 | 0.84119199 |
@@ -1827,49 +1815,49 @@ offset 8 -> byte address 1000 + 8×4 = 1032
 
 Triton 用
 
-$$
+```math
 \frac{e^{2a}-1}{e^{2a}+1}
-$$
+```
 
 算 tanh；PyTorch reference 用 `torch.tanh(a)`。在普通大小输入上，有限浮点精度可能造成最后几位小差，所以检查函数一般用 tolerance（容差），而不是要求每个 bit 完全相同。
 
-但课程这个指数改写是 **教学实现，不是完整数值稳定实现**。用 $x=20$ 做反例：
+但课程这个指数改写是 **教学实现，不是完整数值稳定实现**。用 $`x=20`$ 做反例：
 
-$$
+```math
 x^3=20^3=8{,}000.
-$$
+```
 
-$$
+```math
 x+0.044715x^3
 =20+0.044715\times8{,}000
 =20+357.72
 =377.72.
-$$
+```
 
-$$
+```math
 a=0.79788456\times377.72
 \approx301.376956
 \approx301.37.
-$$
+```
 
-$$
+```math
 2a\approx602.753912\approx602.75.
-$$
+```
 
-若中间先粗略截断，可能写成约 $602.74$；无论取哪一个，结论相同：FP32 的有限最大值只能支持指数输入到约 88 左右，`exp(602.75)` 会 overflow（溢出）成 `inf`。课程代码随后做：
+若中间先粗略截断，可能写成约 $`602.74`$；无论取哪一个，结论相同：FP32 的有限最大值只能支持指数输入到约 88 左右，`exp(602.75)` 会 overflow（溢出）成 `inf`。课程代码随后做：
 
-$$
+```math
 \frac{\text{inf}-1}{\text{inf}+1}
 =\frac{\text{inf}}{\text{inf}},
-$$
+```
 
-这个不定式可能得到 `NaN`，最终 GeLU 也可能 NaN。数值稳定的 `tanh(a)` 在 $a$ 很大时接近 1，所以正确近似应是：
+这个不定式可能得到 `NaN`，最终 GeLU 也可能 NaN。数值稳定的 `tanh(a)` 在 $`a`$ 很大时接近 1，所以正确近似应是：
 
-$$
-\operatorname{GeLU}(20)
+```math
+\mathrm{GeLU}(20)
 \approx0.5\times20\times(1+1)
 =20.
-$$
+```
 
 课程随机检查用标准随机输入，极端的 20 几乎不会被抽到，所以“随机 `allclose` 通过”不能覆盖这个反例。可靠测试还应显式加入大正数、大负数、`NaN`、`+Inf`、`-Inf`，并写清期望传播规则。生产实现应直接用数值稳定的 `tanh`/builtin，或使用避免中间指数溢出的等价实现。
 
@@ -1879,7 +1867,7 @@ $$
 
 - 对 744 行官方源码逐行读取；
 - 对 wrapper/kernel 的索引做手算；
-- 用独立基础数学复算 $x=0,1,-1$ 的 reference 数值，并复算 $x=20$ 的指数溢出反例；
+- 用独立基础数学复算 $`x=0,1,-1`$ 的 reference 数值，并复算 $`x=20`$ 的指数溢出反例；
 - 对代码围栏、符号和结构做静态检查。
 
 要在自己的 CUDA 环境运行，必须安装相互兼容的 NVIDIA driver、CUDA-enabled PyTorch 与 Triton，再把课程辅助的 `check_equal`/benchmark 函数一并带上。
@@ -1979,18 +1967,18 @@ SASS --hardware--> 执行
 
 ### 11.1 Softmax 是“每行变成和为 1 的非负权重”
 
-**【课程代码｜行 392–418｜视频 [58:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3486s)】**对一行输入 $x=[x_0,x_1,\ldots,x_{N-1}]$，softmax 第 $j$ 项定义为：
+**【课程代码｜行 392–418｜视频 [58:06](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3486s)】**对一行输入 $`x=[x_0,x_1,\ldots,x_{N-1}]`$，softmax 第 $`j`$ 项定义为：
 
-$$
-\operatorname{softmax}(x)_j
+```math
+\mathrm{softmax}(x)_j
 =\frac{e^{x_j}}{\sum_{k=0}^{N-1}e^{x_k}}.
-$$
+```
 
 逐个符号：
 
-- $j$：当前要算的列；
-- $k$：求和时从第 0 列走到第 $N-1$ 列；
-- $e^{x_j}$：把第 $j$ 个 logit 指数化；
+- $`j`$：当前要算的列；
+- $`k`$：求和时从第 0 列走到第 $`N-1`$ 列；
+- $`e^{x_j}`$：把第 $`j`$ 个 logit 指数化；
 - 分母是这一行所有指数的和；
 - 同一行每项除同一个正分母，所以结果非负且总和为 1。
 
@@ -1998,124 +1986,124 @@ $$
 
 ### 11.2 为什么先减 row maximum
 
-**【课程视频｜[58:21](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3501s)–[59:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3550s)】**直接算很大的 $e^x$ 可能 overflow（溢出）。例如 FP32 中 $e^{100}$ 太大，不能用普通有限数表示。
+**【课程视频｜[58:21](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3501s)–[59:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3550s)】**直接算很大的 $`e^x`$ 可能 overflow（溢出）。例如 FP32 中 $`e^{100}`$ 太大，不能用普通有限数表示。
 
 设这一行最大值：
 
-$$
+```math
 m=\max_j x_j.
-$$
+```
 
 改算：
 
-$$
+```math
 \frac{e^{x_j-m}}{\sum_k e^{x_k-m}}.
-$$
+```
 
 为什么输出不变？分子：
 
-$$
+```math
 e^{x_j-m}=e^{x_j}e^{-m}.
-$$
+```
 
 分母：
 
-$$
+```math
 \sum_k e^{x_k-m}
 =e^{-m}\sum_k e^{x_k}.
-$$
+```
 
-上下都有同一个 $e^{-m}$，相除抵消：
+上下都有同一个 $`e^{-m}`$，相除抵消：
 
-$$
+```math
 \frac{e^{x_j}e^{-m}}{e^{-m}\sum_k e^{x_k}}
 =\frac{e^{x_j}}{\sum_k e^{x_k}}.
-$$
+```
 
-减最大值后，每个 $x_j-m\le0$，至少一项等于 0；指数都不超过 $e^0=1$，就避免了正方向的指数溢出。
+减最大值后，每个 $`x_j-m\le0`$，至少一项等于 0；指数都不超过 $`e^0=1`$，就避免了正方向的指数溢出。
 
-### 11.3 课程 $2\times3$ 输入逐行手算
+### 11.3 课程 $`2\times3`$ 输入逐行手算
 
 **【课程】**输入取自官方代码行 404–408。**【补充】**以下把课程只运行给出的结果完整展开：
 
-$$
+```math
 X=
 \begin{bmatrix}
 5&5&5\\
 0&0&100
 \end{bmatrix}.
-$$
+```
 
-Shape 是 $[M,N]=[2,3]$：$M=2$ 行，$N=3$ 列。Softmax 独立处理每一行。
+Shape 是 $`[M,N]=[2,3]`$：$`M=2`$ 行，$`N=3`$ 列。Softmax 独立处理每一行。
 
-第一行 $[5,5,5]$：
+第一行 $`[5,5,5]`$：
 
 1. row max：
 
-$$
+```math
 m_0=5.
-$$
+```
 
 2. 每项减最大值：
 
-$$
+```math
 [5-5,5-5,5-5]=[0,0,0].
-$$
+```
 
 3. 指数：
 
-$$
+```math
 [e^0,e^0,e^0]=[1,1,1].
-$$
+```
 
 4. 求和：
 
-$$
+```math
 d_0=1+1+1=3.
-$$
+```
 
 5. 归一化：
 
-$$
+```math
 y_0=\left[\frac13,\frac13,\frac13\right].
-$$
+```
 
-第二行 $[0,0,100]$：
+第二行 $`[0,0,100]`$：
 
 1. row max：
 
-$$
+```math
 m_1=100.
-$$
+```
 
 2. 减最大值：
 
-$$
+```math
 [0-100,0-100,100-100]=[-100,-100,0].
-$$
+```
 
 3. 指数：
 
-$$
+```math
 [e^{-100},e^{-100},e^0]
 \approx[3.72008\times10^{-44},3.72008\times10^{-44},1].
-$$
+```
 
 4. 求和：
 
-$$
+```math
 d_1=1+2\times3.72008\times10^{-44}
 \approx1.
-$$
+```
 
 5. 归一化：
 
-$$
+```math
 y_1\approx
 [3.72008\times10^{-44},3.72008\times10^{-44},1].
-$$
+```
 
-检查：两行每项都非负；第一行和为 $1/3+1/3+1/3=1$，第二行在显示精度下也约为 1。
+检查：两行每项都非负；第一行和为 $`1/3+1/3+1/3=1`$，第二行在显示精度下也约为 1。
 
 ### 11.4 Naive softmax 的五次大步骤
 
@@ -2134,57 +2122,57 @@ def naive_softmax(x: torch.Tensor) -> torch.Tensor:
 
 - `dim=1`：沿列方向归约，每一行得到一个数；
 - `x_max[:,None]`：把 shape `[M]` 变成 `[M,1]`，才能按行 broadcast 到 `[M,N]`；
-- **broadcast（广播）**：不手工复制数据，也能把 `[M,1]` 的每行标量用于该行全部 $N$ 项；
-- **reduction（归约）**：把多项合成较少项，例如一行的 `max` 或 `sum` 从 $N$ 个数变 1 个数。
+- **broadcast（广播）**：不手工复制数据，也能把 `[M,1]` 的每行标量用于该行全部 $`N`$ 项；
+- **reduction（归约）**：把多项合成较少项，例如一行的 `max` 或 `sum` 从 $`N`$ 个数变 1 个数。
 
 数学只写五行；eager 执行可能形成多个 kernels 和中间 tensors。实际 kernel 数仍由 profiler 确认。
 
-### 11.5 严格复算课程的 reads：$5MN+M$
+### 11.5 严格复算课程的 reads：$`5MN+M`$
 
 课程注释采用一个简化的 element-read accounting（元素读取记账）：
 
 | 步骤 | 课程计的 reads | 为什么 |
 |---|---:|---|
-| 1. row max | $MN$ | 读完整输入矩阵一次 |
-| 2. subtract max | $MN+M$ | 读矩阵 $MN$ 项，再读每行 max 共 $M$ 项 |
-| 3. exponentiate | $MN$ | 读 shifted matrix |
-| 4. row sum | $MN$ | 读 numerator matrix |
-| 5. normalize | $MN$ | 读 numerator；课程模型把 denominator row scalar 的广播读取折叠/不另计 |
+| 1. row max | $`MN`$ | 读完整输入矩阵一次 |
+| 2. subtract max | $`MN+M`$ | 读矩阵 $`MN`$ 项，再读每行 max 共 $`M`$ 项 |
+| 3. exponentiate | $`MN`$ | 读 shifted matrix |
+| 4. row sum | $`MN`$ | 读 numerator matrix |
+| 5. normalize | $`MN`$ | 读 numerator；课程模型把 denominator row scalar 的广播读取折叠/不另计 |
 
 相加：
 
-$$
+```math
 MN+(MN+M)+MN+MN+MN.
-$$
+```
 
-先合五个 $MN$：
+先合五个 $`MN`$：
 
-$$
+```math
 =5MN+M\ \text{reads}.
-$$
+```
 
-这个口径必须说清：若你把最后一步从 HBM 读取每行 denominator 也另计一次，会再加 $M$，得到 $5MN+2M$。课程源码行 435–438 选择前一种简化，目的是抓住主导的 $MN$ 项；这里按课程口径复算，不把两套规则悄悄混用。
+这个口径必须说清：若你把最后一步从 HBM 读取每行 denominator 也另计一次，会再加 $`M`$，得到 $`5MN+2M`$。课程源码行 435–438 选择前一种简化，目的是抓住主导的 $`MN`$ 项；这里按课程口径复算，不把两套规则悄悄混用。
 
-### 11.6 严格复算课程的 writes：$3MN+2M$
+### 11.6 严格复算课程的 writes：$`3MN+2M`$
 
 | 步骤 | writes | 写了什么 |
 |---|---:|---|
-| 1. row max | $M$ | 每行一个 maximum |
-| 2. subtract max | $MN$ | shifted matrix |
-| 3. exponentiate | $MN$ | numerator matrix |
-| 4. row sum | $M$ | 每行一个 denominator |
-| 5. normalize | $MN$ | 最终 output matrix |
+| 1. row max | $`M`$ | 每行一个 maximum |
+| 2. subtract max | $`MN`$ | shifted matrix |
+| 3. exponentiate | $`MN`$ | numerator matrix |
+| 4. row sum | $`M`$ | 每行一个 denominator |
+| 5. normalize | $`MN`$ | 最终 output matrix |
 
 相加：
 
-$$
+```math
 M+MN+MN+M+MN
 =3MN+2M\ \text{writes}.
-$$
+```
 
-### 11.7 代 $M=2,N=3$：为什么是 32 reads、22 writes
+### 11.7 代 $`M=2,N=3`$：为什么是 32 reads、22 writes
 
-**【补充】**下面严格沿用课程口径手算；$MN=2\times3=6$。
+**【补充】**下面严格沿用课程口径手算；$`MN=2\times3=6`$。
 
 Reads 分项：
 
@@ -2199,9 +2187,9 @@ normalize     : MN     = 6
 
 公式复核：
 
-$$
+```math
 5MN+M=5\times2\times3+2=30+2=32.
-$$
+```
 
 Writes 分项：
 
@@ -2216,66 +2204,66 @@ normalize     : MN = 6
 
 公式复核：
 
-$$
+```math
 3MN+2M=3\times2\times3+2\times2=18+4=22.
-$$
+```
 
 总 element-transfers：
 
-$$
+```math
 32+22=54.
-$$
+```
 
 若每项 FP32：
 
-$$
+```math
 54\times4=216\ \text{bytes}
-$$
+```
 
 是这个小例在教学模型里的流量；真实 memory transactions/cache traffic 不会简单等于 216 bytes。
 
-### 11.8 Fused 理想流量与 $4.5\times$ 从哪里来
+### 11.8 Fused 理想流量与 $`4.5\times`$ 从哪里来
 
 **【课程内容 + 补充推导｜视频 [60:23](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=3623s)】**若一个 fused kernel 把一行读进片上存储，max、减法、exp、sum、division 都在片上完成，最后只写 output：
 
-$$
+```math
 MN\ \text{reads}+MN\ \text{writes}=2MN.
-$$
+```
 
-对 $M=2,N=3$：
+对 $`M=2,N=3`$：
 
-$$
+```math
 2MN=2\times2\times3=12
-$$
+```
 
 次 element-transfers，即 FP32 的：
 
-$$
+```math
 12\times4=48\ \text{bytes}.
-$$
+```
 
 教学流量倍数：
 
-$$
+```math
 \frac{54}{12}=4.5.
-$$
+```
 
-一般 $M,N$ 下，naive 总传输：
+一般 $`M,N`$ 下，naive 总传输：
 
-$$
+```math
 (5MN+M)+(3MN+2M)=8MN+3M.
-$$
+```
 
-除以 fused 的 $2MN$：
+除以 fused 的 $`2MN`$：
 
-$$
+```math
 \frac{8MN+3M}{2MN}
 =4+\frac{3}{2N}.
-$$
+```
 
-当 $N$ 很大，$3/(2N)$ 趋近 0，所以流量比趋近 $4\times$，不是趋近 $4.5\times$。
+当 $`N`$ 很大，$`3/(2N)`$ 趋近 0，所以流量比趋近 $`4\times`$，不是趋近 $`4.5\times`$。
 
-**流量减少 $4\times$ 不保证 wall-clock speedup 恰好 $4\times$**：还有 launch、exp/max/sum 的计算、同步、occupancy、cache、compiler 与行宽资源限制。这个比值是教学 traffic model 的上游线索，不是测速结果。
+**流量减少 $`4\times`$ 不保证 wall-clock speedup 恰好 $`4\times`$**：还有 launch、exp/max/sum 的计算、同步、occupancy、cache、compiler 与行宽资源限制。这个比值是教学 traffic model 的上游线索，不是测速结果。
 
 ### 11.9 Wrapper：每行一个 program
 
@@ -2298,9 +2286,9 @@ def triton_softmax(x: torch.Tensor) -> torch.Tensor:
     return y
 ```
 
-- `next_power_of_2(N)`：返回不小于 $N$ 的最小 $2^k$。例：$N=3$ 得 4，$N=8$ 得 8，$N=9$ 得 16。
-- 这里 grid 是 `(M,)`，所以 program 0 处理 row 0，program 1 处理 row 1，直到 row $M-1$。
-- `x.stride(0)`：从一行第 0 项走到下一行第 0 项，要跨多少“元素”。连续 `[M,N]` tensor 通常是 $N$，但传 stride 比硬编码 $N$ 更清楚。
+- `next_power_of_2(N)`：返回不小于 $`N`$ 的最小 $`2^k`$。例：$`N=3`$ 得 4，$`N=8`$ 得 8，$`N=9`$ 得 16。
+- 这里 grid 是 `(M,)`，所以 program 0 处理 row 0，program 1 处理 row 1，直到 row $`M-1`$。
+- `x.stride(0)`：从一行第 0 项走到下一行第 0 项，要跨多少“元素”。连续 `[M,N]` tensor 通常是 $`N`$，但传 stride 比硬编码 $`N`$ 更清楚。
 - 一整个 row 要在该 program 中完成 max/sum reduction，才能避免把中间矩阵写回 HBM。
 
 这里有一个隐藏条件：wrapper **只传 row stride**，kernel 却用 `x_start_ptr + col_offsets` 和 `y_start_ptr + col_offsets`，等价于假定：
@@ -2326,15 +2314,15 @@ x = base.T
 
 底层 storage 顺序仍是 `[1,2,3,4,5,6]`。逻辑 row 0 应读 offsets：
 
-$$
+```math
 0\times1+[0\times3,1\times3]=[0,3],
-$$
+```
 
 得到 `[1,4]`。课程 kernel 却算：
 
-$$
+```math
 0\times1+[0,1]=[0,1],
-$$
+```
 
 读成 storage 的 `[1,2]`，答案错误。
 
@@ -2398,28 +2386,28 @@ def triton_softmax_kernel(
 3. `col_offsets` 列出本行候选列。
 4. `mask=col_offsets<num_cols` 禁止 padding lane 真读越界地址。
 5. `other=-inf` 给无效 lane 一个数学上的负无穷值。
-6. row max 不会被 padding 扰乱，因为任何有限数都大于 $-\infty$。
-7. 减去有限 row max 后，padding 仍为 $-\infty$。
-8. $e^{-\infty}=0$，所以 padding 对 denominator 的 sum 贡献 0。
+6. row max 不会被 padding 扰乱，因为任何有限数都大于 $`-\infty`$。
+7. 减去有限 row max 后，padding 仍为 $`-\infty`$。
+8. $`e^{-\infty}=0`$，所以 padding 对 denominator 的 sum 贡献 0。
 9. store 再用同一 mask，不把 padding 写到输出之外。
 
 `other=-inf` 不只是“随便填个很小的数”；在**至少有一个有限有效 logit**的前提下，它恰好是 max/exp/sum softmax 链的中性处理：不抢 maximum，指数后变 0。
 
-若一整行的所有有效值也都是 $-\infty$：
+若一整行的所有有效值也都是 $`-\infty`$：
 
-$$
+```math
 \max(-\infty,-\infty,\ldots)=-\infty,
-$$
+```
 
 接着：
 
-$$
--\infty-(-\infty)=\operatorname{NaN}.
-$$
+```math
+-\infty-(-\infty)=\mathrm{NaN}.
+```
 
-后续 exp/sum/divide 会传播 NaN。数学上这行也对应 $0/0$，没有普通 softmax 概率分布。Attention 实现应避免产生 fully masked row，或显式规定这种行输出全 0 等特殊语义；不能用 padding 推导假装它自动安全。
+后续 exp/sum/divide 会传播 NaN。数学上这行也对应 $`0/0`$，没有普通 softmax 概率分布。Attention 实现应避免产生 fully masked row，或显式规定这种行输出全 0 等特殊语义；不能用 padding 推导假装它自动安全。
 
-### 11.11 $N=3,B=4$ 的 padding 表
+### 11.11 $`N=3,B=4`$ 的 padding 表
 
 **【补充手算】**以 row 0 的 `[5,5,5]` 为例，`next_power_of_2(3)=4`：
 
@@ -2428,23 +2416,23 @@ $$
 | 0 | True | 5 | 0 | 1 |
 | 1 | True | 5 | 0 | 1 |
 | 2 | True | 5 | 0 | 1 |
-| 3 | False | $-\infty$ | $-\infty$ | 0 |
+| 3 | False | $`-\infty`$ | $`-\infty`$ | 0 |
 
 Reduction：
 
-$$
+```math
 \max(5,5,5,-\infty)=5,
-$$
+```
 
-$$
+```math
 1+1+1+0=3.
-$$
+```
 
 归一化向量在 Triton 语义上是：
 
-$$
+```math
 \left[\frac13,\frac13,\frac13,0\right].
-$$
+```
 
 最终 store mask 只写前三项；第四项连输出地址都不写。
 
@@ -2535,10 +2523,10 @@ def triton_row_sum(
 
 Shape 逐项：
 
-- 输入 `x`：`[M,N]`，$M$ 行、每行 $N$ 个数；
+- 输入 `x`：`[M,N]`，$`M`$ 行、每行 $`N`$ 个数；
 - 输出 `y`：`[M]`，每行只留下一个和；
 - grid：`(M,)`，每行一个 program；
-- `BLOCK_SIZE=B`：一次 tile 有 $B$ 个语义向量位置。
+- `BLOCK_SIZE=B`：一次 tile 有 $`B`$ 个语义向量位置。
 
 课程 kernel 用：
 
@@ -2546,7 +2534,7 @@ Shape 逐项：
 x_ptr + row * N + cols
 ```
 
-它假设 `x` 按连续 row-major 顺序存放，即 row stride 正好是 $N$。课程 wrapper 没有显式 `assert x.is_contiguous()`，也没传 `x.stride(0)`；因此这是教学简化。要支持任意 strided tensor，应传 row stride 并写成 `row*x_row_stride`。
+它假设 `x` 按连续 row-major 顺序存放，即 row stride 正好是 $`N`$。课程 wrapper 没有显式 `assert x.is_contiguous()`，也没传 `x.stride(0)`；因此这是教学简化。要支持任意 strided tensor，应传 row stride 并写成 `row*x_row_stride`。
 
 ### 12.3 Kernel 的循环逐行翻译
 
@@ -2580,29 +2568,29 @@ def row_sum_kernel(
 逐行状态：
 
 1. `row=program_id(0)`：选择当前行。
-2. `tl.zeros([B],float32)`：建立长度 $B$ 的零向量。即使输入 dtype 较低，FP32 accumulator 通常能减少累加舍入误差。
-3. `range(0,N,B)`：`start` 依次为 $0,B,2B,\ldots$，直到最后一个小于 $N$ 的起点。
+2. `tl.zeros([B],float32)`：建立长度 $`B`$ 的零向量。即使输入 dtype 较低，FP32 accumulator 通常能减少累加舍入误差。
+3. `range(0,N,B)`：`start` 依次为 $`0,B,2B,\ldots`$，直到最后一个小于 $`N`$ 的起点。
 4. `cols=start+[0,1,...,B-1]`：生成当前 tile 的列号。
-5. `mask=cols<N`：最后一个不足 $B$ 项的 tile 禁止越界。
-6. `other=0.0`：无效位置补 0；0 是求和的 identity（单位元），因为 $a+0=a$。
+5. `mask=cols<N`：最后一个不足 $`B`$ 项的 tile 禁止越界。
+6. `other=0.0`：无效位置补 0；0 是求和的 identity（单位元），因为 $`a+0=a`$。
 7. `acc+=x`：按向量位置逐项累加当前 tile。
-8. 循环结束后，`acc` 仍是长度 $B$ 的向量，不是最终 row sum。
-9. `tl.sum(acc,axis=0)`：compiler 生成所需的 reduction，把 $B$ 项合成一个 scalar（标量）。可能使用 warp shuffle/shared memory 等低层机制，源码没有固定指定。
+8. 循环结束后，`acc` 仍是长度 $`B`$ 的向量，不是最终 row sum。
+9. `tl.sum(acc,axis=0)`：compiler 生成所需的 reduction，把 $`B`$ 项合成一个 scalar（标量）。可能使用 warp shuffle/shared memory 等低层机制，源码没有固定指定。
 10. `store(out_ptr+row,result)`：每行只写一个输出。
 
-### 12.4 $N=12,B=4$：把 `[1..12]` 全部走一遍
+### 12.4 $`N=12,B=4`$：把 `[1..12]` 全部走一遍
 
 **【补充】**输入只有一行：
 
-$$
+```math
 x=[1,2,3,4,5,6,7,8,9,10,11,12].
-$$
+```
 
 Shape 是 `[1,12]`，输出 shape 是 `[1]`。初始：
 
-$$
+```math
 acc^{(0)}=[0,0,0,0].
-$$
+```
 
 Tile 0，`start=0`：
 
@@ -2614,11 +2602,11 @@ load = [1,2,3,4]
 
 逐项相加：
 
-$$
+```math
 acc^{(1)}
 =[0+1,0+2,0+3,0+4]
 =[1,2,3,4].
-$$
+```
 
 Tile 1，`start=4`：
 
@@ -2627,11 +2615,11 @@ cols = [4,5,6,7]
 load = [5,6,7,8]
 ```
 
-$$
+```math
 acc^{(2)}
 =[1+5,2+6,3+7,4+8]
 =[6,8,10,12].
-$$
+```
 
 Tile 2，`start=8`：
 
@@ -2640,81 +2628,81 @@ cols = [8,9,10,11]
 load = [9,10,11,12]
 ```
 
-$$
+```math
 acc^{(3)}
 =[6+9,8+10,10+11,12+12]
 =[15,18,21,24].
-$$
+```
 
 最后 reduction：
 
-$$
+```math
 result=15+18+21+24.
-$$
+```
 
 逐步：
 
-$$
+```math
 15+18=33,
-$$
+```
 
-$$
+```math
 21+24=45,
-$$
+```
 
-$$
+```math
 33+45=78.
-$$
+```
 
 直接检查：
 
-$$
+```math
 1+2+\cdots+12
 =\frac{12\times13}{2}
 =78.
-$$
+```
 
 两条路径一致。
 
-### 12.5 $N=10,B=4$：最后两项为什么必须补 0
+### 12.5 $`N=10,B=4`$：最后两项为什么必须补 0
 
 **【补充】**现在一行是 `[1,2,...,10]`。前两个 tiles 后：
 
-$$
+```math
 acc=[6,8,10,12].
-$$
+```
 
 最后 `start=8`：
 
 | 向量位置 | `col` | `col<10` | 真内存元素 | `tl.load(...,other=0)` |
 |---:|---:|---:|---:|---:|
-| 0 | 8 | True | $x[8]=9$ | 9 |
-| 1 | 9 | True | $x[9]=10$ | 10 |
+| 0 | 8 | True | $`x[8]=9`$ | 9 |
+| 1 | 9 | True | $`x[9]=10`$ | 10 |
 | 2 | 10 | False | 越界 | 0 |
 | 3 | 11 | False | 越界 | 0 |
 
 更新：
 
-$$
+```math
 acc=[6+9,8+10,10+0,12+0]
 =[15,18,10,12].
-$$
+```
 
 最后：
 
-$$
+```math
 15+18+10+12=55.
-$$
+```
 
 直接检查：
 
-$$
+```math
 1+2+\cdots+10
 =\frac{10\times11}{2}
 =55.
-$$
+```
 
-若 `other` 错写成 1，结果会多 $1+1=2$；若没有 mask，会读 `x[10]`、`x[11]` 的非法地址。求和 padding 必须用 0，而 softmax padding 用 $-\infty$，因为两个 reduction 的单位元不同。
+若 `other` 错写成 1，结果会多 $`1+1=2`$；若没有 mask，会读 `x[10]`、`x[11]` 的非法地址。求和 padding 必须用 0，而 softmax padding 用 $`-\infty`$，因为两个 reduction 的单位元不同。
 
 ### 12.6 Tiles 不是多个独立 blocks
 
@@ -2731,36 +2719,36 @@ $$
 
 ## 13. Matrix multiplication：从每个输出单算到 tiling 复用
 
-### 13.1 Shape 先对齐：$A[M,K]B[K,N]=C[M,N]$
+### 13.1 Shape 先对齐：$`A[M,K]B[K,N]=C[M,N]`$
 
 **【课程代码｜行 538–568｜视频 [71:57](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4317s)–[73:01](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4381s)】**矩阵乘：
 
-$$
+```math
 A\in\mathbb{R}^{M\times K},
 \quad
 B\in\mathbb{R}^{K\times N},
 \quad
 C=AB\in\mathbb{R}^{M\times N}.
-$$
+```
 
-- $M$：$A$ 和 $C$ 的行数；
-- $K$：被消去的 inner dimension（内维），必须同时是 $A$ 的列数和 $B$ 的行数；
-- $N$：$B$ 和 $C$ 的列数；
-- $C[m,n]$：输出第 $m$ 行、第 $n$ 列。
+- $`M`$：$`A`$ 和 $`C`$ 的行数；
+- $`K`$：被消去的 inner dimension（内维），必须同时是 $`A`$ 的列数和 $`B`$ 的行数；
+- $`N`$：$`B`$ 和 $`C`$ 的列数；
+- $`C[m,n]`$：输出第 $`m`$ 行、第 $`n`$ 列。
 
 单个输出：
 
-$$
+```math
 C[m,n]=\sum_{k=0}^{K-1}A[m,k]B[k,n].
-$$
+```
 
-它要做 $K$ 次乘法，并把 $K$ 个乘积相加。把一次 multiply 与一次 accumulate 近似记 2 FLOPs，则全部输出约 $2MKN$ FLOPs。
+它要做 $`K`$ 次乘法，并把 $`K`$ 个乘积相加。把一次 multiply 与一次 accumulate 近似记 2 FLOPs，则全部输出约 $`2MKN`$ FLOPs。
 
 ### 13.2 Naive reads 的两个口径必须说清
 
-**【课程内容｜视频 [73:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4424s)–[74:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4450s)】**课程写“$MKN$ reads”，是在 big-O 讨论中把“为一个 $k$ 取得一对 $A/B$ 操作数”当一次读事件，省略常数 2。
+**【课程内容｜视频 [73:44](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4424s)–[74:10](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4450s)】**课程写“$`MKN`$ reads”，是在 big-O 讨论中把“为一个 $`k`$ 取得一对 $`A/B`$ 操作数”当一次读事件，省略常数 2。
 
-若严格按“读一个标量元素一次”记：每个 $(m,n,k)$ 要读：
+若严格按“读一个标量元素一次”记：每个 $`(m,n,k)`$ 要读：
 
 ```text
 A[m,k]：1 个元素
@@ -2769,37 +2757,37 @@ B[k,n]：1 个元素
 
 所以 input reads 是：
 
-$$
+```math
 2MKN\ \text{scalar-element reads},
-$$
+```
 
 最后另写：
 
-$$
+```math
 MN\ \text{output elements}.
-$$
+```
 
-两种说法的大 O 都是 $O(MKN)$，但做精确 bytes 账时必须保留 2。下面所有精确流量都按标量元素口径。
+两种说法的大 O 都是 $`O(MKN)`$，但做精确 bytes 账时必须保留 2。下面所有精确流量都按标量元素口径。
 
 ### 13.3 为什么 naive 重复读同一个元素
 
-**【课程内容｜视频 [74:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4483s)】**固定一个 $A[m,k]$：它参与同一输出行的所有 $N$ 列：
+**【课程内容｜视频 [74:43](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4483s)】**固定一个 $`A[m,k]`$：它参与同一输出行的所有 $`N`$ 列：
 
-$$
+```math
 C[m,0],C[m,1],\ldots,C[m,N-1].
-$$
+```
 
-若每个 $C[m,n]$ 独立从 HBM 取操作数，这个 $A[m,k]$ 会读约 $N$ 次。
+若每个 $`C[m,n]`$ 独立从 HBM 取操作数，这个 $`A[m,k]`$ 会读约 $`N`$ 次。
 
-固定一个 $B[k,n]$：它参与同一输出列的所有 $M$ 行，所以会读约 $M$ 次。
+固定一个 $`B[k,n]`$：它参与同一输出列的所有 $`M`$ 行，所以会读约 $`M`$ 次。
 
-方阵 $M=N=K$ 时，每个 $A/B$ 输入元素都大约重复读 $N$ 次。这就是 tiling 要消除的复用浪费。
+方阵 $`M=N=K`$ 时，每个 $`A/B`$ 输入元素都大约重复读 $`N`$ 次。这就是 tiling 要消除的复用浪费。
 
-### 13.4 $4\times4,T=2$：具体矩阵
+### 13.4 $`4\times4,T=2`$：具体矩阵
 
 **【补充】**取：
 
-$$
+```math
 A=
 \begin{bmatrix}
 1&2&3&4\\
@@ -2807,9 +2795,9 @@ A=
 9&10&11&12\\
 13&14&15&16
 \end{bmatrix},
-$$
+```
 
-$$
+```math
 B=
 \begin{bmatrix}
 1&2&0&1\\
@@ -2817,11 +2805,11 @@ B=
 2&0&1&1\\
 1&1&0&2
 \end{bmatrix}.
-$$
+```
 
-$M=N=K=4$，输出 tile 大小 $T=2$。先只算 $C$ 左上 $2\times2$：rows 0–1、columns 0–1。
+$`M=N=K=4`$，输出 tile 大小 $`T=2`$。先只算 $`C`$ 左上 $`2\times2`$：rows 0–1、columns 0–1。
 
-它沿 $K$ 分两段：
+它沿 $`K`$ 分两段：
 
 ```text
 K-tile 0：k=0,1
@@ -2830,9 +2818,9 @@ K-tile 1：k=2,3
 
 ### 13.5 左上 tile：partial accumulator 0
 
-第一个 $K$ tile 读：
+第一个 $`K`$ tile 读：
 
-$$
+```math
 A_0=
 \begin{bmatrix}
 1&2\\
@@ -2844,51 +2832,51 @@ B_0=
 1&2\\
 0&1
 \end{bmatrix}.
-$$
+```
 
 初始 accumulator：
 
-$$
+```math
 acc_{\text{init}}=
 \begin{bmatrix}
 0&0\\
 0&0
 \end{bmatrix}.
-$$
+```
 
-算 $A_0B_0$ 四项：
+算 $`A_0B_0`$ 四项：
 
-$$
+```math
 (0,0):1\times1+2\times0=1,
-$$
+```
 
-$$
+```math
 (0,1):1\times2+2\times1=2+2=4,
-$$
+```
 
-$$
+```math
 (1,0):5\times1+6\times0=5,
-$$
+```
 
-$$
+```math
 (1,1):5\times2+6\times1=10+6=16.
-$$
+```
 
 所以：
 
-$$
+```math
 acc_0=
 \begin{bmatrix}
 1&4\\
 5&16
 \end{bmatrix}.
-$$
+```
 
 ### 13.6 左上 tile：partial accumulator 1 与最终值
 
-第二个 $K$ tile：
+第二个 $`K`$ tile：
 
-$$
+```math
 A_1=
 \begin{bmatrix}
 3&4\\
@@ -2900,39 +2888,39 @@ B_1=
 2&0\\
 1&1
 \end{bmatrix}.
-$$
+```
 
 这次贡献：
 
-$$
+```math
 (0,0):3\times2+4\times1=6+4=10,
-$$
+```
 
-$$
+```math
 (0,1):3\times0+4\times1=4,
-$$
+```
 
-$$
+```math
 (1,0):7\times2+8\times1=14+8=22,
-$$
+```
 
-$$
+```math
 (1,1):7\times0+8\times1=8.
-$$
+```
 
 贡献矩阵：
 
-$$
+```math
 P_1=
 \begin{bmatrix}
 10&4\\
 22&8
 \end{bmatrix}.
-$$
+```
 
 累加：
 
-$$
+```math
 acc_1=acc_0+P_1
 =
 \begin{bmatrix}
@@ -2944,15 +2932,15 @@ acc_1=acc_0+P_1
 11&8\\
 27&24
 \end{bmatrix}.
-$$
+```
 
-这就是最终 $C$ 左上 tile。
+这就是最终 $`C`$ 左上 tile。
 
-### 13.7 完整 $C$ 与一项交叉检查
+### 13.7 完整 $`C`$ 与一项交叉检查
 
-对其他三个输出 tiles 做同样的两段 $K$ 累加，得到：
+对其他三个输出 tiles 做同样的两段 $`K`$ 累加，得到：
 
-$$
+```math
 C=AB=
 \begin{bmatrix}
 11&8&5&12\\
@@ -2960,298 +2948,298 @@ C=AB=
 43&40&21&44\\
 59&56&29&60
 \end{bmatrix}.
-$$
+```
 
 不能只信表，抽查右下角：
 
-$$
+```math
 C[3,3]
 =13\times1+14\times0+15\times1+16\times2.
-$$
+```
 
-$$
+```math
 =13+0+15+32=60.
-$$
+```
 
 与矩阵右下角一致。
 
 ### 13.8 一个 tile 内到底复用了几次
 
-对左上输出 tile 的第一个 $K$ tile：
+对左上输出 tile 的第一个 $`K`$ tile：
 
-- $A[0,0]=1$ 同时用于 $C[0,0]$ 和 $C[0,1]$，复用 $B_N=2$ 次；
-- $A[0,1]=2$ 也用于这两个输出，复用 2 次；
-- $B[0,0]=1$ 同时用于 $C[0,0]$ 和 $C[1,0]$，复用 $B_M=2$ 次；
-- $B[0,1]=2$ 也跨两行输出复用 2 次。
+- $`A[0,0]=1`$ 同时用于 $`C[0,0]`$ 和 $`C[0,1]`$，复用 $`B_N=2`$ 次；
+- $`A[0,1]=2`$ 也用于这两个输出，复用 2 次；
+- $`B[0,0]=1`$ 同时用于 $`C[0,0]`$ 和 $`C[1,0]`$，复用 $`B_M=2`$ 次；
+- $`B[0,1]=2`$ 也跨两行输出复用 2 次。
 
-一般输出 tile 是 $B_M\times B_N$：
+一般输出 tile 是 $`B_M\times B_N`$：
 
-- 每个载入的 $A$ 元素横向供 $B_N$ 个输出使用；
-- 每个载入的 $B$ 元素纵向供 $B_M$ 个输出使用。
+- 每个载入的 $`A`$ 元素横向供 $`B_N`$ 个输出使用；
+- 每个载入的 $`B`$ 元素纵向供 $`B_M`$ 个输出使用。
 
 这就是“从 HBM 读一次，在片上用多次”。
 
-### 13.9 一般 $B_M,B_N,B_K$ 的 input reads 推导
+### 13.9 一般 $`B_M,B_N,B_K`$ 的 input reads 推导
 
-**【课程内容 + 补充精确化｜视频 [76:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4579s)–[78:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4702s)】**先假设 $M,N,K$ 都能分别整除 $B_M,B_N,B_K$，不考虑边界 padding。
+**【课程内容 + 补充精确化｜视频 [76:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4579s)–[78:22](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4702s)】**先假设 $`M,N,K`$ 都能分别整除 $`B_M,B_N,B_K`$，不考虑边界 padding。
 
 输出 tiles 数：
 
-$$
+```math
 \frac{M}{B_M}\times\frac{N}{B_N}.
-$$
+```
 
-每个输出 tile 要走的 $K$ tiles 数：
+每个输出 tile 要走的 $`K`$ tiles 数：
 
-$$
+```math
 \frac{K}{B_K}.
-$$
+```
 
-每次 $K$ tile 读取：
+每次 $`K`$ tile 读取：
 
-$$
+```math
 B_MB_K\ \text{个 A 元素}
-$$
+```
 
 和：
 
-$$
+```math
 B_KB_N\ \text{个 B 元素}.
-$$
+```
 
 总 input reads：
 
-$$
+```math
 \frac{M}{B_M}
 \frac{N}{B_N}
 \frac{K}{B_K}
 (B_MB_K+B_KB_N).
-$$
+```
 
 分别约掉：
 
-$$
+```math
 =\frac{MNK}{B_N}+\frac{MNK}{B_M}.
-$$
+```
 
 合写：
 
-$$
+```math
 =MNK\left(\frac1{B_N}+\frac1{B_M}\right).
-$$
+```
 
-为什么 $B_K$ 在这个理想计数里约掉？$B_K$ 加倍时，每次 tile 读量加倍，但 $K$ 循环次数减半。$B_K$ 仍影响 Tensor Core shape、shared memory、registers、pipeline 和实际速度；“在此公式里约掉”不等于“它不重要”。
+为什么 $`B_K`$ 在这个理想计数里约掉？$`B_K`$ 加倍时，每次 tile 读量加倍，但 $`K`$ 循环次数减半。$`B_K`$ 仍影响 Tensor Core shape、shared memory、registers、pipeline 和实际速度；“在此公式里约掉”不等于“它不重要”。
 
 若不能整除，调度的候选 load slots 为：
 
-$$
+```math
 \left\lceil\frac{M}{B_M}\right\rceil
 \left\lceil\frac{N}{B_N}\right\rceil
 \left\lceil\frac{K}{B_K}\right\rceil
 (B_MB_K+B_KB_N),
-$$
+```
 
 边界 mask 会让一部分 slots 不真正访问 global memory。精确有效元素读数依赖各边界 tile 的剩余尺寸。
 
-### 13.10 方阵、方形输出 tile：为什么是 $2N^3/T$
+### 13.10 方阵、方形输出 tile：为什么是 $`2N^3/T`$
 
 令：
 
-$$
+```math
 M=N=K,
 \quad B_M=B_N=T.
-$$
+```
 
 代入：
 
-$$
+```math
 N^3\left(\frac1T+\frac1T\right)
 =\frac{2N^3}{T}
-$$
+```
 
 个 input elements。
 
 另有输出写：
 
-$$
+```math
 N^2\ \text{elements}.
-$$
+```
 
-不能把 output writes 藏进 input reads；它们在精确总流量比里会让改善略小于 $T$。
+不能把 output writes 藏进 input reads；它们在精确总流量比里会让改善略小于 $`T`$。
 
-### 13.11 用户关心的完整例：$N=1024,T=32$
+### 13.11 用户关心的完整例：$`N=1024,T=32`$
 
-**【补充】**方阵 $A,B,C$ 都是 $1024\times1024$，FP32 每元素 4 bytes。
+**【补充】**方阵 $`A,B,C`$ 都是 $`1024\times1024`$，FP32 每元素 4 bytes。
 
 先定义本节第一次使用的二进制容量单位：
 
-$$
+```math
 1\ \text{MiB}=2^{20}=1{,}048{,}576\ \text{bytes},
-$$
+```
 
-$$
+```math
 1\ \text{GiB}=1{,}024\ \text{MiB}
 =2^{30}=1{,}073{,}741{,}824\ \text{bytes}.
-$$
+```
 
 `MiB/GiB` 是二进制单位；这里不要把它们与十进制厂商容量标签 `MB/GB` 混算。
 
 先算元素数：
 
-$$
+```math
 N^2=1024^2=1{,}048{,}576.
-$$
+```
 
-$$
+```math
 N^3=1024^3=1{,}073{,}741{,}824.
-$$
+```
 
 #### Naive input reads
 
-每个 $A$ 元素要服务 1,024 个输出列，约读 1,024 次；每个 $B$ 元素要服务 1,024 个输出行，也约读 1,024 次。
+每个 $`A`$ 元素要服务 1,024 个输出列，约读 1,024 次；每个 $`B`$ 元素要服务 1,024 个输出行，也约读 1,024 次。
 
-$$
+```math
 2N^3
 =2\times1{,}073{,}741{,}824
 =2{,}147{,}483{,}648
-$$
+```
 
 个 input elements。
 
 换 bytes：
 
-$$
+```math
 2{,}147{,}483{,}648\times4
 =8{,}589{,}934{,}592\ \text{bytes}.
-$$
+```
 
-$$
+```math
 8{,}589{,}934{,}592/1{,}073{,}741{,}824
 =8\ \text{GiB}.
-$$
+```
 
 #### Tiled input reads
 
 输出每边有：
 
-$$
+```math
 N/T=1024/32=32
-$$
+```
 
-个 tiles。一个 $A$ 元素只需针对 32 个输出-column tiles 各载入一次，所以约读 32 次；一个 $B$ 元素也针对 32 个输出-row tiles 各载入一次。每次进 tile 后，它分别被 32 个输出复用。
+个 tiles。一个 $`A`$ 元素只需针对 32 个输出-column tiles 各载入一次，所以约读 32 次；一个 $`B`$ 元素也针对 32 个输出-row tiles 各载入一次。每次进 tile 后，它分别被 32 个输出复用。
 
 公式：
 
-$$
+```math
 \frac{2N^3}{T}
 =\frac{2\times1{,}073{,}741{,}824}{32}
 =67{,}108{,}864
-$$
+```
 
 个 input elements。
 
 换 bytes：
 
-$$
+```math
 67{,}108{,}864\times4
 =268{,}435{,}456\ \text{bytes}.
-$$
+```
 
 再除以每 MiB 的 bytes：
 
-$$
+```math
 268{,}435{,}456/1{,}048{,}576
 =256\ \text{MiB}.
-$$
+```
 
 #### Output writes
 
-两种方法都至少写 $N^2$ 个输出：
+两种方法都至少写 $`N^2`$ 个输出：
 
-$$
+```math
 1{,}048{,}576\times4
 =4{,}194{,}304\ \text{bytes}.
-$$
+```
 
-$$
+```math
 4{,}194{,}304/1{,}048{,}576
 =4\ \text{MiB}.
-$$
+```
 
 #### 总流量与真实比值
 
 先把 naive 的 8 GiB 换成 MiB：
 
-$$
+```math
 8\ \text{GiB}
 =8\times1{,}024\ \text{MiB}
 =8{,}192\ \text{MiB}.
-$$
+```
 
 Naive 教学总量：
 
-$$
+```math
 8{,}192+4=8{,}196\ \text{MiB}.
-$$
+```
 
 换回 GiB：
 
-$$
+```math
 8{,}196/1{,}024
 =8.00390625\ \text{GiB}
 \approx8.004\ \text{GiB}.
-$$
+```
 
 Tiled 教学总量：
 
-$$
+```math
 256\ \text{MiB}+4\ \text{MiB}
 =260\ \text{MiB}.
-$$
+```
 
 两者都用 MiB 后求比值：
 
-$$
+```math
 \frac{8192+4}{256+4}
 =\frac{8196}{260}
 \approx31.523.
-$$
+```
 
-约 $31.52\times$，不是包含 output 后精确 $32\times$。若只比 input reads：
+约 $`31.52\times`$，不是包含 output 后精确 $`32\times`$。若只比 input reads：
 
-$$
+```math
 8\ \text{GiB}/256\ \text{MiB}=32.
-$$
+```
 
 ### 13.12 连接 arithmetic intensity 与 Roofline
 
 **【补充理解】**矩阵乘 FLOPs 约：
 
-$$
+```math
 F\approx2N^3.
-$$
+```
 
-Naive FP32 input bytes 约 $8N^3$，忽略较小 output 后：
+Naive FP32 input bytes 约 $`8N^3`$，忽略较小 output 后：
 
-$$
+```math
 I_{naive}\approx\frac{2N^3}{8N^3}=0.25\ \text{FLOP/byte}.
-$$
+```
 
 Tiled input bytes 约：
 
-$$
+```math
 4\times\frac{2N^3}{T}=\frac{8N^3}{T}.
-$$
+```
 
-所以大 $N$ 时：
+所以大 $`N`$ 时：
 
-$$
+```math
 I_{tiled}\approx
 \frac{2N^3}{8N^3/T}
 =\frac{T}{4}\ \text{FLOP/byte}.
-$$
+```
 
-$T=32$ 时约 $8$ FLOP/byte。Roofline 会用 arithmetic intensity 判断 bandwidth roof 与 compute roof 哪个更低；tiling 把点向右推，但是否跨过 ridge point 仍取决于具体 GPU 的带宽、峰值计算、dtype 和实际 kernel 效率。这里不重复 Lecture 5 全章，也不把 $T/4$ 当实测值：cache、额外读写、边界、pipeline 和 fusion 都会改变它。
+$`T=32`$ 时约 $`8`$ FLOP/byte。Roofline 会用 arithmetic intensity 判断 bandwidth roof 与 compute roof 哪个更低；tiling 把点向右推，但是否跨过 ridge point 仍取决于具体 GPU 的带宽、峰值计算、dtype 和实际 kernel 效率。这里不重复 Lecture 5 全章，也不把 $`T/4`$ 当实测值：cache、额外读写、边界、pipeline 和 fusion 都会改变它。
 
 ## 14. Triton matmul wrapper 与 kernel：每个索引都追踪 shape
 
@@ -3277,8 +3265,8 @@ def triton_matmul_relu(a: torch.Tensor, b: torch.Tensor):
 1. 两个输入必须在 CUDA device；CPU pointer 不能交给 GPU kernel。
 2. 课程实现只处理 contiguous 输入，因为后面 strides 和 pointer 访问按这种条件测试。
 3. `a.shape[1]==b.shape[0]` 检查两个 inner dimensions 相等。
-4. `M,K=a.shape` 先得到 $A$ 的 $M,K$。
-5. `K,N=b.shape` 又把 Python 变量 `K` 覆盖为 $B$ 的行数。前一行 `assert` 已保证新旧两个 $K$ 相同，所以结果正确；教学或生产代码写成 `K_a`、`K_b` 再 assert 会更不易误读。
+4. `M,K=a.shape` 先得到 $`A`$ 的 $`M,K`$。
+5. `K,N=b.shape` 又把 Python 变量 `K` 覆盖为 $`B`$ 的行数。前一行 `assert` 已保证新旧两个 $`K`$ 相同，所以结果正确；教学或生产代码写成 `K_a`、`K_b` 再 assert 会更不易误读。
 6. 输出 shape 是 `[M,N]`。
 
 课程 `torch.empty((M,N),device=a.device)` 没显式传 `dtype=a.dtype`。在默认设置下它通常创建默认浮点 dtype，未必适配所有输入 dtype；这是教学简化。通用 wrapper 应明确输出 dtype，并检查 `a.dtype/b.dtype/device` 是否兼容。
@@ -3303,20 +3291,20 @@ stride_col = 1
 
 元素 `(row=1,col=2)` 的元素偏移：
 
-$$
+```math
 1\times4+2\times1=6.
-$$
+```
 
 扁平 storage 的第 6 项是 6，检查一致。公式：
 
-$$
-\operatorname{offset}(r,c)
+```math
+\mathrm{offset}(r,c)
 =r\cdot stride_{row}+c\cdot stride_{col}.
-$$
+```
 
 Stride 以“元素”为单位，不是固定以 bytes 为单位。
 
-### 14.3 Grid：每个 program 负责一个 $C$ tile
+### 14.3 Grid：每个 program 负责一个 $`C`$ tile
 
 **【课程代码｜行 619–630｜视频 [79:54](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4794s)】**
 
@@ -3331,17 +3319,17 @@ grid = (
 
 - grid axis 0 枚举输出 row tiles；
 - grid axis 1 枚举输出 column tiles；
-- $B_K$ 不形成独立 grid 维，而在同一 program 内通过 loop 累加。
+- $`B_K`$ 不形成独立 grid 维，而在同一 program 内通过 loop 累加。
 
-若 $M=130,N=70,B_M=B_N=64$：
+若 $`M=130,N=70,B_M=B_N=64`$：
 
-$$
+```math
 \lceil130/64\rceil=3,
 \quad
 \lceil70/64\rceil=2,
-$$
+```
 
-所以 grid shape 是 `[3,2]`，一共 $3\times2=6$ 个 program instances。
+所以 grid shape 是 `[3,2]`，一共 $`3\times2=6`$ 个 program instances。
 
 ### 14.4 `pid_m,pid_n` 与三个一维 index vectors
 
@@ -3362,21 +3350,21 @@ indices_n = (
 indices_k = tl.arange(0, BLOCK_K)  # shape [BLOCK_K]
 ```
 
-例：$B_M=2,B_N=3,B_K=2$，program `(pid_m=1,pid_n=2)`：
+例：$`B_M=2,B_N=3,B_K=2`$，program `(pid_m=1,pid_n=2)`：
 
-$$
+```math
 indices_m=1\times2+[0,1]=[2,3],
-$$
+```
 
-$$
+```math
 indices_n=2\times3+[0,1,2]=[6,7,8],
-$$
+```
 
-$$
+```math
 indices_k=[0,1].
-$$
+```
 
-这里 `indices_k` 是当前 $K$ tile 内的相对索引；loop 变量 `k` 和 pointer advance 会把它移到后续 $K$ tiles。
+这里 `indices_k` 是当前 $`K`$ tile 内的相对索引；loop 变量 `k` 和 pointer advance 会把它移到后续 $`K`$ tiles。
 
 ### 14.5 `None` 是新增长度为 1 的 axis
 
@@ -3400,21 +3388,21 @@ indices_k[None, :].shape = [1, BK]
 [BM,1] + [1,BK] -> [BM,BK]
 ```
 
-小例 $indices_m=[2,3]$、$indices_k=[0,1]$：
+小例 $`indices_m=[2,3]`$、$`indices_k=[0,1]`$：
 
-$$
+```math
 indices_m[:,None]
 =\begin{bmatrix}2\\3\end{bmatrix},
-$$
+```
 
-$$
+```math
 indices_k[None,:]
 =\begin{bmatrix}0&1\end{bmatrix}.
-$$
+```
 
 把 row index 乘 row stride、column index 乘 column stride，再广播相加，就得到一个 pointer matrix。
 
-### 14.6 $A/B$ pointer matrices 的 shape
+### 14.6 $`A/B`$ pointer matrices 的 shape
 
 **【课程代码｜行 655–657｜视频 [80:38](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4838s)】**
 
@@ -3432,13 +3420,13 @@ b_ptrs = (
 )  # shape [BLOCK_K, BLOCK_N]
 ```
 
-- `a_ptrs[i,q]` 指向 $A[indices_m[i],indices_k[q]]$；
-- `b_ptrs[q,j]` 指向 $B[indices_k[q],indices_n[j]]$；
+- `a_ptrs[i,q]` 指向 $`A[indices_m[i],indices_k[q]]`$；
+- `b_ptrs[q,j]` 指向 $`B[indices_k[q],indices_n[j]]`$；
 - 一个是 `[B_M,B_K]`，另一个是 `[B_K,B_N]`，正好可以矩阵乘出 `[B_M,B_N]`。
 
 `a_ptrs` 或 `b_ptrs` 不是已经 load 的数字；它们是地址组成的矩阵。真正读 memory 发生在 `tl.load`。
 
-### 14.7 $K$ loop：mask、`tl.dot` 与 pointer advance
+### 14.7 $`K`$ loop：mask、`tl.dot` 与 pointer advance
 
 **【课程代码｜行 659–667｜视频 [80:46](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4846s)–[81:29](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4889s)】**
 
@@ -3470,13 +3458,13 @@ for k in range(0, K, BLOCK_K):
 
 1. `acc` shape `[B_M,B_N]`，FP32 累加降低低精度输入的累计误差；
 2. `&` 是逐元素 logical AND（逻辑与），左右条件都 True 才 load；不能换成 Python scalar `and`；
-3. $A$ mask 同时检查输出 row 是否小于 $M$、有效 $K$ 是否小于总 $K$；
-4. $B$ mask 同时检查有效 $K$、输出 column 是否小于 $N$；
-5. 越界项填 0，因为矩阵乘中 $0\times z=0$，不会改变 accumulator；
+3. $`A`$ mask 同时检查输出 row 是否小于 $`M`$、有效 $`K`$ 是否小于总 $`K`$；
+4. $`B`$ mask 同时检查有效 $`K`$、输出 column 是否小于 $`N`$；
+5. 越界项填 0，因为矩阵乘中 $`0\times z=0`$，不会改变 accumulator；
 6. `tl.dot(a,b)` 语义是 `[B_M,B_K]@[B_K,B_N]→[B_M,B_N]`；compiler 依 dtype、shape 和硬件选择可用的矩阵乘实现，不能仅凭这一行保证使用某种 Tensor Core 指令；
-7. `a_ptrs += B_K*stride_ak` 把 $A$ 指针向右移动 $B_K$ 列；
-8. `b_ptrs += B_K*stride_bk` 把 $B$ 指针向下移动 $B_K$ 行；
-9. `indices_k` 本身仍是 `[0,...,B_K-1]`，所以 mask 用 `indices_k+k` 检查当前全局 $K$。
+7. `a_ptrs += B_K*stride_ak` 把 $`A`$ 指针向右移动 $`B_K`$ 列；
+8. `b_ptrs += B_K*stride_bk` 把 $`B`$ 指针向下移动 $`B_K`$ 行；
+9. `indices_k` 本身仍是 `[0,...,B_K-1]`，所以 mask 用 `indices_k+k` 检查当前全局 $`K`$。
 
 ### 14.8 Store pointer 与二维边界 mask
 
@@ -3497,22 +3485,22 @@ tl.store(
 )
 ```
 
-`c_ptrs` shape `[B_M,B_N]`。边界 tile 的候选 row/column 可能超过真正 $M,N$，所以 store 也必须 mask；load mask 正确不代表 store 自动安全。
+`c_ptrs` shape `[B_M,B_N]`。边界 tile 的候选 row/column 可能超过真正 $`M,N`$，所以 store 也必须 mask；load mask 正确不代表 store 自动安全。
 
-### 14.9 非整除完整例：$M=3,N=5,K=3$，blocks 都是 2
+### 14.9 非整除完整例：$`M=3,N=5,K=3`$，blocks 都是 2
 
 **【补充】**设：
 
-$$
+```math
 B_M=B_N=B_K=2.
-$$
+```
 
 Grid：
 
-$$
+```math
 \lceil3/2\rceil\times\lceil5/2\rceil
 =2\times3.
-$$
+```
 
 六个 programs 的候选输出：
 
@@ -3527,11 +3515,11 @@ $$
 
 最难的 program `(1,2)`：
 
-$$
+```math
 indices_m=[2,3],
 \quad indices_n=[4,5],
 \quad indices_k=[0,1].
-$$
+```
 
 假设连续 row-major：
 
@@ -3541,11 +3529,11 @@ B strides = [5,1]
 C strides = [5,1]
 ```
 
-#### 第一个 $K$ tile：`k=0`
+#### 第一个 $`K`$ tile：`k=0`
 
-$A$ 候选元素 offsets：
+$`A`$ 候选元素 offsets：
 
-$$
+```math
 \begin{bmatrix}
 2\times3+0&2\times3+1\\
 3\times3+0&3\times3+1
@@ -3555,21 +3543,21 @@ $$
 6&7\\
 9&10
 \end{bmatrix}.
-$$
+```
 
-$A$ mask：row 2 有效、row 3 越界；$k=0,1$ 都有效：
+$`A`$ mask：row 2 有效、row 3 越界；$`k=0,1`$ 都有效：
 
-$$
+```math
 mask_A^{(0)}=
 \begin{bmatrix}
 T&T\\
 F&F
 \end{bmatrix}.
-$$
+```
 
-$B$ 候选 offsets：
+$`B`$ 候选 offsets：
 
-$$
+```math
 \begin{bmatrix}
 0\times5+4&0\times5+5\\
 1\times5+4&1\times5+5
@@ -3579,53 +3567,53 @@ $$
 4&5\\
 9&10
 \end{bmatrix}.
-$$
+```
 
-两个 $k$ 都有效，但 col 5 越界：
+两个 $`k`$ 都有效，但 col 5 越界：
 
-$$
+```math
 mask_B^{(0)}=
 \begin{bmatrix}
 T&F\\
 T&F
 \end{bmatrix}.
-$$
+```
 
-#### 第二个 $K$ tile：`k=2`
+#### 第二个 $`K`$ tile：`k=2`
 
 Pointers 分别前进：
 
-$$
+```math
 B_K\cdot stride_{ak}=2\times1=2,
-$$
+```
 
-$$
+```math
 B_K\cdot stride_{bk}=2\times5=10.
-$$
+```
 
-有效全局 $K$ 候选为 `[2,3]`，而 $K=3$，所以只有 2 有效。
+有效全局 $`K`$ 候选为 `[2,3]`，而 $`K=3`$，所以只有 2 有效。
 
-$$
+```math
 mask_A^{(1)}=
 \begin{bmatrix}
 T&F\\
 F&F
 \end{bmatrix},
-$$
+```
 
-$$
+```math
 mask_B^{(1)}=
 \begin{bmatrix}
 T&F\\
 F&F
 \end{bmatrix}.
-$$
+```
 
 #### Store
 
-Candidate $C$ offsets：
+Candidate $`C`$ offsets：
 
-$$
+```math
 \begin{bmatrix}
 2\times5+4&2\times5+5\\
 3\times5+4&3\times5+5
@@ -3635,18 +3623,18 @@ $$
 14&15\\
 19&20
 \end{bmatrix}.
-$$
+```
 
 Store mask：
 
-$$
+```math
 \begin{bmatrix}
 T&F\\
 F&F
 \end{bmatrix}.
-$$
+```
 
-因此这个 program 最终只写合法的 $C[2,4]$。其他三个 candidate positions 只是 tile padding，不能写 memory。
+因此这个 program 最终只写合法的 $`C[2,4]`$。其他三个 candidate positions 只是 tile padding，不能写 memory。
 
 ### 14.10 读 kernel 的 shape 检查表
 
@@ -3669,13 +3657,13 @@ $$
 
 **【课程代码｜行 602–604、669–674｜视频 [72:19](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4339s)】**ReLU 是 Rectified Linear Unit（修正线性单元）：
 
-$$
-\operatorname{ReLU}(z)=\max(z,0).
-$$
+```math
+\mathrm{ReLU}(z)=\max(z,0).
+```
 
-- $z>0$：保留 $z$；
-- $z=0$：仍为 0；
-- $z<0$：变为 0；
+- $`z>0`$：保留 $`z`$；
+- $`z=0`$：仍为 0；
+- $`z<0`$：变为 0；
 - 逐元素操作，shape 不变。
 
 Naive 高层代码：
@@ -3685,13 +3673,13 @@ def naive_matmul_relu(x, y):
     return torch.nn.functional.relu(x @ y)
 ```
 
-概念上先产生完整中间矩阵 $Z=X@Y$，再算 $C=\operatorname{ReLU}(Z)$。
+概念上先产生完整中间矩阵 $`Z=X@Y`$，再算 $`C=\mathrm{ReLU}(Z)`$。
 
-### 15.2 含负数的 $2\times2$ 完整例
+### 15.2 含负数的 $`2\times2`$ 完整例
 
 **【补充】**取：
 
-$$
+```math
 A=
 \begin{bmatrix}
 1&-2\\
@@ -3703,39 +3691,39 @@ B=
 1&2\\
 3&-1
 \end{bmatrix}.
-$$
+```
 
 先算 matmul：
 
-$$
+```math
 Z[0,0]=1\times1+(-2)\times3=1-6=-5,
-$$
+```
 
-$$
+```math
 Z[0,1]=1\times2+(-2)\times(-1)=2+2=4,
-$$
+```
 
-$$
+```math
 Z[1,0]=(-3)\times1+1\times3=-3+3=0,
-$$
+```
 
-$$
+```math
 Z[1,1]=(-3)\times2+1\times(-1)=-6-1=-7.
-$$
+```
 
 所以：
 
-$$
+```math
 Z=AB=
 \begin{bmatrix}
 -5&4\\
 0&-7
 \end{bmatrix}.
-$$
+```
 
 逐项 ReLU：
 
-$$
+```math
 C=
 \begin{bmatrix}
 \max(-5,0)&\max(4,0)\\
@@ -3746,11 +3734,11 @@ C=
 0&4\\
 0&0
 \end{bmatrix}.
-$$
+```
 
 ### 15.3 Fused kernel 在哪里做 ReLU
 
-**【课程代码｜行 659–674｜视频 [78:39](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4719s)–[81:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4907s)】**所有 $K$ tiles 累加后，`acc` 已是最终 matmul output tile，但还在 program 的片上计算状态中：
+**【课程代码｜行 659–674｜视频 [78:39](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4719s)–[81:47](https://www.youtube.com/watch?v=xnDHaNUvHBg&t=4907s)】**所有 $`K`$ tiles 累加后，`acc` 已是最终 matmul output tile，但还在 program 的片上计算状态中：
 
 ```python
 for k in range(0, K, BLOCK_K):
@@ -3774,7 +3762,7 @@ store once
 
 ### 15.4 Output-side 流量和 launch 账
 
-**【补充推导】**这里只比较 matmul input tiles 已经读完之后的 output-side logical transfers；$A/B$ 的读取两种路径相同，不重复计。
+**【补充推导】**这里只比较 matmul input tiles 已经读完之后的 output-side logical transfers；$`A/B`$ 的读取两种路径相同，不重复计。
 
 Separate kernels：
 
@@ -3797,23 +3785,23 @@ launch 数                    1
 
 逻辑节省：
 
-$$
+```math
 3MN-MN=2MN
-$$
+```
 
-个 element-transfers，也就是省掉中间 $Z$ 的一次写与一次读。
+个 element-transfers，也就是省掉中间 $`Z`$ 的一次写与一次读。
 
-对 $2\times2$ FP32：
+对 $`2\times2`$ FP32：
 
-$$
+```math
 2MN=2\times2\times2=8
-$$
+```
 
 个元素传输：
 
-$$
+```math
 8\times4=32\ \text{bytes}.
-$$
+```
 
 **Epilogue（尾处理）**是 matmul 完成主要乘加、写回 output 前执行的 bias、activation、类型转换等末尾操作。这是教学 logical traffic；真实 HBM bytes 受 cache、已有 library epilogue、compiler fusion 和 memory transaction 粒度影响。若高层编译器本来就把 activation 融入 matmul epilogue，naive 源码也不一定真的启动两个 kernels；必须 profile。
 
@@ -3828,7 +3816,7 @@ Fusion 可能增加：
 
 这些情况不能随便融合：
 
-- 中间 $Z$ 还被另一个 **consumer（下游使用者，即另一个需要读取 $Z$ 的操作）**使用；若不 store，就得重新计算；
+- 中间 $`Z`$ 还被另一个 **consumer（下游使用者，即另一个需要读取 $`Z`$ 的操作）**使用；若不 store，就得重新计算；
 - 两步之间需要跨 programs 的 global synchronization；
 - 融合后 tile 太大、register spill，实际反而慢；
 - vendor/library matmul kernel 极强，自写 fused kernel 的 matmul 主体损失超过 epilogue 收益；
@@ -3873,16 +3861,16 @@ Fusion 可能增加：
 | registers | 每 thread/program 临时量是否过多？ | 调小 tile、减少 live values | register 越少永远越快 |
 | occupancy | resident warps 是否被 register/shared 限制？ | 调 block/warps/tile | occupancy 低必然慢 |
 | waves | blocks 数是否让最后一波只占少数 SM？ | 调 grid/tile、batch | blocks 越多越好 |
-| compute | `tl.dot`/dtype/shape 是否适合硬件矩阵单元？ | 调 $B_M,B_N,B_K$、dtype | 某个固定 tile 适合所有 GPU |
+| compute | `tl.dot`/dtype/shape 是否适合硬件矩阵单元？ | 调 $`B_M,B_N,B_K`$、dtype | 某个固定 tile 适合所有 GPU |
 | numerical | fusion/重排是否改变舍入或稳定性？ | FP32 acc、减 max、tolerance | bit 不同就是错误，或差很多也没关系 |
 
 ### 16.3 为什么没有万能最佳 tile size
 
 增大 tile 常常提高数据复用：
 
-$$
+```math
 \text{square matmul teaching intensity}\approx T/4.
-$$
+```
 
 但同时会增加：
 
@@ -3893,7 +3881,7 @@ $$
 - 单个 block 运行时间；
 - block 数减少后产生 wave quantization tail 的风险。
 
-因此 $T=16,32,64,128$ 没有脱离上下文的永久冠军。最佳选择依赖 $M,N,K$、dtype、GPU、compiler、并发 workload 和是否融合 epilogue。现实实现常用 autotuning（自动调参）：在合法候选配置中实测，再选该 shape/设备上更快者。
+因此 $`T=16,32,64,128`$ 没有脱离上下文的永久冠军。最佳选择依赖 $`M,N,K`$、dtype、GPU、compiler、并发 workload 和是否融合 epilogue。现实实现常用 autotuning（自动调参）：在合法候选配置中实测，再选该 shape/设备上更快者。
 
 ### 16.4 三种例子形成的难度阶梯
 
@@ -3936,14 +3924,14 @@ Matmul
 
 `torch.allclose(a,b)` 的逐元素判断是：
 
-$$
+```math
 |a-b|\le atol+rtol\,|b|.
-$$
+```
 
 - `atol` 是 absolute tolerance（绝对容差）；
-- `rtol` 是 relative tolerance（相对容差），会随参考值 $|b|$ 增大。
+- `rtol` 是 relative tolerance（相对容差），会随参考值 $`|b|`$ 增大。
 
-课程源码只显式传 `atol=1e-6`，没有传 `rtol`，因此仍保留 PyTorch 默认 `rtol=1e-5`；它不是“纯绝对误差 $10^{-6}$”。若真要只检查绝对误差，应显式写 `rtol=0, atol=1e-6`。默认情况下，两个对应位置都是 `NaN` 也不会被视为相等；若测试契约明确要求“对应 NaN 算相同”，还要有意识地设置 `equal_nan=True`，不能让默认行为替你决定。
+课程源码只显式传 `atol=1e-6`，没有传 `rtol`，因此仍保留 PyTorch 默认 `rtol=1e-5`；它不是“纯绝对误差 $`10^{-6}`$”。若真要只检查绝对误差，应显式写 `rtol=0, atol=1e-6`。默认情况下，两个对应位置都是 `NaN` 也不会被视为相等；若测试契约明确要求“对应 NaN 算相同”，还要有意识地设置 `equal_nan=True`，不能让默认行为替你决定。
 
 另一个覆盖边界：`check_equal_2d_2d` 虽在行 723–728 定义，可用于两个二维输入的函数，但 `main()`/`triton_matmul_relu_example()` 并没有调用它验证 matmul+ReLU。定义了 helper 不等于该路径已被测试。生产测试还应加入 matmul reference、边界 shape、非整除尺寸、NaN/Inf 策略和按 dtype 选择的容差。
 
@@ -4167,7 +4155,7 @@ compute利用不足且matmul shape不合适
 
 20. **错误说法：任何 reduction 的 padding 都填 0。**
    - 为什么错：softmax 先做 max；补 0 可能把全负行的 maximum 错改为 0。
-   - 正确说法：softmax padding 在至少一个有效值有限时用 $-\infty$，使 max 不变且 exp 后为 0；row sum padding 才用 0。若有效行全是 $-\infty$，仍会因 $-\infty-(-\infty)$ 得 NaN，必须单独处理。
+   - 正确说法：softmax padding 在至少一个有效值有限时用 $`-\infty`$，使 max 不变且 exp 后为 0；row sum padding 才用 0。若有效行全是 $`-\infty`$，仍会因 $`-\infty-(-\infty)`$ 得 NaN，必须单独处理。
 
 21. **错误说法：fusion 总会更快。**
     - 为什么错：融合可能增加 registers、spill、编译时间，或失去高度优化的 library kernel。
@@ -4179,19 +4167,19 @@ compute利用不足且matmul shape不合适
 
 ### 18.6 Matmul tiling
 
-23. **错误说法：课程写 $MKN$ reads，所以 scalar input reads 精确是 $MKN$。**
-    - 为什么错：每个 $(m,n,k)$ 要读一个 $A$ 和一个 $B$ 标量，精确是 $2MKN$；课程省略常数 2 做 big-O。
-    - 正确说法：渐近讨论可写 $O(MKN)$；精确 bytes 账写 $2MKN$。
+23. **错误说法：课程写 $`MKN`$ reads，所以 scalar input reads 精确是 $`MKN`$。**
+    - 为什么错：每个 $`(m,n,k)`$ 要读一个 $`A`$ 和一个 $`B`$ 标量，精确是 $`2MKN`$；课程省略常数 2 做 big-O。
+    - 正确说法：渐近讨论可写 $`O(MKN)`$；精确 bytes 账写 $`2MKN`$。
 
 24. **错误说法：tile 越大永远越好。**
     - 为什么错：复用增加的同时，register/shared 用量、padding、wave tail 和 spill 也可能增加。
     - 正确说法：限定合法候选，在目标 shape、dtype、GPU 上 autotune/benchmark。
 
-25. **错误说法：$B_K$ 在简化 global-read 公式中约掉，所以 $B_K$ 不影响性能。**
+25. **错误说法：$`B_K`$ 在简化 global-read 公式中约掉，所以 $`B_K`$ 不影响性能。**
     - 为什么错：它仍影响 `tl.dot` shape、Tensor Core 路径、pipeline、shared/register 资源和循环次数。
     - 正确说法：只说“在可整除的理想 global input element count 中约掉”。
 
-26. **错误说法：$N=1024,T=32$ 的总流量精确减少 32 倍。**
+26. **错误说法：$`N=1024,T=32`$ 的总流量精确减少 32 倍。**
     - 为什么错：input reads 是 32 倍，但两种方案都还要写 4 MiB 输出。
     - 正确说法：教学总量是约 8.004 GiB 对 260 MiB，比值约 31.52。
 
@@ -4204,7 +4192,7 @@ compute利用不足且matmul shape不合适
     - 正确说法：要么 assert column-contiguous 并分配连续 output，要么传入并乘上 input/output column strides。
 
 29. **错误说法：随机 `allclose` 通过就证明 GeLU 对所有输入稳定。**
-    - 为什么错：随机正态样本几乎抽不到 $x=20$；课程 `exp(2a)` 路径会在此 FP32 overflow，可能产生 `inf/inf=NaN`。
+    - 为什么错：随机正态样本几乎抽不到 $`x=20`$；课程 `exp(2a)` 路径会在此 FP32 overflow，可能产生 `inf/inf=NaN`。
     - 正确说法：除随机比较外，显式测试极大正负值、NaN、Inf；生产实现使用稳定 builtin/tanh 路径。
 
 ## 19. 自测题：先独立写，再看 §20
@@ -4245,17 +4233,17 @@ compute利用不足且matmul shape不合适
 
 17. Profiler 里看到许多持续极短、之间有 gaps 的 kernels，支持什么瓶颈假设？还要用什么证据确认？
 
-18. 【手算】按 tanh GeLU 近似，已知 $a(1)=0.83356197$、`tanh(a)=0.68238398`，求 GeLU(1)。
+18. 【手算】按 tanh GeLU 近似，已知 $`a(1)=0.83356197`$、`tanh(a)=0.68238398`，求 GeLU(1)。
 
-19. 【手算】先利用 $a(-1)=-0.83356197$、`tanh(a)=-0.68238398` 求 GeLU(-1)。再说明课程 kernel 对 $x=20$ 为什么可能产生 NaN，而稳定 GeLU 应约为多少；随机 `allclose` 为什么可能漏掉它？
+19. 【手算】先利用 $`a(-1)=-0.83356197`$、`tanh(a)=-0.68238398` 求 GeLU(-1)。再说明课程 kernel 对 $`x=20`$ 为什么可能产生 NaN，而稳定 GeLU 应约为多少；随机 `allclose` 为什么可能漏掉它？
 
-20. 【手算】$N=16,384$ 个 FP32 元素，理想 fused GeLU 只读一次输入、写一次输出。共有多少 element-transfers、bytes、KiB？
+20. 【手算】$`N=16,384`$ 个 FP32 元素，理想 fused GeLU 只读一次输入、写一次输出。共有多少 element-transfers、bytes、KiB？
 
 21. 为什么不能从 naive GeLU 表达式里数出 9 个运算符，就断言所有机器固定启动 9 个 kernels？
 
 22. 依次解释 CUDA、Triton、PTX、SASS 各在哪一层；PTX 与 SASS 是否相同？
 
-23. 【手算】Triton GeLU 的 $N=10,BLOCK\_SIZE=8$，`cdiv` 得多少 programs？两个 programs 的 offsets 分别是什么？
+23. 【手算】Triton GeLU 的 $`N=10,BLOCK\_SIZE=8`$，`cdiv` 得多少 programs？两个 programs 的 offsets 分别是什么？
 
 24. 【手算】承接第 23 题，写出 program 1 的 8 项 mask，并列出真正 load/store 的下标。
 
@@ -4267,47 +4255,47 @@ compute利用不足且matmul shape不合适
 
 28. 【手算】对 `[5,5,5]` 做数值稳定 softmax：写 row max、shifted、exp、denominator 与输出。
 
-29. 【手算】对 `[0,0,100]` 做数值稳定 softmax，使用 $e^{-100}\approx3.72008\times10^{-44}$。
+29. 【手算】对 `[0,0,100]` 做数值稳定 softmax，使用 $`e^{-100}\approx3.72008\times10^{-44}`$。
 
-30. 【手算】课程 traffic 口径下，$M=2,N=3$ 的 naive softmax reads、writes、总 transfers 各多少？逐步骤相加。
+30. 【手算】课程 traffic 口径下，$`M=2,N=3`$ 的 naive softmax reads、writes、总 transfers 各多少？逐步骤相加。
 
-31. 【手算】同一 $2\times3$ softmax 的 fused 理想 transfers 是多少？naive/fused 比是多少？一般比值为何趋近 4 而不是 4.5？
+31. 【手算】同一 $`2\times3`$ softmax 的 fused 理想 transfers 是多少？naive/fused 比是多少？一般比值为何趋近 4 而不是 4.5？
 
 32. 【手算】`next_power_of_2(3)` 是多少？对长度 3 的 row，写出四项 offsets、mask 和 padding load values。再对 transpose tensor shape `[3,2]`、stride `[1,3]`、storage `[1,2,3,4,5,6]`，说明逻辑 row 0 应读哪些 offsets，而课程 `+col_offsets` 错读哪些 offsets。
 
-33. 【手算】若真实 row 为 `[-5,-6,-7]`，padding 错填 0，row max 会错成什么？用 $-\infty$ 时 max 是什么？若所有有效 logits 本身全是 $-\infty$，减 max 后发生什么？
+33. 【手算】若真实 row 为 `[-5,-6,-7]`，padding 错填 0，row max 会错成什么？用 $`-\infty`$ 时 max 是什么？若所有有效 logits 本身全是 $`-\infty`$，减 max 后发生什么？
 
-34. 【手算】row sum 的输入是 `[1,2,...,12]`、$B=4$。写三轮 accumulator，最后求和。
+34. 【手算】row sum 的输入是 `[1,2,...,12]`、$`B=4`$。写三轮 accumulator，最后求和。
 
-35. 【手算】row sum 的输入是 `[1,2,...,10]`、$B=4$。写最后一轮 mask/load、最终 accumulator 与 row sum。
+35. 【手算】row sum 的输入是 `[1,2,...,10]`、$`B=4`$。写最后一轮 mask/load、最终 accumulator 与 row sum。
 
 36. 【手算】连续 `x` shape `[4,10]`，row-sum program 处理 `row=2`、当前 `start=4,B=4`。`x_ptr + row*N + cols` 的四个元素 offsets 是多少？
 
-37. 【手算】$A$ shape `[3,4]`、$B$ shape `[4,2]`，输出 shape 是什么？总输出元素数多少？若 $B$ 是 `[5,2]`，为什么不能乘？
+37. 【手算】$`A`$ shape `[3,4]`、$`B`$ shape `[4,2]`，输出 shape 是什么？总输出元素数多少？若 $`B`$ 是 `[5,2]`，为什么不能乘？
 
-38. 【手算】某个 $A$ row 为 `[1,2,3]`，对应 $B$ column 为 `[4,5,6]`，求一个输出元素。
+38. 【手算】某个 $`A`$ row 为 `[1,2,3]`，对应 $`B`$ column 为 `[4,5,6]`，求一个输出元素。
 
-39. 【手算】$M=3,K=4,N=2$ 的 naive matmul，按 scalar-element 口径求 input reads 与 output writes；课程写 $MKN$ reads 对应什么简化？
+39. 【手算】$`M=3,K=4,N=2`$ 的 naive matmul，按 scalar-element 口径求 input reads 与 output writes；课程写 $`MKN`$ reads 对应什么简化？
 
-40. 【手算】§13 的 $4\times4,T=2$ 例中，左上输出 tile 的两个 partial matrices 是 `[[1,4],[5,16]]` 与 `[[10,4],[22,8]]`。逐项相加得到什么？
+40. 【手算】§13 的 $`4\times4,T=2`$ 例中，左上输出 tile 的两个 partial matrices 是 `[[1,4],[5,16]]` 与 `[[10,4],[22,8]]`。逐项相加得到什么？
 
-41. 方形输出 tile $T=32$ 内，每个载入的 A 元素和 B 元素各被多少个输出复用？它们在整个 $N=1024$ 乘法中各从 HBM 读约多少次？
+41. 方形输出 tile $`T=32`$ 内，每个载入的 A 元素和 B 元素各被多少个输出复用？它们在整个 $`N=1024`$ 乘法中各从 HBM 读约多少次？
 
-42. 【手算】$M=128,N=256,K=64,B_M=32,B_N=64,B_K=16$，假设全整除。用“tiles 数×每 tile reads”与化简公式两种方法求 input element reads。
+42. 【手算】$`M=128,N=256,K=64,B_M=32,B_N=64,B_K=16`$，假设全整除。用“tiles 数×每 tile reads”与化简公式两种方法求 input element reads。
 
-43. 【手算】$N=1024,T=32$、FP32：naive 与 tiled input element reads、input bytes 分别是多少？
+43. 【手算】$`N=1024,T=32`$、FP32：naive 与 tiled input element reads、input bytes 分别是多少？
 
 44. 【手算】承接第 43 题，加上共同的 4 MiB output，求 naive 总 GiB、tiled 总 MiB 和总流量比。
 
-45. 【手算】方阵 FP32 tiled matmul 的教学 arithmetic intensity 约 $T/4$ FLOP/byte。$T=32$ 时是多少？这是否保证 compute-bound？
+45. 【手算】方阵 FP32 tiled matmul 的教学 arithmetic intensity 约 $`T/4`$ FLOP/byte。$`T=32`$ 时是多少？这是否保证 compute-bound？
 
-46. 【手算】$M=130,N=70,B_M=B_N=64$，grid shape 和 program 总数是多少？哪些方向有边界 tile？
+46. 【手算】$`M=130,N=70,B_M=B_N=64`$，grid shape 和 program 总数是多少？哪些方向有边界 tile？
 
-47. 【手算】`indices_m=[2,3]`、`indices_k=[0,1,2]`，$A$ strides `[4,1]`。写出 `indices_m[:,None]`、`indices_k[None,:]` 的 shapes，以及广播得到的 $2\times3$ element-offset matrix。
+47. 【手算】`indices_m=[2,3]`、`indices_k=[0,1,2]`，$`A`$ strides `[4,1]`。写出 `indices_m[:,None]`、`indices_k[None,:]` 的 shapes，以及广播得到的 $`2\times3`$ element-offset matrix。
 
-48. 【手算】`indices_k=[0,1]`、`indices_n=[4,5]`，$B$ strides `[5,1]`。写出初始 $B$ pointer element-offset matrix。
+48. 【手算】`indices_k=[0,1]`、`indices_n=[4,5]`，$`B`$ strides `[5,1]`。写出初始 $`B`$ pointer element-offset matrix。
 
-49. 【手算】边界例 $M=3,N=5,K=3,B_M=B_N=B_K=2$，program `(1,2)` 在 `k=0` 时写出 A load mask 和 B load mask。
+49. 【手算】边界例 $`M=3,N=5,K=3,B_M=B_N=B_K=2`$，program `(1,2)` 在 `k=0` 时写出 A load mask 和 B load mask。
 
 50. 【手算】承接第 49 题，在第二个 K tile `k=2` 时写 A/B masks；最终 C store mask 是什么？真正写哪个元素？
 
@@ -4315,7 +4303,7 @@ compute利用不足且matmul shape不合适
 
 52. `a` tile shape `[B_M,B_K]`、`b` tile `[B_K,B_N]`，`tl.dot` 与 accumulator shape 各是什么？为什么用 FP32 accumulator？
 
-53. 【手算】$A=[[1,-2],[-3,1]]$、$B=[[1,2],[3,-1]]$。求 $AB$ 与 `ReLU(AB)`。
+53. 【手算】$`A=[[1,-2],[-3,1]]`$、$`B=[[1,2],[3,-1]]`$。求 $`AB`$ 与 `ReLU(AB)`。
 
 54. 【手算】输出 shape `[128,64]`、元素 FP16（2 bytes）。只比较 output side，separate matmul+ReLU 与 fused 各搬多少 bytes？融合逻辑节省多少 KiB？
 
@@ -4339,105 +4327,71 @@ compute利用不足且matmul shape不合适
 
 3. A 分支执行时，一个 warp 的 32 lane positions 都占 3 周期：
 
-   $$
-   32\times3=96\ \text{lane-slots}.
-   $$
+   $`32\times3=96\ \text{lane-slots}.`$
 
    B 分支同样：
 
-   $$
-   32\times3=96.
-   $$
+   $`32\times3=96.`$
 
    总消耗：
 
-   $$
-   96+96=192.
-   $$
+   $`96+96=192.`$
 
    有用 lane-slots：
 
-   $$
-   20\times3+12\times3=60+36=96.
-   $$
+   $`20\times3+12\times3=60+36=96.`$
 
    利用率：
 
-   $$
-   96/192=0.5=50\%.
-   $$
+   $`96/192=0.5=50\%.`$
 
 4. Registers/block：
 
-   $$
-   128\times160=20{,}480.
-   $$
+   $`128\times160=20{,}480.`$
 
    Resident blocks：
 
-   $$
-   \left\lfloor65{,}536/20{,}480\right\rfloor=3.
-   $$
+   $`\left\lfloor65{,}536/20{,}480\right\rfloor=3.`$
 
    每 block warps：
 
-   $$
-   128/32=4.
-   $$
+   $`128/32=4.`$
 
    Resident warps：
 
-   $$
-   3\times4=12.
-   $$
+   $`3\times4=12.`$
 
    Warp occupancy：
 
-   $$
-   12/64=0.1875=18.75\%.
-   $$
+   $`12/64=0.1875=18.75\%.`$
 
 5. 误用 64 threads：
 
-   $$
-   64\times160=10{,}240\ \text{registers/block}.
-   $$
+   $`64\times160=10{,}240\ \text{registers/block}.`$
 
-   $$
-   \left\lfloor65{,}536/10{,}240\right\rfloor=6\ \text{blocks}.
-   $$
+   $`\left\lfloor65{,}536/10{,}240\right\rfloor=6\ \text{blocks}.`$
 
-   每 block 是 $64/32=2$ warps，所以：
+   每 block 是 $`64/32=2`$ warps，所以：
 
-   $$
-   6\times2=12\ \text{warps},
-   $$
+   $`6\times2=12\ \text{warps},`$
 
    occupancy 仍是：
 
-   $$
-   12/64=18.75\%.
-   $$
+   $`12/64=18.75\%.`$
 
    百分比碰巧相同，但 resident blocks 是 6 而不是 3；block 上限、shared memory、同步和 wave 行为都会不同，所以不能用错误输入得到的同百分比冒充正确推导。
 
 6. 第一波可放 148 blocks，还剩：
 
-   $$
-   160-148=12.
-   $$
+   $`160-148=12.`$
 
    因此共 2 波。最后一波 12 个 SM 工作，空闲：
 
-   $$
-   148-12=136.
-   $$
+   $`148-12=136.`$
 
    最后一波利用率：
 
-   $$
-   12/148\approx0.081081=8.11\%.
-   $$
+   $`12/148\approx0.081081=8.11\%.`$
 
 7. 先除以 4 得 word index，再模 32：
 
@@ -4451,11 +4405,9 @@ compute利用不足且matmul shape不合适
 
 8. Thread 0→word0→bank0；thread1→bank1；thread30→bank30；thread31→bank31。32 个 threads 各去不同 bank，教学模型中没有 bank conflict。
 
-9. Thread $t$ 的 bank：
+9. Thread $`t`$ 的 bank：
 
-   $$
-   (32t)\bmod32=0.
-   $$
+   $`(32t)\bmod32=0.`$
 
    所有 32 个地址落 bank 0，且 word addresses 不同，所以是教学模型中的 32-way bank conflict，需要拆成约 32 路服务。
 
@@ -4463,9 +4415,7 @@ compute利用不足且matmul shape不合适
 
 11. 有效 bytes：
 
-   $$
-   32\times4=128\ \text{bytes}.
-   $$
+   $`32\times4=128\ \text{bytes}.`$
 
    对齐良好的教学模型中正好覆盖一个 128-byte 区间，所以 1 个 transaction。
 
@@ -4480,15 +4430,11 @@ compute利用不足且matmul shape不合适
 
 13. 总 HBM bytes：
 
-   $$
-   8{,}192+8{,}192=16{,}384.
-   $$
+   $`8{,}192+8{,}192=16{,}384.`$
 
    Arithmetic intensity：
 
-   $$
-   4{,}096/16{,}384=0.25\ \text{FLOP/byte}.
-   $$
+   $`4{,}096/16{,}384=0.25\ \text{FLOP/byte}.`$
 
 14. 时间线：
 
@@ -4506,22 +4452,15 @@ compute利用不足且matmul shape不合适
 
 16. Mean：
 
-   $$
-   (1+1+1+5)/4=8/4=2\ \text{ms}.
-   $$
+   $`(1+1+1+5)/4=8/4=2\ \text{ms}.`$
 
    Population variance：
 
-   $$
-   \frac{(1-2)^2+(1-2)^2+(1-2)^2+(5-2)^2}{4}
-   =\frac{1+1+1+9}{4}=3\ \text{ms}^2.
-   $$
+   $`\frac{(1-2)^2+(1-2)^2+(1-2)^2+(5-2)^2}{4} =\frac{1+1+1+9}{4}=3\ \text{ms}^2.`$
 
    排序仍是 `[1,1,1,5]`，median 是中间两项平均：
 
-   $$
-   (1+1)/2=1\ \text{ms}.
-   $$
+   $`(1+1)/2=1\ \text{ms}.`$
 
    Mean 被 5 ms outlier 拉到 2 ms，不能代表最常见的 1 ms。
 
@@ -4529,78 +4468,47 @@ compute利用不足且matmul shape不合适
 
 18. 代入：
 
-   $$
-   \operatorname{GeLU}(1)
-   \approx0.5\times1\times(1+0.68238398).
-   $$
+   $`\mathrm{GeLU}(1) \approx0.5\times1\times(1+0.68238398).`$
 
-   $$
-   =0.5\times1.68238398
-   =0.84119199.
-   $$
+   $`=0.5\times1.68238398 =0.84119199.`$
 
 19. 代入：
 
-   $$
-   \operatorname{GeLU}(-1)
-   \approx0.5\times(-1)\times(1-0.68238398).
-   $$
+   $`\mathrm{GeLU}(-1) \approx0.5\times(-1)\times(1-0.68238398).`$
 
-   $$
-   =-0.5\times0.31761602
-   =-0.15880801.
-   $$
+   $`=-0.5\times0.31761602 =-0.15880801.`$
 
    结果仍为负，不是 0；GeLU 不把所有负数清零。
 
-   对 $x=20$：
+   对 $`x=20`$：
 
-   $$
-   x^3=8{,}000,
-   $$
+   $`x^3=8{,}000,`$
 
-   $$
-   a=0.79788456(20+0.044715\times8{,}000)
-   \approx301.376956,
-   $$
+   $`a=0.79788456(20+0.044715\times8{,}000) \approx301.376956,`$
 
-   $$
-   2a\approx602.753912.
-   $$
+   $`2a\approx602.753912.`$
 
    FP32 的 `exp(602.75)` overflow 为 `inf`，课程改写会出现：
 
-   $$
-   (\text{inf}-1)/(\text{inf}+1)
-   =\text{inf}/\text{inf},
-   $$
+   $`(\text{inf}-1)/(\text{inf}+1) =\text{inf}/\text{inf},`$
 
    因而可能 NaN。稳定 `tanh(a)\approx1`，所以：
 
-   $$
-   \operatorname{GeLU}(20)
-   \approx0.5\times20\times2=20.
-   $$
+   $`\mathrm{GeLU}(20) \approx0.5\times20\times2=20.`$
 
    标准随机测试几乎抽不到 20，必须另加极端/NaN/Inf cases。
 
 20. Reads+writes：
 
-   $$
-   2N=2\times16{,}384=32{,}768
-   $$
+   $`2N=2\times16{,}384=32{,}768`$
 
    次 element-transfers。Bytes：
 
-   $$
-   32{,}768\times4=131{,}072\ \text{bytes}.
-   $$
+   $`32{,}768\times4=131{,}072\ \text{bytes}.`$
 
    KiB：
 
-   $$
-   131{,}072/1{,}024=128\ \text{KiB}.
-   $$
+   $`131{,}072/1{,}024=128\ \text{KiB}.`$
 
 21. 运算符是计算图的概念节点，不是固定 kernel 边界。Backend 可合并标量操作，compiler 可 fusion，某些 temporary 可留在 cache/register；版本、dtype、shape 与 GPU 也会改变生成代码。实际 kernel 数要看当前环境 profiler。
 
@@ -4608,21 +4516,15 @@ compute利用不足且matmul shape不合适
 
 23. Programs：
 
-   $$
-   \lceil10/8\rceil=2.
-   $$
+   $`\lceil10/8\rceil=2.`$
 
    Program 0：
 
-   $$
-   0\times8+[0,1,\ldots,7]=[0,1,2,3,4,5,6,7].
-   $$
+   $`0\times8+[0,1,\ldots,7]=[0,1,2,3,4,5,6,7].`$
 
    Program 1：
 
-   $$
-   1\times8+[0,1,\ldots,7]=[8,9,10,11,12,13,14,15].
-   $$
+   $`1\times8+[0,1,\ldots,7]=[8,9,10,11,12,13,14,15].`$
 
 24. 与 `offset<10` 比较：
 
@@ -4635,15 +4537,11 @@ compute利用不足且matmul shape不合适
 
 25. FP32 每元素 4 bytes：
 
-   $$
-   1000+8\times4=1032.
-   $$
+   $`1000+8\times4=1032.`$
 
    FP16 每元素 2 bytes：
 
-   $$
-   1000+8\times2=1016.
-   $$
+   $`1000+8\times2=1016.`$
 
 26. `%ctaid.x` 给 CTA/block 的 x 编号；`%tid.x` 给 block 内 thread x 编号；`ld.global`/`st.global` 表示 global address-space load/store。Global address space 的访问还可经过 L1/L2 cache，所以名字本身不证明每次触达 HBM。
 
@@ -4651,43 +4549,31 @@ compute利用不足且matmul shape不合适
 
 28. Row max：
 
-   $$
-   m=5.
-   $$
+   $`m=5.`$
 
    Shifted：
 
-   $$
-   [5,5,5]-5=[0,0,0].
-   $$
+   $`[5,5,5]-5=[0,0,0].`$
 
-   Exp：`[1,1,1]`；denominator：$1+1+1=3$；输出：
+   Exp：`[1,1,1]`；denominator：$`1+1+1=3`$；输出：
 
-   $$
-   [1/3,1/3,1/3].
-   $$
+   $`[1/3,1/3,1/3].`$
 
 29. Max 是 100；shifted：
 
-   $$
-   [-100,-100,0].
-   $$
+   $`[-100,-100,0].`$
 
    Exp：
 
-   $$
-   [3.72008\times10^{-44},3.72008\times10^{-44},1].
-   $$
+   $`[3.72008\times10^{-44},3.72008\times10^{-44},1].`$
 
    Denominator：
 
-   $$
-   1+2\times3.72008\times10^{-44}\approx1.
-   $$
+   $`1+2\times3.72008\times10^{-44}\approx1.`$
 
    输出约等于同一向量。
 
-30. $MN=2\times3=6$。Reads：
+30. $`MN=2\times3=6`$。Reads：
 
    ```text
    max 6
@@ -4711,29 +4597,21 @@ compute利用不足且matmul shape不合适
 
    总 transfers：
 
-   $$
-   32+22=54.
-   $$
+   $`32+22=54.`$
 
-31. Fused 只读输入 $MN$、写输出 $MN$：
+31. Fused 只读输入 $`MN`$、写输出 $`MN`$：
 
-   $$
-   2MN=2\times2\times3=12.
-   $$
+   $`2MN=2\times2\times3=12.`$
 
    比值：
 
-   $$
-   54/12=4.5.
-   $$
+   $`54/12=4.5.`$
 
    一般比值：
 
-   $$
-   \frac{8MN+3M}{2MN}=4+\frac{3}{2N}.
-   $$
+   $`\frac{8MN+3M}{2MN}=4+\frac{3}{2N}.`$
 
-   当 $N$ 增大，$3/(2N)$ 趋近 0，所以比值趋近 4。
+   当 $`N`$ 增大，$`3/(2N)`$ 趋近 0，所以比值趋近 4。
 
 32. 不小于 3 的最小 2 的幂是 4，所以 `next_power_of_2(3)=4`。
 
@@ -4743,61 +4621,45 @@ compute利用不足且matmul shape不合适
    loads   = [x0,x1,x2,-inf]
    ```
 
-   最后一项不能访问真实地址，语义值用 $-\infty$。
+   最后一项不能访问真实地址，语义值用 $`-\infty`$。
 
-   Transpose 例中 row 0 base 是 $0\times stride(0)=0$。正确 column stride 是 3：
+   Transpose 例中 row 0 base 是 $`0\times stride(0)=0`$。正确 column stride 是 3：
 
-   $$
-   0+[0\times3,1\times3]=[0,3],
-   $$
+   $`0+[0\times3,1\times3]=[0,3],`$
 
    从 storage 读 `[1,4]`。课程 kernel 直接加 `[0,1]`，错读 offsets `[0,1]`，得到 `[1,2]`。所以只传 row stride 不足以支持任意 strided tensor。
 
 33. 错填 0：
 
-   $$
-   \max(-5,-6,-7,0)=0,
-   $$
+   $`\max(-5,-6,-7,0)=0,`$
 
-   把真实最大值改坏。填 $-\infty$：
+   把真实最大值改坏。填 $`-\infty`$：
 
-   $$
-   \max(-5,-6,-7,-\infty)=-5,
-   $$
+   $`\max(-5,-6,-7,-\infty)=-5,`$
 
-   保留真实 row max；且 $e^{-\infty}=0$，不进入 denominator。这个结论假设至少有一个有限有效 logit。
+   保留真实 row max；且 $`e^{-\infty}=0`$，不进入 denominator。这个结论假设至少有一个有限有效 logit。
 
-   若所有有效值都是 $-\infty$，row max 也是 $-\infty$，然后每项做：
+   若所有有效值都是 $`-\infty`$，row max 也是 $`-\infty`$，然后每项做：
 
-   $$
-   -\infty-(-\infty)=\operatorname{NaN}.
-   $$
+   $`-\infty-(-\infty)=\mathrm{NaN}.`$
 
    所以该行不会自动得到全 0 概率；实现要避免 fully masked row 或显式定义特殊结果。
 
 34. 初始 `[0,0,0,0]`。第一轮加 `[1,2,3,4]`：
 
-   $$
-   [1,2,3,4].
-   $$
+   $`[1,2,3,4].`$
 
    第二轮加 `[5,6,7,8]`：
 
-   $$
-   [6,8,10,12].
-   $$
+   $`[6,8,10,12].`$
 
    第三轮加 `[9,10,11,12]`：
 
-   $$
-   [15,18,21,24].
-   $$
+   $`[15,18,21,24].`$
 
    最后：
 
-   $$
-   15+18+21+24=33+45=78.
-   $$
+   $`15+18+21+24=33+45=78.`$
 
 35. 前两轮后 accumulator 是 `[6,8,10,12]`。最后：
 
@@ -4809,248 +4671,145 @@ compute利用不足且matmul shape不合适
 
    更新：
 
-   $$
-   [6+9,8+10,10+0,12+0]=[15,18,10,12].
-   $$
+   $`[6+9,8+10,10+0,12+0]=[15,18,10,12].`$
 
    总和：
 
-   $$
-   15+18+10+12=55.
-   $$
+   $`15+18+10+12=55.`$
 
 36. Row base：
 
-   $$
-   row\times N=2\times10=20.
-   $$
+   $`row\times N=2\times10=20.`$
 
    当前 `cols=[4,5,6,7]`，所以 offsets：
 
-   $$
-   20+[4,5,6,7]=[24,25,26,27].
-   $$
+   $`20+[4,5,6,7]=[24,25,26,27].`$
 
 37. Inner dimensions 都是 4，所以：
 
-   $$
-   [3,4]@[4,2]\to[3,2].
-   $$
+   $`[3,4]@[4,2]\to[3,2].`$
 
    输出元素数：
 
-   $$
-   3\times2=6.
-   $$
+   $`3\times2=6.`$
 
-   若 $B=[5,2]$，inner dimensions 是 4 与 5，不相等；无法把长度 4 的 row 与长度 5 的 column 逐项乘加。
+   若 $`B=[5,2]`$，inner dimensions 是 4 与 5，不相等；无法把长度 4 的 row 与长度 5 的 column 逐项乘加。
 
 38. Dot product：
 
-   $$
-   1\times4+2\times5+3\times6
-   =4+10+18=32.
-   $$
+   $`1\times4+2\times5+3\times6 =4+10+18=32.`$
 
 39. Input scalar reads：
 
-   $$
-   2MKN=2\times3\times4\times2=48.
-   $$
+   $`2MKN=2\times3\times4\times2=48.`$
 
    Output writes：
 
-   $$
-   MN=3\times2=6.
-   $$
+   $`MN=3\times2=6.`$
 
-   课程的 $MKN=24$ 把每个 $(m,n,k)$ 取得的一对 A/B 操作数省略常数 2，当成一次概念读事件用于 big-O。
+   课程的 $`MKN=24`$ 把每个 $`(m,n,k)`$ 取得的一对 A/B 操作数省略常数 2，当成一次概念读事件用于 big-O。
 
 40. 逐项：
 
-   $$
-   \begin{bmatrix}
-   1+10&4+4\\
-   5+22&16+8
-   \end{bmatrix}
-   =
-   \begin{bmatrix}
-   11&8\\
-   27&24
-   \end{bmatrix}.
-   $$
+   $`\begin{bmatrix} 1+10&4+4\\ 5+22&16+8 \end{bmatrix} = \begin{bmatrix} 11&8\\ 27&24 \end{bmatrix}.`$
 
-41. 在 $T=32$ 输出 tile 内，每个 A 元素横向服务 32 个 output columns；每个 B 元素纵向服务 32 个 output rows，所以都复用 32 次。整个 $N=1024$ 输出每边有：
+41. 在 $`T=32`$ 输出 tile 内，每个 A 元素横向服务 32 个 output columns；每个 B 元素纵向服务 32 个 output rows，所以都复用 32 次。整个 $`N=1024`$ 输出每边有：
 
-   $$
-   N/T=1024/32=32
-   $$
+   $`N/T=1024/32=32`$
 
    个 tiles，所以每个 A/B 输入元素约为不同输出 tile 从 HBM 读 32 次，而不是 naive 的 1,024 次。
 
 42. 输出 tile 数：
 
-   $$
-   (128/32)\times(256/64)=4\times4=16.
-   $$
+   $`(128/32)\times(256/64)=4\times4=16.`$
 
    每个输出 tile 有：
 
-   $$
-   K/B_K=64/16=4
-   $$
+   $`K/B_K=64/16=4`$
 
    个 K tiles。每个 K tile 读：
 
-   $$
-   B_MB_K+B_KB_N
-   =32\times16+16\times64
-   =512+1024=1536.
-   $$
+   $`B_MB_K+B_KB_N =32\times16+16\times64 =512+1024=1536.`$
 
    总读：
 
-   $$
-   16\times4\times1536=98{,}304.
-   $$
+   $`16\times4\times1536=98{,}304.`$
 
    化简公式复核：
 
-   $$
-   MNK=128\times256\times64=2{,}097{,}152,
-   $$
+   $`MNK=128\times256\times64=2{,}097{,}152,`$
 
-   $$
-   \frac1{B_N}+\frac1{B_M}
-   =\frac1{64}+\frac1{32}
-   =\frac3{64}.
-   $$
+   $`\frac1{B_N}+\frac1{B_M} =\frac1{64}+\frac1{32} =\frac3{64}.`$
 
-   $$
-   2{,}097{,}152\times\frac3{64}
-   =32{,}768\times3
-   =98{,}304.
-   $$
+   $`2{,}097{,}152\times\frac3{64} =32{,}768\times3 =98{,}304.`$
 
 43. 先重述单位，避免依赖正文：
 
-   $$
-   1\ \text{MiB}=1{,}048{,}576\ \text{bytes},
-   \quad
-   1\ \text{GiB}=1{,}024\ \text{MiB}
-   =1{,}073{,}741{,}824\ \text{bytes}.
-   $$
+   $`1\ \text{MiB}=1{,}048{,}576\ \text{bytes}, \quad 1\ \text{GiB}=1{,}024\ \text{MiB} =1{,}073{,}741{,}824\ \text{bytes}.`$
 
    Naive input elements：
 
-   $$
-   2N^3=2\times1024^3
-   =2{,}147{,}483{,}648.
-   $$
+   $`2N^3=2\times1024^3 =2{,}147{,}483{,}648.`$
 
    FP32 bytes：
 
-   $$
-   2{,}147{,}483{,}648\times4
-   =8{,}589{,}934{,}592\ \text{bytes}.
-   $$
+   $`2{,}147{,}483{,}648\times4 =8{,}589{,}934{,}592\ \text{bytes}.`$
 
-   $$
-   8{,}589{,}934{,}592/1{,}073{,}741{,}824
-   =8\ \text{GiB}.
-   $$
+   $`8{,}589{,}934{,}592/1{,}073{,}741{,}824 =8\ \text{GiB}.`$
 
    Tiled input elements：
 
-   $$
-   2N^3/T
-   =2{,}147{,}483{,}648/32
-   =67{,}108{,}864.
-   $$
+   $`2N^3/T =2{,}147{,}483{,}648/32 =67{,}108{,}864.`$
 
    Bytes：
 
-   $$
-   67{,}108{,}864\times4
-   =268{,}435{,}456\ \text{bytes}.
-   $$
+   $`67{,}108{,}864\times4 =268{,}435{,}456\ \text{bytes}.`$
 
-   $$
-   268{,}435{,}456/1{,}048{,}576
-   =256\ \text{MiB}.
-   $$
+   $`268{,}435{,}456/1{,}048{,}576 =256\ \text{MiB}.`$
 
-44. 每个 MiB 仍是 $1{,}048{,}576$ bytes。Output bytes：
+44. 每个 MiB 仍是 $`1{,}048{,}576`$ bytes。Output bytes：
 
-   $$
-   N^2\times4
-   =1024^2\times4
-   =4{,}194{,}304\ \text{bytes}.
-   $$
+   $`N^2\times4 =1024^2\times4 =4{,}194{,}304\ \text{bytes}.`$
 
-   $$
-   4{,}194{,}304/1{,}048{,}576
-   =4\ \text{MiB}.
-   $$
+   $`4{,}194{,}304/1{,}048{,}576 =4\ \text{MiB}.`$
 
    先把 naive 8 GiB 变成 MiB：
 
-   $$
-   8\times1{,}024=8{,}192\ \text{MiB}.
-   $$
+   $`8\times1{,}024=8{,}192\ \text{MiB}.`$
 
    Naive total 是：
 
-   $$
-   8{,}192+4=8{,}196\ \text{MiB}.
-   $$
+   $`8{,}192+4=8{,}196\ \text{MiB}.`$
 
-   $$
-   8{,}196/1{,}024
-   =8.00390625\ \text{GiB}.
-   $$
+   $`8{,}196/1{,}024 =8.00390625\ \text{GiB}.`$
 
    Tiled total：
 
-   $$
-   256+4=260\ \text{MiB}.
-   $$
+   $`256+4=260\ \text{MiB}.`$
 
    两者已统一为 MiB，所以：
 
-   $$
-   \frac{8192+4}{260}
-   =8196/260
-   \approx31.523.
-   $$
+   $`\frac{8192+4}{260} =8196/260 \approx31.523.`$
 
 45. 代入：
 
-   $$
-   I\approx T/4=32/4=8\ \text{FLOP/byte}.
-   $$
+   $`I\approx T/4=32/4=8\ \text{FLOP/byte}.`$
 
    不保证 compute-bound；还要把 8 与该 GPU、该 dtype 的 Roofline ridge point 比较，并检查实际 bytes、计算利用率和资源限制。
 
 46. Row tiles：
 
-   $$
-   \lceil130/64\rceil=3.
-   $$
+   $`\lceil130/64\rceil=3.`$
 
    Column tiles：
 
-   $$
-   \lceil70/64\rceil=2.
-   $$
+   $`\lceil70/64\rceil=2.`$
 
    Grid `[3,2]`，programs：
 
-   $$
-   3\times2=6.
-   $$
+   $`3\times2=6.`$
 
-   $130$ 不是 64 的倍数，所以最后 row tile 是边界；$70$ 也不是 64 的倍数，所以最后 column tile 也是边界。
+   $`130`$ 不是 64 的倍数，所以最后 row tile 是边界；$`70`$ 也不是 64 的倍数，所以最后 column tile 也是边界。
 
 47. Shapes：
 
@@ -5060,78 +4819,33 @@ compute利用不足且matmul shape不合适
    broadcast result  -> [2,3]
    ```
 
-   Row 2 base：$2\times4=8$；row 3 base：$3\times4=12$。加 column offsets `[0,1,2]`：
+   Row 2 base：$`2\times4=8`$；row 3 base：$`3\times4=12`$。加 column offsets `[0,1,2]`：
 
-   $$
-   \begin{bmatrix}
-   8&9&10\\
-   12&13&14
-   \end{bmatrix}.
-   $$
+   $`\begin{bmatrix} 8&9&10\\ 12&13&14 \end{bmatrix}.`$
 
-48. $B[k,n]$ offset 是 $k\times5+n$：
+48. $`B[k,n]`$ offset 是 $`k\times5+n`$：
 
-   $$
-   \begin{bmatrix}
-   0\times5+4&0\times5+5\\
-   1\times5+4&1\times5+5
-   \end{bmatrix}
-   =
-   \begin{bmatrix}
-   4&5\\
-   9&10
-   \end{bmatrix}.
-   $$
+   $`\begin{bmatrix} 0\times5+4&0\times5+5\\ 1\times5+4&1\times5+5 \end{bmatrix} = \begin{bmatrix} 4&5\\ 9&10 \end{bmatrix}.`$
 
    Col 5 逻辑越界，即使扁平 offset 5/10 落到 storage 的别处，也必须 mask。
 
-49. Program `(1,2)` 有 rows `[2,3]`、cols `[4,5]`、当前 K `[0,1]`。$M=3$ 只 row2 有效，$N=5$ 只 col4 有效，两个 K 都有效。
+49. Program `(1,2)` 有 rows `[2,3]`、cols `[4,5]`、当前 K `[0,1]`。$`M=3`$ 只 row2 有效，$`N=5`$ 只 col4 有效，两个 K 都有效。
 
-   $$
-   mask_A^{(0)}=
-   \begin{bmatrix}
-   T&T\\
-   F&F
-   \end{bmatrix},
-   \quad
-   mask_B^{(0)}=
-   \begin{bmatrix}
-   T&F\\
-   T&F
-   \end{bmatrix}.
-   $$
+   $`mask_A^{(0)}= \begin{bmatrix} T&T\\ F&F \end{bmatrix}, \quad mask_B^{(0)}= \begin{bmatrix} T&F\\ T&F \end{bmatrix}.`$
 
-50. 第二轮有效 K candidates 是 `[2,3]`，而总 $K=3$，所以只 K=2 有效。结合 row/column：
+50. 第二轮有效 K candidates 是 `[2,3]`，而总 $`K=3`$，所以只 K=2 有效。结合 row/column：
 
-   $$
-   mask_A^{(1)}=
-   \begin{bmatrix}
-   T&F\\
-   F&F
-   \end{bmatrix},
-   $$
+   $`mask_A^{(1)}= \begin{bmatrix} T&F\\ F&F \end{bmatrix},`$
 
-   $$
-   mask_B^{(1)}=
-   \begin{bmatrix}
-   T&F\\
-   F&F
-   \end{bmatrix}.
-   $$
+   $`mask_B^{(1)}= \begin{bmatrix} T&F\\ F&F \end{bmatrix}.`$
 
    Store 只检查 rows/cols：
 
-   $$
-   mask_C=
-   \begin{bmatrix}
-   T&F\\
-   F&F
-   \end{bmatrix}.
-   $$
+   $`mask_C= \begin{bmatrix} T&F\\ F&F \end{bmatrix}.`$
 
-   真正写 $C[2,4]$。
+   真正写 $`C[2,4]`$。
 
-51. 前面的 `assert a.shape[1]==b.shape[0]` 保证 $K_a=K_b$，所以覆盖后数值相同。更清楚写法：
+51. 前面的 `assert a.shape[1]==b.shape[0]` 保证 $`K_a=K_b`$，所以覆盖后数值相同。更清楚写法：
 
    ```python
    M, K_a = a.shape
@@ -5142,68 +4856,39 @@ compute利用不足且matmul shape不合适
 
 52. Matrix multiply：
 
-   $$
-   [B_M,B_K]@[B_K,B_N]
-   \to[B_M,B_N].
-   $$
+   $`[B_M,B_K]@[B_K,B_N] \to[B_M,B_N].`$
 
    `acc` 也必须是 `[B_M,B_N]`。FP32 accumulator 可减少 FP16/BF16 多次乘加的舍入误差；最终输出可再按需求转换。
 
 53. 四项 matmul：
 
-   $$
-   1\times1+(-2)\times3=-5,
-   $$
+   $`1\times1+(-2)\times3=-5,`$
 
-   $$
-   1\times2+(-2)\times(-1)=4,
-   $$
+   $`1\times2+(-2)\times(-1)=4,`$
 
-   $$
-   (-3)\times1+1\times3=0,
-   $$
+   $`(-3)\times1+1\times3=0,`$
 
-   $$
-   (-3)\times2+1\times(-1)=-7.
-   $$
+   $`(-3)\times2+1\times(-1)=-7.`$
 
    所以：
 
-   $$
-   AB=
-   \begin{bmatrix}-5&4\\0&-7\end{bmatrix},
-   \quad
-   \operatorname{ReLU}(AB)=
-   \begin{bmatrix}0&4\\0&0\end{bmatrix}.
-   $$
+   $`AB= \begin{bmatrix}-5&4\\0&-7\end{bmatrix}, \quad \mathrm{ReLU}(AB)= \begin{bmatrix}0&4\\0&0\end{bmatrix}.`$
 
 54. 元素数：
 
-   $$
-   MN=128\times64=8{,}192.
-   $$
+   $`MN=128\times64=8{,}192.`$
 
-   Separate output-side 是 $3MN$ element-transfers：
+   Separate output-side 是 $`3MN`$ element-transfers：
 
-   $$
-   3\times8{,}192\times2
-   =49{,}152\ \text{bytes}
-   =48\ \text{KiB}.
-   $$
+   $`3\times8{,}192\times2 =49{,}152\ \text{bytes} =48\ \text{KiB}.`$
 
-   Fused 是 $MN$ writes：
+   Fused 是 $`MN`$ writes：
 
-   $$
-   8{,}192\times2
-   =16{,}384\ \text{bytes}
-   =16\ \text{KiB}.
-   $$
+   $`8{,}192\times2 =16{,}384\ \text{bytes} =16\ \text{KiB}.`$
 
    节省：
 
-   $$
-   48-16=32\ \text{KiB}.
-   $$
+   $`48-16=32\ \text{KiB}.`$
 
 55. 任举两项：融合可能让 live temporaries/register pressure 增长并 spill；中间结果有其他 consumer 时不能删掉 store；vendor matmul kernel 可能比自写 fused 主体快；跨 program global synchronization 的边界不易融合；运算重排可能改变数值语义。
 
@@ -5231,11 +4916,9 @@ compute利用不足且matmul shape不合适
 
    `allclose` 判定：
 
-   $$
-   |a-b|\le atol+rtol|b|.
-   $$
+   $`|a-b|\le atol+rtol|b|.`$
 
-   课程只写 `atol=1e-6`，`rtol` 仍采用 PyTorch 默认 $10^{-5}$，不是 0；纯绝对容差要显式传 `rtol=0`。`check_equal_2d_2d` 虽已定义，但 `main()` 的 matmul+ReLU 路径没有调用它，因此不能声称该实现已由 helper 验证。
+   课程只写 `atol=1e-6`，`rtol` 仍采用 PyTorch 默认 $`10^{-5}`$，不是 0；纯绝对容差要显式传 `rtol=0`。`check_equal_2d_2d` 虽已定义，但 `main()` 的 matmul+ReLU 路径没有调用它，因此不能声称该实现已由 helper 验证。
 
 ## 21. 视频导航：使用未在正文重复的人工字幕 cue
 
@@ -5373,8 +5056,8 @@ compute利用不足且matmul shape不合适
 - 逐 offset 写 Triton mask，区分 pointer 元素偏移与 byte address；
 - 解释 `tl.arange` 向量语义为何不等于 CUDA thread 一一映射；
 - 从 `pid_m/pid_n`、`None` broadcasting 构造 A/B/C pointer matrices；
-- 推导 naive $2MKN$ input reads 与 tiled $MNK(1/B_N+1/B_M)$；
-- 完整复算 $N=1024,T=32$ 的 8.004 GiB、260 MiB、31.52 倍；
+- 推导 naive $`2MKN`$ input reads 与 tiled $`MNK(1/B_N+1/B_M)`$；
+- 完整复算 $`N=1024,T=32`$ 的 8.004 GiB、260 MiB、31.52 倍；
 - 计算 fusion 省掉的中间 transfers，同时说明它何时可能变慢；
 - 区分 PTX 与 SASS，并保持“无 GPU 就不声称实测”的证据边界。
 

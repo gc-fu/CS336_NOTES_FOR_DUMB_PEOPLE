@@ -112,16 +112,14 @@ pipeline parallelism（流水线并行：切 layers/depth）
 7. `all-to-all` 的平衡例子像把 4×4 矩阵转置；不平衡路由仍能做，但最忙的目标 rank 会拖慢大家。
 8. 粗略通信时间：
 
-   $$
-   T\approx sL+\frac{Q}{B}.
-   $$
+   $`T\approx sL+\frac{Q}{B}.`$
 
-   小消息常被延迟项 $sL$ 支配，大消息常被搬运项 $Q/B$ 支配。
+   小消息常被延迟项 $`sL`$ 支配，大消息常被搬运项 $`Q/B`$ 支配。
 9. `per-rank bytes`、全网络 `aggregate traffic` 与应用看到的 payload 大小不是同一个数。
 10. NVLink/NVSwitch、PCIe、InfiniBand、Ethernet 是不同层级；NCCL 会结合 topology（拓扑，即设备怎样连接）选择实现路径。
 11. DDP 每 rank 保存完整模型、处理不同 local batch；等大 local batch 且 local loss 都取 mean 时，AVG gradients 等于 global-batch mean gradient。
 12. 课程 TP 把 `[1024,1024]` 权重按输出列切成四个 `[1024,256]`，每层 local output `[128,256]` 再 all-gather 成 `[128,1024]`。
-13. 课程 PP 把 4 layers 分给 2 stages；4 个 microbatches（微批次，即从一个大 batch 再切出的小批；§13.3 详解）的理想 forward utilization 是 $4/(4+2-1)=80\%$。
+13. 课程 PP 把 4 layers 分给 2 stages；4 个 microbatches（微批次，即从一个大 batch 再切出的小批；§13.3 详解）的理想 forward utilization 是 $`4/(4+2-1)=80\%`$。
 14. DP、TP、PP 可组成多维 device mesh；一个 rank 在不同 process groups 中分别做梯度、层内和 stage 边界通信。
 
 ### 0.4 本讲最终地图
@@ -146,8 +144,8 @@ pipeline parallelism（流水线并行：切 layers/depth）
 
 读者只需要会下面四件事；不会编写分布式代码也可以开始：
 
-1. 加法，例如 $0+1+2+3=6$；
-2. 乘除法，例如 $16/4=4$；
+1. 加法，例如 $`0+1+2+3=6`$；
+2. 乘除法，例如 $`16/4=4`$；
 3. 把向量看成一排数字，例如 `[2,3,4]` 的长度是 3；
 4. 知道 1 byte 是存储单位，8 bits（位）等于 1 byte。
 
@@ -172,32 +170,32 @@ pipeline parallelism（流水线并行：切 layers/depth）
 
 ### 1.2 一个只用乘法和加法的显存账
 
-**【补充例子】**假设小模型恰好有 $1,048,576=2^{20}$ 个参数，所有持久状态都用 FP32；先忽略通信 buffer（缓冲区）和框架开销。
+**【补充例子】**假设小模型恰好有 $`1,048,576=2^{20}`$ 个参数，所有持久状态都用 FP32；先忽略通信 buffer（缓冲区）和框架开销。
 
 先定义容量单位：
 
-$$
+```math
 1\ \text{MiB}=2^{20}=1,048,576\ \text{bytes}.
-$$
+```
 
 一份参数占：
 
-$$
+```math
 1,048,576\ \text{elements}\times4\ \text{bytes/element}
 =4,194,304\ \text{bytes}=4\ \text{MiB}.
-$$
+```
 
 逐项列账：
 
 | 项目 | 有几份“参数大小” | 计算 | 大小 |
 |---|---:|---:|---:|
-| 参数 | 1 | $1\times4$ MiB | 4 MiB |
-| 梯度 | 1 | $1\times4$ MiB | 4 MiB |
-| Adam 一阶 moment | 1 | $1\times4$ MiB | 4 MiB |
-| Adam 二阶 moment | 1 | $1\times4$ MiB | 4 MiB |
-| 持久状态小计 | 4 | $4+4+4+4$ | 16 MiB |
+| 参数 | 1 | $`1\times4`$ MiB | 4 MiB |
+| 梯度 | 1 | $`1\times4`$ MiB | 4 MiB |
+| Adam 一阶 moment | 1 | $`1\times4`$ MiB | 4 MiB |
+| Adam 二阶 moment | 1 | $`1\times4`$ MiB | 4 MiB |
+| 持久状态小计 | 4 | $`4+4+4+4`$ | 16 MiB |
 | 本例保存的 activations | 不按参数份数算 | 已知 | 6 MiB |
-| 每张卡总计 |  | $16+6$ | **22 MiB** |
+| 每张卡总计 |  | $`16+6`$ | **22 MiB** |
 
 这只是教学账。真实训练还可能有低精度权重、FP32 master weights（高精度主副本）、临时 buffer、内存碎片、不同优化器状态；activation 大小也随 batch、sequence length（序列长度）、层数与是否重算而变化。
 
@@ -207,9 +205,9 @@ $$
 
 **Replicate（复制）**：每个 rank 都保存一份相同数据。上例若 4 张卡都复制全部状态，那么**每张卡**仍是 22 MiB；4 张卡合计物理存储：
 
-$$
+```math
 4\times22=88\ \text{MiB}.
-$$
+```
 
 复制没有降低单卡这部分显存；收益是每张卡可直接使用本地副本，不必每次跨卡取。
 
@@ -217,9 +215,9 @@ $$
 
 **Shard（切分）**：把完整对象分片，每个 rank 只保存一部分。若把 16 MiB 持久状态均匀切到 4 张卡，但每张卡仍需要 6 MiB activations：
 
-$$
+```math
 \frac{16\ \text{MiB}}{4}+6\ \text{MiB}=4+6=10\ \text{MiB/rank}.
-$$
+```
 
 单卡从 22 MiB 降到 10 MiB，但某个 rank 需要完整参数时，必须临时收集别人的分片。
 
@@ -227,10 +225,10 @@ $$
 
 **Recompute（重算）**：不保存某些中间 activation，反向传播需要时重新做一部分前向计算。若把 activation 存储从 6 MiB 降到 2 MiB：
 
-$$
+```math
 4\ \text{MiB sharded persistent state}+2\ \text{MiB activation}
 =6\ \text{MiB/rank}.
-$$
+```
 
 显存再降 4 MiB，代价是多做计算。
 
@@ -257,10 +255,10 @@ $$
 
 假设训练一步要 400 FLOPs：
 
-- 单卡实际 100 FLOP/s：理想计算时间 $400/100=4$ 秒；
-- 4 卡若完美分工，总计 400 FLOP/s：理想计算时间 $400/400=1$ 秒；
-- 若每步另花 0.6 秒通信，总时间是 $1+0.6=1.6$ 秒，不是 1 秒；
-- 加速比是 $4/1.6=2.5$ 倍，不是 4 倍。
+- 单卡实际 100 FLOP/s：理想计算时间 $`400/100=4`$ 秒；
+- 4 卡若完美分工，总计 400 FLOP/s：理想计算时间 $`400/400=1`$ 秒；
+- 若每步另花 0.6 秒通信，总时间是 $`1+0.6=1.6`$ 秒，不是 1 秒；
+- 加速比是 $`4/1.6=2.5`$ 倍，不是 4 倍。
 
 这就是两个目标的区别：**fit memory** 问“能不能跑”；**faster** 问“端到端一步是否真的更短”。
 
@@ -282,11 +280,11 @@ $$
 
 当 `world_size=4`：
 
-$$
+```math
 \text{valid ranks}=0,1,2,\ldots,\text{world\_size}-1=0,1,2,3.
-$$
+```
 
-注意是从 0 开始，因此最后一个编号是 $4-1=3$，不是 4。
+注意是从 0 开始，因此最后一个编号是 $`4-1=3`$，不是 4。
 
 ```text
 process P0 ── controls GPU 0 ── rank 0
@@ -405,13 +403,13 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 3.3 Scatter：root 的完整向量被切成片段分发
 
-**Scatter（散发）**：root 先有完整输入，把它按约定切成 $p$ 片；$p$ 是参与 rank 数，每个 rank 收一片。
+**Scatter（散发）**：root 先有完整输入，把它按约定切成 $`p`$ 片；$`p`$ 是参与 rank 数，每个 rank 收一片。
 
 **【课程代码｜行 103–113】【视频补充｜[09:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=550s)】**输入长度 4，world size 4，因此每片长度：
 
-$$
+```math
 \frac{4\ \text{elements}}{4\ \text{ranks}}=1\ \text{element/rank}.
-$$
+```
 
 | rank | 操作前 | 输入 shape | 操作后 | 输出 shape |
 |---:|---|---:|---|---:|
@@ -420,7 +418,7 @@ $$
 | 2 | — | — | `[2]` | `[1]` |
 | 3 | — | — | `[3]` | `[1]` |
 
-检查总元素数：操作前是 4 个；操作后 $1+1+1+1=4$ 个逻辑输出元素。Scatter 改变“放在哪里”，没有把元素相加。
+检查总元素数：操作前是 4 个；操作后 $`1+1+1+1=4`$ 个逻辑输出元素。Scatter 改变“放在哪里”，没有把元素相加。
 
 ### 3.4 Gather：把各 rank 的片段收回 root
 
@@ -447,16 +445,16 @@ $$
 
 | rank | 操作前 | SUM 的中间算式 | 操作后逻辑有效结果 |
 |---:|---:|---|---:|
-| 0（root） | `[0]` | $0+1+2+3$ | `[6]` |
+| 0（root） | `[0]` | $`0+1+2+3`$ | `[6]` |
 | 1 | `[1]` | 参与求和 | 非 root 不持有最终结果 |
 | 2 | `[2]` | 参与求和 | 非 root 不持有最终结果 |
 | 3 | `[3]` | 参与求和 | 非 root 不持有最终结果 |
 
 逐步算：
 
-$$
+```math
 0+1=1,\qquad 1+2=3,\qquad 3+3=6.
-$$
+```
 
 所以 root 得到 `[6]`，shape 仍是 `[1]`。视频在 [11:20](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=680s) 现场算出 6。
 
@@ -493,9 +491,9 @@ $$
 
 单个 rank 的输出元素数从 1 变为 4，所以它要准备长度 4 的输出空间。4 个 rank 合计输出副本元素数为：
 
-$$
+```math
 4\ \text{ranks}\times4\ \text{elements/rank}=16\ \text{stored elements}.
-$$
+```
 
 这 16 个物理副本来自 4 个不同输入元素的复制，不代表数学上产生了 16 个不同值。
 
@@ -531,14 +529,14 @@ rank 3       3   4   5   6
 
 每一列都展开：
 
-$$
+```math
 \begin{aligned}
 r_0 &= 0+1+2+3=6,\\
 r_1 &= 1+2+3+4=10,\\
 r_2 &= 2+3+4+5=14,\\
 r_3 &= 3+4+5+6=18.
 \end{aligned}
-$$
+```
 
 然后 scatter：
 
@@ -579,10 +577,10 @@ rank 0:[6]   rank 1:[10]   rank 2:[14]   rank 3:[18]
 
 所以在**逻辑语义**上：
 
-$$
+```math
 \text{all-reduce}
 =\text{reduce-scatter}+\text{all-gather}.
-$$
+```
 
 视频在 [16:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=982s) 说明：基础 data parallel 常直接 all-reduce 完整 gradients；FSDP/ZeRO 等方法会把这两个阶段拆开，以便在中间维持 sharded storage。这里的 **FSDP（Fully Sharded Data Parallel，全切分数据并行）**和 **ZeRO（Zero Redundancy Optimizer，零冗余优化器）**只作后续预告。
 
@@ -593,7 +591,7 @@ Collective 还要指定 reduce operation（归约运算）。对 4 个输入：
 - SUM 输出：`[6,10,14,18]`；
 - AVG（average，平均）要再除以参与者数量 4：
 
-$$
+```math
 \left[
 \frac{6}{4},
 \frac{10}{4},
@@ -601,9 +599,9 @@ $$
 \frac{18}{4}
 \right]
 =[1.5,2.5,3.5,4.5].
-$$
+```
 
-不能把 SUM 与 AVG 当同义词。若学习率等其余设置不变，梯度和比梯度平均大 $4$ 倍。课程后半 data parallel 代码使用 `ReduceOp.AVG`；当前概念例使用 SUM。
+不能把 SUM 与 AVG 当同义词。若学习率等其余设置不变，梯度和比梯度平均大 $`4`$ 倍。课程后半 data parallel 代码使用 `ReduceOp.AVG`；当前概念例使用 SUM。
 
 ### 4.5 逻辑等式不指定唯一物理算法
 
@@ -686,7 +684,7 @@ dist.reduce_scatter_tensor(
 | rank 2 | 2 | 6 | 10 | 14 | `[2,6,10,14]` |
 | rank 3 | 3 | 7 | 11 | 15 | `[3,7,11,15]` |
 
-视频在 [17:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1023s) 逐项解释 rank 0/1 的发送规则，在 [17:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1064s) 从“列”读取每个目标输出。若把输入矩阵记为 $X$，输出排布看起来像 $X^T$，即矩阵转置。
+视频在 [17:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1023s) 逐项解释 rank 0/1 的发送规则，在 [17:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1064s) 从“列”读取每个目标输出。若把输入矩阵记为 $`X`$，输出排布看起来像 $`X^T`$，即矩阵转置。
 
 ### 5.2 为什么 MoE 需要它
 
@@ -706,23 +704,23 @@ dist.reduce_scatter_tensor(
 
 | source \ destination | rank 0 | rank 1 | rank 2 | rank 3 | source 总发送 |
 |---:|---:|---:|---:|---:|---:|
-| rank 0 | 2 | 0 | 1 | 1 | $2+0+1+1=4$ |
-| rank 1 | 0 | 3 | 1 | 0 | $0+3+1+0=4$ |
-| rank 2 | 1 | 0 | 2 | 1 | $1+0+2+1=4$ |
-| rank 3 | 0 | 1 | 0 | 3 | $0+1+0+3=4$ |
+| rank 0 | 2 | 0 | 1 | 1 | $`2+0+1+1=4`$ |
+| rank 1 | 0 | 3 | 1 | 0 | $`0+3+1+0=4`$ |
+| rank 2 | 1 | 0 | 2 | 1 | $`1+0+2+1=4`$ |
+| rank 3 | 0 | 1 | 0 | 3 | $`0+1+0+3=4`$ |
 
 每个目标收到：
 
-$$
+```math
 \begin{aligned}
 \text{rank 0 receives} &= 2+0+1+0=3,\\
 \text{rank 1 receives} &= 0+3+0+1=4,\\
 \text{rank 2 receives} &= 1+1+2+0=4,\\
 \text{rank 3 receives} &= 1+0+1+3=5.
 \end{aligned}
-$$
+```
 
-总发送 $4+4+4+4=16$，总接收 $3+4+4+5=16$，数据没有丢；但 rank 3 收 5 个，rank 0 只收 3 个。若所有 rank 进入下一同步点前都要完成 expert 计算，rank 3 可能成为 straggler（拖慢全组的慢参与者）。
+总发送 $`4+4+4+4=16`$，总接收 $`3+4+4+5=16`$，数据没有丢；但 rank 3 收 5 个，rank 0 只收 3 个。若所有 rank 进入下一同步点前都要完成 expert 计算，rank 3 可能成为 straggler（拖慢全组的慢参与者）。
 
 **【视频补充｜[18:49](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1129s)】**平衡 split 可看成转置；[19:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1148s) 明确说一般 all-to-all 能处理不同 byte 数，但仍希望尽量均衡。处理 variable splits（可变分片）时，通信双方还要知道每个 split 的大小；这组大小属于 metadata。
 
@@ -818,9 +816,9 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 
 ### 6.4 课程数字与当前官方资料的边界
 
-先定义单位：小写 `b` 是 bit（位），大写 `B` 是 byte（字节），$8\ \text{bits}=1\ \text{byte}$。厂商网络/显存表常用十进制：$1\ \text{GB}=10^9$ bytes，$1\ \text{TB}=10^{12}$ bytes。若写 `GiB`，才是 $2^{30}$ bytes。
+先定义单位：小写 `b` 是 bit（位），大写 `B` 是 byte（字节），$`8\ \text{bits}=1\ \text{byte}`$。厂商网络/显存表常用十进制：$`1\ \text{GB}=10^9`$ bytes，$`1\ \text{TB}=10^{12}`$ bytes。若写 `GiB`，才是 $`2^{30}`$ bytes。
 
-**【课程时点快照｜代码行 209–230】【视频补充｜[23:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1415s)】**课程给出 B200 的 NVLink 5 约 1.8 TB/s、HBM 约 8 TB/s；[24:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1443s) 用 $8/1.8\approx4.44$ 说明跨 GPU 仍比本地 HBM 慢约 4 倍。这个比值只作数量级直觉：两项的方向、聚合与实际可达口径必须一致才适合严谨比较。
+**【课程时点快照｜代码行 209–230】【视频补充｜[23:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1415s)】**课程给出 B200 的 NVLink 5 约 1.8 TB/s、HBM 约 8 TB/s；[24:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1443s) 用 $`8/1.8\approx4.44`$ 说明跨 GPU 仍比本地 HBM 慢约 4 倍。这个比值只作数量级直觉：两项的方向、聚合与实际可达口径必须一致才适合严谨比较。
 
 下面把课程型号放进一张**课程时点 + 官方产品规格边界表**。不同 form factor（外形/封装）可能有不同规格。**SXM** 是 NVIDIA 数据中心 GPU 使用的一类高带宽模块/封装形态，不等于同型号的 PCIe 插卡版；**HBM2e、HBM3、HBM3e** 是不同代际/版本的 HBM：
 
@@ -828,18 +826,18 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 |---|---|---|---|
 | A100 80GB SXM | 80 GB HBM2e；2,039 GB/s | 600 GB/s | NVIDIA [A100 官方规格](https://www.nvidia.com/en-us/data-center/a100/)；每 GPU 产品规格 |
 | H100 SXM | 80 GB HBM3；3.35 TB/s | 900 GB/s | NVIDIA [H100 官方规格](https://www.nvidia.com/en-us/data-center/h100/)；每 GPU SXM 规格 |
-| B200 SXM | 180 GB HBM3e；最高 8 TB/s | DGX B200 八 GPU 总 NVLink 14.4 TB/s，即 $14.4/8=1.8$ TB/s/GPU 的规格口径 | NVIDIA [HGX 组件表](https://docs.nvidia.com/enterprise-reference-architectures/hgx-ai-factory/latest/components.html) 与 [DGX B200 用户指南](https://docs.nvidia.com/dgx/dgxb200-user-guide/introduction-to-dgxb200.html) |
+| B200 SXM | 180 GB HBM3e；最高 8 TB/s | DGX B200 八 GPU 总 NVLink 14.4 TB/s，即 $`14.4/8=1.8`$ TB/s/GPU 的规格口径 | NVIDIA [HGX 组件表](https://docs.nvidia.com/enterprise-reference-architectures/hgx-ai-factory/latest/components.html) 与 [DGX B200 用户指南](https://docs.nvidia.com/dgx/dgxb200-user-guide/introduction-to-dgxb200.html) |
 | GB200 NVL72 | 72 个 Blackwell GPUs、36 个 Grace CPUs | 每 GPU 1.8 TB/s；72-GPU fabric 汇总 130 TB/s | NVIDIA [GB200 NVL72 调优指南](https://docs.nvidia.com/multi-node-nvlink-systems/multi-node-tuning-guide/overview.html) |
 
-为什么 $72\times1.8=129.6$，官方表写 130 TB/s？因为产品页把 129.6 四舍五入为 130。
+为什么 $`72\times1.8=129.6`$，官方表写 130 TB/s？因为产品页把 129.6 四舍五入为 130。
 
 课程代码第 229 行/视频 [27:48](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1668s) 把 NVL72 简化成“每 tray 8 GPU、9 trays 共 72 GPU”。当前 NVIDIA 架构文档写的是 **18 个 compute trays + 9 个 NVLink switch trays**，每个 compute tray 含 4 GPU。应把课堂表述当作“72 GPU 同一 NVLink domain”的教学简图，不能当机械结构说明。
 
 课程代码还给出 PCIe 7.0 ×16 `242 GB/s`、传统跨节点 Ethernet `~200 MB/s`、InfiniBand `~0.05 TB/s` 等数。它们混合了不同代际、方向/编码与教学场景；不能按一张永久排名表直接比较。一个可复算转换是：
 
-$$
+```math
 400\ \text{Gb/s}\div8=50\ \text{GB/s}=0.05\ \text{TB/s}
-$$
+```
 
 这是忽略协议开销的理论换算。真实应用带宽通常更低。
 
@@ -859,61 +857,61 @@ $$
 
 通信的最小估算式：
 
-$$
+```math
 T\approx sL+\frac{Q}{B}.
-$$
+```
 
 逐符号解释：
 
-- $T$：估计总时间，单位 seconds（秒）；
-- $s$：串行依赖的通信 rounds/steps（轮数），无单位；
-- $L$：每轮固定 latency（延迟），单位 seconds/step；
-- $Q$：关键路径上需要传输的 bytes；
-- $B$：可用 bandwidth（带宽），单位 bytes/second；
-- $Q/B$ 的单位是 $\text{bytes}/(\text{bytes/second})=\text{seconds}$，可以与 $sL$ 相加。
+- $`T`$：估计总时间，单位 seconds（秒）；
+- $`s`$：串行依赖的通信 rounds/steps（轮数），无单位；
+- $`L`$：每轮固定 latency（延迟），单位 seconds/step；
+- $`Q`$：关键路径上需要传输的 bytes；
+- $`B`$：可用 bandwidth（带宽），单位 bytes/second；
+- $`Q/B`$ 的单位是 $`\text{bytes}/(\text{bytes/second})=\text{seconds}`$，可以与 $`sL`$ 相加。
 
 #### 例 1：小消息被 latency 支配
 
-已知：$s=4$ 轮，每轮 $L=10\ \mu s$，$Q=100$ bytes，$B=1\ \text{GB/s}=10^9$ bytes/s。$\mu s$ 是 microsecond（微秒），$1\ \mu s=10^{-6}$ 秒。
+已知：$`s=4`$ 轮，每轮 $`L=10\ \mu s`$，$`Q=100`$ bytes，$`B=1\ \text{GB/s}=10^9`$ bytes/s。$`\mu s`$ 是 microsecond（微秒），$`1\ \mu s=10^{-6}`$ 秒。
 
 固定等待：
 
-$$
+```math
 sL=4\times10\ \mu s=40\ \mu s.
-$$
+```
 
 纯搬运：
 
-$$
+```math
 \frac{Q}{B}
 =\frac{100}{1,000,000,000}\ \text{s}
 =0.0000001\ \text{s}
 =0.1\ \mu s.
-$$
+```
 
 总计：
 
-$$
+```math
 T\approx40+0.1=40.1\ \mu s.
-$$
+```
 
-$40\ \mu s$ 远大于 $0.1\ \mu s$，所以增加带宽几乎帮不到这个小消息；减少轮数/固定延迟更重要。
+$`40\ \mu s`$ 远大于 $`0.1\ \mu s`$，所以增加带宽几乎帮不到这个小消息；减少轮数/固定延迟更重要。
 
 #### 例 2：大消息被 bandwidth 支配
 
-保持 $s=4,L=10\ \mu s,B=1\ \text{GB/s}$，改为 $Q=10\ \text{MB}=10,000,000$ bytes。
+保持 $`s=4,L=10\ \mu s,B=1\ \text{GB/s}`$，改为 $`Q=10\ \text{MB}=10,000,000`$ bytes。
 
-$$
+```math
 \frac{Q}{B}
 =\frac{10,000,000}{1,000,000,000}\ \text{s}
 =0.01\ \text{s}=10\ \text{ms}.
-$$
+```
 
-`ms` 是 millisecond（毫秒），$1\ \text{ms}=1,000\ \mu s$，所以 $40\ \mu s=0.04\ \text{ms}$：
+`ms` 是 millisecond（毫秒），$`1\ \text{ms}=1,000\ \mu s`$，所以 $`40\ \mu s=0.04\ \text{ms}`$：
 
-$$
+```math
 T\approx0.04\ \text{ms}+10\ \text{ms}=10.04\ \text{ms}.
-$$
+```
 
 此时搬运项是 10 ms，固定延迟只有 0.04 ms；提高有效带宽更有意义。
 
@@ -927,50 +925,50 @@ $$
 - **per-rank bytes**：某个 rank 在具体算法中发/收多少；
 - **aggregate network traffic**：所有 ranks 的发送量相加，或全网络链路上的总流量；必须说明是否把 receive 再算一次。
 
-**【补充例子：ring all-reduce 的一种理想化算法账】**令 payload $S=16$ MiB，$p=4$ ranks。Ring 的 reduce-scatter 阶段，每 rank 发送：
+**【补充例子：ring all-reduce 的一种理想化算法账】**令 payload $`S=16`$ MiB，$`p=4`$ ranks。Ring 的 reduce-scatter 阶段，每 rank 发送：
 
-$$
+```math
 \frac{p-1}{p}S
 =\frac{4-1}{4}\times16
 =\frac34\times16
 =12\ \text{MiB}.
-$$
+```
 
 All-gather 再发送 12 MiB，所以每 rank 总**发送**：
 
-$$
+```math
 12+12=24\ \text{MiB}.
-$$
+```
 
 所有 4 ranks 的 aggregate sends：
 
-$$
+```math
 4\times24=96\ \text{MiB}.
-$$
+```
 
 若还把每 rank 收到的 24 MiB 再算一次“send + receive traffic”，就是：
 
-$$
+```math
 4\times(24+24)=192\ \text{MiB}.
-$$
+```
 
 同一个操作可以出现 16、24、96、192 MiB 四个数，因为它们分别回答不同问题；不写口径就无法比较。
 
-这个 $24$ MiB/rank 是 **ring、均匀分块、忽略协议开销**的结果。Tree 或分层算法的 steps、每轮消息大小、经过的物理链路都可能不同。课程 benchmark 在 [48:30](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2910s) 计算的是一种 normalized effective bandwidth（归一化有效带宽）；它不是“把机房所有物理线缆上的 bytes 全部抓包相加”。
+这个 $`24`$ MiB/rank 是 **ring、均匀分块、忽略协议开销**的结果。Tree 或分层算法的 steps、每轮消息大小、经过的物理链路都可能不同。课程 benchmark 在 [48:30](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2910s) 计算的是一种 normalized effective bandwidth（归一化有效带宽）；它不是“把机房所有物理线缆上的 bytes 全部抓包相加”。
 
 ### 6.8 Benchmark 只能验证具体机器，不能把模型变成定律
 
-**Benchmark（基准测试）**是在明确输入与环境下测时间/吞吐。课程代码对 $100\times1024^2$ 个元素做 all-reduce、reduce-scatter，并在计时前 warmup（预热）。它的结构意图是用 CUDA synchronize 等本 rank GPU，再用 barrier 等齐 processes；但当前 setup 未绑定 current device，所以无参 synchronize 可能等错 device，详见 §7.3 与 §9.3。
+**Benchmark（基准测试）**是在明确输入与环境下测时间/吞吐。课程代码对 $`100\times1024^2`$ 个元素做 all-reduce、reduce-scatter，并在计时前 warmup（预热）。它的结构意图是用 CUDA synchronize 等本 rank GPU，再用 barrier 等齐 processes；但当前 setup 未绑定 current device，所以无参 synchronize 可能等错 device，详见 §7.3 与 §9.3。
 
 **【视频补充｜[46:38](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2798s)】**老师进入通信 benchmark；[47:23](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2843s) 解释 warmup 和两层异步：GPU kernels 可能尚未完成，各 processes 也可能进度不同。若不等齐，CPU 计时可能只量到“发出命令”。
 
 有效带宽的一般单位检查：
 
-$$
+```math
 \text{effective bandwidth}
 =\frac{\text{algorithmic bytes}}{\text{measured seconds}}
 \quad[\text{bytes/s}].
-$$
+```
 
 视频 [50:40](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3040s) 讨论课程 all-reduce 归一化口径；[51:40](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3100s) 再对 reduce-scatter 复用相同测量结构。这里观测到的“约 400 GB/s”等值属于老师当时的机器/进程/消息大小，不应复制成另一台机器的保证值。
 
@@ -1220,21 +1218,21 @@ dist.all_reduce(tensor=data, op=dist.ReduceOp.SUM, async_op=False)
 
 四个位置逐列加：
 
-$$
+```math
 0+1+2+3=6,
-$$
+```
 
-$$
+```math
 1+2+3+4=10,
-$$
+```
 
-$$
+```math
 2+3+4+5=14,
-$$
+```
 
-$$
+```math
 3+4+5+6=18.
-$$
+```
 
 所以 `all_reduce` 返回后，每个 rank 的**同一个 `data` 变量**都变为：
 
@@ -1416,7 +1414,7 @@ NCCL 官方文档要求 collective 中所有 ranks 使用匹配的 count 与 dat
 
 **【课程内容｜源码 287–374】【视频补充｜[46:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2804s)】**Benchmark 是对一个明确输入、环境和计时边界做测量。读打印值之前，先问它的分子与分母。
 
-1. **Latency（延迟）**：完成一次操作花多少时间，单位常为 s、ms、µs。$1\text{ ms}=0.001\text{ s}$。
+1. **Latency（延迟）**：完成一次操作花多少时间，单位常为 s、ms、µs。$`1\text{ ms}=0.001\text{ s}`$。
 2. **Algorithm bandwidth，记作 `algbw`（算法带宽）**：逻辑数据大小除以操作时间。它回答“应用眼中的 payload 以多快速度完成”。
 3. **Bus bandwidth，记作 `busbw`（总线归一化带宽）**：给 `algbw` 乘 collective 特定的校正因子，试图让不同 collective 更容易横向比较。它是**归一化指标**，不是抓包得到的每根线缆字节和。
 4. **Per-rank send bytes**：一个 rank 在指定算法模型下发送多少 bytes。
@@ -1425,19 +1423,19 @@ NCCL 官方文档要求 collective 中所有 ranks 使用匹配的 count 与 dat
 
 先记单位：
 
-$$
+```math
 1\ \text{byte}=8\ \text{bits},
-$$
+```
 
-$$
+```math
 1\ \text{MiB}=2^{20}=1{,}048{,}576\ \text{bytes},
-$$
+```
 
-$$
+```math
 1\ \text{GiB}=2^{30}=1{,}073{,}741{,}824\ \text{bytes}.
-$$
+```
 
-十进制 `GB` 则是 $10^9=1{,}000{,}000{,}000$ bytes；`GiB` 和 `GB` 数字不同。
+十进制 `GB` 则是 $`10^9=1{,}000{,}000{,}000`$ bytes；`GiB` 和 `GB` 数字不同。
 
 ### 9.2 课程消息为什么恰好是 400 MiB
 
@@ -1450,36 +1448,36 @@ spawn(reduce_scatter, world_size=4, num_elements=100 * 1024**2)
 
 上面是当前源码两行；真实函数名就是 `all_reduce` 与 `reduce_scatter`，两者都收到相同的 `num_elements` 数值，但 reduce-scatter 还会在函数内部创建 leading dimension=`world_size` 的完整 input。
 
-`1024**2` 是 $1024^2$。逐步算：
+`1024**2` 是 $`1024^2`$。逐步算：
 
-$$
+```math
 1024^2=1024\times1024=1{,}048{,}576,
-$$
+```
 
-$$
+```math
 100\times1{,}048{,}576=104{,}857{,}600\ \text{elements}.
-$$
+```
 
 课程 `torch.randn` 默认生成 FP32；**FP32（32-bit floating point，32 位浮点）**每元素 32 bits，即：
 
-$$
+```math
 32\div8=4\ \text{bytes/element}.
-$$
+```
 
 因此一条长度 `num_elements` 的 tensor 是：
 
-$$
+```math
 104{,}857{,}600\times4
 =419{,}430{,}400\ \text{bytes}.
-$$
+```
 
 换成 MiB：
 
-$$
+```math
 419{,}430{,}400\div1{,}048{,}576=400\ \text{MiB}.
-$$
+```
 
-这就是后文 all-reduce payload $S=400$ MiB，也是 reduce-scatter 每 rank 的 output chunk $C=400$ MiB。两段 benchmark 虽传入同一个 `num_elements`，reduce-scatter 的 **input** 还多了 `world_size` 这一维，不能把两者输入 tensor 大小混为一谈。
+这就是后文 all-reduce payload $`S=400`$ MiB，也是 reduce-scatter 每 rank 的 output chunk $`C=400`$ MiB。两段 benchmark 虽传入同一个 `num_elements`，reduce-scatter 的 **input** 还多了 `world_size` 这一维，不能把两者输入 tensor 大小混为一谈。
 
 ### 9.3 All-reduce 的 warmup 与测量区间逐行
 
@@ -1571,13 +1569,13 @@ dist.barrier()
 # end_time
 ```
 
-当 $p=4$、`num_elements=104,857,600`：
+当 $`p=4`$、`num_elements=104,857,600`：
 
-- `output.shape = [104,857,600]`，大小 $C=400$ MiB；
+- `output.shape = [104,857,600]`，大小 $`C=400`$ MiB；
 - `input.shape = [4,104,857,600]`；
-- input 元素数是 $4\times104{,}857{,}600=419{,}430{,}400$；
-- input bytes 是 $419{,}430{,}400\times4=1{,}677{,}721{,}600$ bytes；
-- 换成 MiB：$1{,}677{,}721{,}600\div1{,}048{,}576=1600$ MiB。
+- input 元素数是 $`4\times104{,}857{,}600=419{,}430{,}400`$；
+- input bytes 是 $`419{,}430{,}400\times4=1{,}677{,}721{,}600`$ bytes；
+- 换成 MiB：$`1{,}677{,}721{,}600\div1{,}048{,}576=1600`$ MiB。
 
 视频 [51:19](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3079s) 指出 reduce-scatter 输入是四个 output chunks 的合体；[52:02](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3122s) 开始解释它的带宽分子。
 
@@ -1589,89 +1587,89 @@ dist.barrier()
 
 **【课程公式 + 补充分解｜源码 323–333】【视频补充｜[49:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2964s)】**令：
 
-- $p=4$：rank 数；
-- $S=400$ MiB：每 rank 的完整 all-reduce payload；
-- $t=10$ ms $=0.010$ s：假设测得 duration；
+- $`p=4`$：rank 数；
+- $`S=400`$ MiB：每 rank 的完整 all-reduce payload；
+- $`t=10`$ ms $`=0.010`$ s：假设测得 duration；
 - 算法模型：均匀分块的理想 ring all-reduce；
 - 暂时忽略协议 headers、对齐、重传和 topology 绕路。
 
-Ring all-reduce 可分为一次 reduce-scatter 加一次 all-gather。在每个阶段，一个 rank 发出 payload 的 $(p-1)/p$：
+Ring all-reduce 可分为一次 reduce-scatter 加一次 all-gather。在每个阶段，一个 rank 发出 payload 的 $`(p-1)/p`$：
 
-$$
+```math
 \frac{p-1}{p}S
 =\frac{4-1}{4}\times400
 =\frac34\times400
 =300\ \text{MiB}.
-$$
+```
 
 两个阶段每 rank 总发送：
 
-$$
+```math
 300+300=600\ \text{MiB}.
-$$
+```
 
 在对称理想 ring 中，每 rank 也接收 600 MiB。
 
 所有 4 ranks 的 aggregate sends：
 
-$$
+```math
 4\times600=2400\ \text{MiB}.
-$$
+```
 
 若发送端和接收端都算：
 
-$$
+```math
 4\times(600+600)=4800\ \text{MiB}.
-$$
+```
 
 ### 10.2 All-reduce 的 `algbw` 与 normalized `busbw`
 
 NCCL-tests 的口径先定义算法带宽：
 
-$$
+```math
 \text{algbw}=\frac{S}{t}.
-$$
+```
 
-这里 $S=400$ MiB $=400/1024=0.390625$ GiB，所以：
+这里 $`S=400`$ MiB $`=400/1024=0.390625`$ GiB，所以：
 
-$$
+```math
 \text{algbw}
 =\frac{0.390625\ \text{GiB}}{0.010\ \text{s}}
 =39.0625\ \text{GiB/s}.
-$$
+```
 
 用十进制 GB/s 复算：
 
-$$
+```math
 \frac{419{,}430{,}400\ \text{bytes}}{0.010\ \text{s}}
 =41{,}943{,}040{,}000\ \text{bytes/s}
 =41.94304\ \text{GB/s}.
-$$
+```
 
 两数不同只是单位底数不同。
 
 All-reduce 的归一化 bus bandwidth 校正因子是：
 
-$$
+```math
 2\frac{p-1}{p}
 =2\times\frac34
 =1.5.
-$$
+```
 
 因此：
 
-$$
+```math
 \text{busbw}
 =\text{algbw}\times1.5
 =39.0625\times1.5
 =58.59375\ \text{GiB/s}.
-$$
+```
 
 十进制口径对应：
 
-$$
+```math
 41.94304\times1.5=62.91456\ \text{GB/s}.
-$$
+```
 
 这个 `busbw` 是 [NCCL-tests 官方性能口径](https://github.com/NVIDIA/nccl-tests/blob/master/doc/PERFORMANCE.md) 的归一化量。它便于比较，不承诺等于某一根 NVLink 或 NIC 的实际抓包速率；现代分层/硬件卸载算法尤其不能只靠这个数还原物理路径。
 
@@ -1689,43 +1687,43 @@ print(f"[all_reduce] Rank {rank}: all_reduce measured bandwidth = {round(bandwid
 
 最后一行是当前源码的 `round(...)` 整数舍入，不是 `.2f` 保留两位小数。若教学时想看小数，可以另写格式化版本，但不能冒充原行。
 
-把 $S=400$ MiB、$p=4$、$t=0.010$ s 代入：
+把 $`S=400`$ MiB、$`p=4`$、$`t=0.010`$ s 代入：
 
-$$
+```math
 \text{sent\_bytes numerator}
 =S\times2\times(p-1)
 =400\times2\times3
 =2400\ \text{MiB}.
-$$
+```
 
 这个 2400 MiB 正好等于前面算出的 **aggregate sends**。这里必须纠正源码行 325 的注释：公式里的 factor 2 来自 ring all-reduce 的 **reduce-scatter + all-gather 两个发送阶段**，不是把同一阶段的 send 与 receive 两端各数一次。若按 endpoint 的 send+receive 口径，本例还要在 2400 MiB aggregate sends 上再乘 2，得到 4800 MiB。不能一边把 factor 2 解释为“两阶段”，一边又把它重复解释为“发送端+接收端”。
 
 分母：
 
-$$
+```math
 \text{total\_duration}
 =p\times t
 =4\times0.010
 =0.040\ \text{rank-seconds}.
-$$
+```
 
 再除：
 
-$$
+```math
 \frac{2400\ \text{MiB}}{0.040\ \text{s}}
 =60{,}000\ \text{MiB/s}
 =58.59375\ \text{GiB/s}.
-$$
+```
 
 为什么等于 §10.2 的 busbw？把代数约掉：
 
-$$
+```math
 \frac{S\,2(p-1)}{p\,t}
 =\frac{S}{t}\times\frac{2(p-1)}{p}
 =\text{algbw}\times\frac{2(p-1)}p.
-$$
+```
 
-**关键纠错：**变量名 `total_duration = world_size * duration` 不表示“真实操作先后跑了 4 次，所以墙钟用了 40 ms”。四 ranks 是并发的，真实这次测量仍约 10 ms。$p\times t$ 是为了把 aggregate numerator 归一到 per-rank 平均口径而写出的 **rank-seconds** 分母。
+**关键纠错：**变量名 `total_duration = world_size * duration` 不表示“真实操作先后跑了 4 次，所以墙钟用了 40 ms”。四 ranks 是并发的，真实这次测量仍约 10 ms。$`p\times t`$ 是为了把 aggregate numerator 归一到 per-rank 平均口径而写出的 **rank-seconds** 分母。
 
 视频 [49:29](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2969s) 开始数两阶段发送，[50:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3003s) 展开 world-size 校正，[50:30](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3030s) 对照打印结果。
 
@@ -1733,9 +1731,9 @@ $$
 
 源码最后除的是：
 
-$$
+```math
 1024^3=1{,}073{,}741{,}824\ \text{bytes/GiB}.
-$$
+```
 
 所以打印出来的数值单位其实是 **GiB/s**，字符串却写成 `GB/s`。若要严格：
 
@@ -1744,78 +1742,78 @@ $$
 
 这不是 2% 内可以随便忽略的拼写：本例 58.59375 GiB/s 对应 62.91456 GB/s，读硬件规格表时混用会让比较偏移。
 
-### 10.5 Reduce-scatter：先从 output chunk $C$ 开始
+### 10.5 Reduce-scatter：先从 output chunk $`C`$ 开始
 
 **【课程公式 + 补充分解｜源码 338–370】【视频补充｜[52:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3128s)】**令：
 
-- $p=4$；
-- 每 rank output chunk $C=400$ MiB；
-- 每 rank 输入总大小 $S_{\text{in}}=pC=4\times400=1600$ MiB；
-- $t=0.010$ s；
+- $`p=4`$；
+- 每 rank output chunk $`C=400`$ MiB；
+- 每 rank 输入总大小 $`S_{\text{in}}=pC=4\times400=1600`$ MiB；
+- $`t=0.010`$ s；
 - 仍用理想均匀 ring reduce-scatter 作流量模型。
 
-Reduce-scatter 有 $p-1=3$ 个发送 steps，每步发送一个 chunk $C$。每 rank 发送：
+Reduce-scatter 有 $`p-1=3`$ 个发送 steps，每步发送一个 chunk $`C`$。每 rank 发送：
 
-$$
+```math
 (p-1)C
 =(4-1)\times400
 =1200\ \text{MiB}.
-$$
+```
 
 每 rank 接收同量 1200 MiB。Aggregate sends：
 
-$$
+```math
 p(p-1)C
 =4\times3\times400
 =4800\ \text{MiB}.
-$$
+```
 
 Aggregate send + receive：
 
-$$
+```math
 2\times4800=9600\ \text{MiB}.
-$$
+```
 
 ### 10.6 Reduce-scatter 的两种“看起来不同”带宽从哪里来
 
-NCCL-tests 对 reduce-scatter 的算法数据量 $S$ 定义为**完整输入大小**，即本例 1600 MiB，而不是 output chunk 400 MiB：
+NCCL-tests 对 reduce-scatter 的算法数据量 $`S`$ 定义为**完整输入大小**，即本例 1600 MiB，而不是 output chunk 400 MiB：
 
-$$
+```math
 \text{algbw}
 =\frac{S_{\text{in}}}{t}
 =\frac{1600/1024\ \text{GiB}}{0.010\ \text{s}}
 =156.25\ \text{GiB/s}.
-$$
+```
 
 Reduce-scatter 的校正因子是：
 
-$$
+```math
 \frac{p-1}{p}=\frac34=0.75.
-$$
+```
 
 所以：
 
-$$
+```math
 \text{busbw}
 =156.25\times0.75
 =117.1875\ \text{GiB/s}.
-$$
+```
 
 十进制单位：
 
-$$
+```math
 S_{\text{in}}=1{,}677{,}721{,}600\ \text{bytes},
-$$
+```
 
-$$
+```math
 \text{algbw}=167.77216\ \text{GB/s},
-$$
+```
 
-$$
+```math
 \text{busbw}=167.77216\times0.75=125.82912\ \text{GB/s}.
-$$
+```
 
-如果有人只用 output chunk 算 $C/t=39.0625$ GiB/s，他回答的是“每 rank 最终留下的输出 bytes / 时间”，**不是 NCCL-tests 在这里定义的 reduce-scatter algbw**。两者都可以成为自定义指标，但必须命名分子。
+如果有人只用 output chunk 算 $`C/t=39.0625`$ GiB/s，他回答的是“每 rank 最终留下的输出 bytes / 时间”，**不是 NCCL-tests 在这里定义的 reduce-scatter algbw**。两者都可以成为自定义指标，但必须命名分子。
 
 ### 10.7 逐字符审计源码 reduce-scatter 公式
 
@@ -1833,68 +1831,68 @@ print(f"[reduce_scatter] Rank {rank}: reduce_scatter measured bandwidth = {round
 
 此时 `data_bytes` 是完整 input，1600 MiB。代入：
 
-$$
+```math
 \text{sent\_bytes numerator}
 =1600\times(4-1)
 =4800\ \text{MiB}.
-$$
+```
 
 这等于四 ranks 的 aggregate sends。再除：
 
-$$
+```math
 \frac{4800\ \text{MiB}}{4\times0.010\ \text{s}}
 =\frac{1200\ \text{MiB}}{0.010\ \text{s}}
 =120{,}000\ \text{MiB/s}
 =117.1875\ \text{GiB/s}.
-$$
+```
 
 代数化简：
 
-$$
+```math
 \frac{S_{\text{in}}(p-1)}{pt}
 =\frac{S_{\text{in}}}{t}\times\frac{p-1}{p}
 =\text{algbw}\times\frac{p-1}{p}.
-$$
+```
 
 视频 [52:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3144s) 逐项讨论 input 大小，[52:47](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3167s) 到 [53:06](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3186s) 对照发送次数与打印值。
 
-### 10.8 “All-reduce 是 Reduce-scatter 两倍流量”需要固定同一个完整输入 $S$
+### 10.8 “All-reduce 是 Reduce-scatter 两倍流量”需要固定同一个完整输入 $`S`$
 
-若两个操作比较的是**同一个完整输入大小 $S$**，理想 ring 中：
+若两个操作比较的是**同一个完整输入大小 $`S`$**，理想 ring 中：
 
-$$
+```math
 Q_{\text{RS, per-rank}}
 =\frac{p-1}{p}S,
-$$
+```
 
-$$
+```math
 Q_{\text{AR, per-rank}}
 =2\frac{p-1}{p}S
 =2Q_{\text{RS, per-rank}}.
-$$
+```
 
-这里 AR 的 factor 2 是 reduce-scatter 与 all-gather 两阶段。因此源码行 370 “all-reduce moves 2x the data ... compared to reduce-scatter”只有在比较相同完整输入 $S$ 时才成立。
+这里 AR 的 factor 2 是 reduce-scatter 与 all-gather 两阶段。因此源码行 370 “all-reduce moves 2x the data ... compared to reduce-scatter”只有在比较相同完整输入 $`S`$ 时才成立。
 
 但课程两次实际调用的完整输入**不同**：
 
-- All-reduce input $S_{\text{AR}}=400$ MiB；
-- Reduce-scatter input $S_{\text{RS}}=1600$ MiB，output chunk 才是 400 MiB。
+- All-reduce input $`S_{\text{AR}}=400`$ MiB；
+- Reduce-scatter input $`S_{\text{RS}}=1600`$ MiB，output chunk 才是 400 MiB。
 
 所以实际教学调用：
 
-$$
+```math
 Q_{\text{AR}}
 =2\times\frac34\times400
 =600\ \text{MiB/rank},
-$$
+```
 
-$$
+```math
 Q_{\text{RS}}
 =\frac34\times1600
 =1200\ \text{MiB/rank}.
-$$
+```
 
-这一次反而是 reduce-scatter per-rank sends 为 all-reduce 的 2 倍，因为它的完整输入大 4 倍。两句话不冲突：一个固定 $S$ 比算法，一个比较课程实际不同 shapes。
+这一次反而是 reduce-scatter per-rank sends 为 all-reduce 的 2 倍，因为它的完整输入大 4 倍。两句话不冲突：一个固定 $`S`$ 比算法，一个比较课程实际不同 shapes。
 
 ### 10.9 课程 trace 的数字是什么、又不是什么
 
@@ -1911,9 +1909,9 @@ $$
 
 因此，看到：
 
-$$
+```math
 2\frac{p-1}{p}S
-$$
+```
 
 应该读作“ring all-reduce 的理想 per-rank send 量，也对应 NCCL-tests all-reduce 的标准 busbw 校正因子”，不能读成“所有硬件链路恰好只搬这些 bytes”。同理，`busbw` 是归一化比较量；要知道某一物理链路实际走了多少，还需要 NCCL debug topology、profiler、硬件计数器或网络 telemetry（遥测）证据。
 
@@ -1921,13 +1919,13 @@ $$
 
 不看正文，能从以下七步重建本轮核心数字，才算真的会：
 
-1. $100\times1024^2=104{,}857{,}600$ 个 FP32 元素；
-2. $104{,}857{,}600\times4=419{,}430{,}400$ bytes $=400$ MiB；
-3. All-reduce ring 每 rank send $2\times(3/4)\times400=600$ MiB；
-4. All-reduce aggregate sends $4\times600=2400$ MiB；
-5. 10 ms 时 all-reduce algbw $=39.0625$ GiB/s，busbw $=58.59375$ GiB/s；
-6. Reduce-scatter input $=4\times400=1600$ MiB，每 rank send $3\times400=1200$ MiB；
-7. 10 ms 时 reduce-scatter algbw $=156.25$ GiB/s，busbw $=117.1875$ GiB/s。
+1. $`100\times1024^2=104{,}857{,}600`$ 个 FP32 元素；
+2. $`104{,}857{,}600\times4=419{,}430{,}400`$ bytes $`=400`$ MiB；
+3. All-reduce ring 每 rank send $`2\times(3/4)\times400=600`$ MiB；
+4. All-reduce aggregate sends $`4\times600=2400`$ MiB；
+5. 10 ms 时 all-reduce algbw $`=39.0625`$ GiB/s，busbw $`=58.59375`$ GiB/s；
+6. Reduce-scatter input $`=4\times400=1600`$ MiB，每 rank send $`3\times400=1200`$ MiB；
+7. 10 ms 时 reduce-scatter algbw $`=156.25`$ GiB/s，busbw $`=117.1875`$ GiB/s。
 
 ## 11. Data parallel：每张卡看不同样本，梯度再求平均
 
@@ -1959,48 +1957,48 @@ num_dim = 1024
 data = torch.randn(batch_size, num_dim)  # shape [128, 1024]
 ```
 
-`int_divide(128,4)` 先检查 $128$ 能否整除 $4$，再得到：
+`int_divide(128,4)` 先检查 $`128`$ 能否整除 $`4`$，再得到：
 
-$$
+```math
 \text{local\_batch\_size}
 =\frac{128}{4}
 =32.
-$$
+```
 
-对 rank $r$：
+对 rank $`r`$：
 
-$$
+```math
 \text{start}=r\times32,
 \qquad
 \text{end}=\text{start}+32.
-$$
+```
 
 Python 切片 `data[start:end]` 包含 `start`，不包含 `end`：
 
-| rank $r$ | start | end | 实际行号 | 本地 shape |
+| rank $`r`$ | start | end | 实际行号 | 本地 shape |
 |---:|---:|---:|---|---:|
-| 0 | $0\times32=0$ | $0+32=32$ | 0–31 | `[32,1024]` |
-| 1 | $1\times32=32$ | $32+32=64$ | 32–63 | `[32,1024]` |
-| 2 | $2\times32=64$ | $64+32=96$ | 64–95 | `[32,1024]` |
-| 3 | $3\times32=96$ | $96+32=128$ | 96–127 | `[32,1024]` |
+| 0 | $`0\times32=0`$ | $`0+32=32`$ | 0–31 | `[32,1024]` |
+| 1 | $`1\times32=32`$ | $`32+32=64`$ | 32–63 | `[32,1024]` |
+| 2 | $`2\times32=64`$ | $`64+32=96`$ | 64–95 | `[32,1024]` |
+| 3 | $`3\times32=96`$ | $`96+32=128`$ | 96–127 | `[32,1024]` |
 
 四份合计：
 
-$$
+```math
 32+32+32+32=128\ \text{samples}.
-$$
+```
 
 既没有重复，也没有漏行。视频 [56:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3404s) 开始按 rows 切，[57:20](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3440s) 得到每 rank 32 行，[57:29](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3449s) 对应 `start_index:end_index`。
 
 本地输入 FP32 bytes：
 
-$$
+```math
 32\times1024\times4
 =131{,}072\ \text{bytes}
 =128\ \text{KiB}.
-$$
+```
 
-这里 $1\text{ KiB}=1024$ bytes。
+这里 $`1\text{ KiB}=1024`$ bytes。
 
 ### 11.3 教学代码先复制完整数据再切，不是实际数据管线
 
@@ -2018,23 +2016,23 @@ $$
 
 **【课程代码｜源码 412–415】【视频补充｜[58:04](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3484s)】**每层参数矩阵 shape 是 `[1024,1024]`。一层元素数：
 
-$$
+```math
 1024\times1024=1{,}048{,}576.
-$$
+```
 
 FP32 一层参数 bytes：
 
-$$
+```math
 1{,}048{,}576\times4
 =4{,}194{,}304\ \text{bytes}
 =4\ \text{MiB}.
-$$
+```
 
 四层：
 
-$$
+```math
 4\times4=16\ \text{MiB}.
-$$
+```
 
 每个 rank 都有完整四层，所以**每 rank**最小训练状态账：
 
@@ -2042,15 +2040,15 @@ $$
 |---|---|---:|
 | parameters | 4 个 `[1024,1024]` | 16 MiB |
 | gradients | 每个 parameter 对应一个同 shape grad | 16 MiB |
-| Adam first moment $m$ | 每参数一个同 shape 一阶动量 | 16 MiB |
-| Adam second moment $v$ | 每参数一个同 shape 二阶动量 | 16 MiB |
-| 合计 | params + grads + $m$ + $v$ | **64 MiB/rank** |
+| Adam first moment $`m`$ | 每参数一个同 shape 一阶动量 | 16 MiB |
+| Adam second moment $`v`$ | 每参数一个同 shape 二阶动量 | 16 MiB |
+| 合计 | params + grads + $`m`$ + $`v`$ | **64 MiB/rank** |
 
-**Moment（动量状态）**是 AdamW 为每个参数记住的历史梯度统计；$m$ 类似带衰减的梯度平均，$v$ 类似带衰减的梯度平方平均。课程 `torch.optim.AdamW` 的小 step counter 还会占少量空间，但相对 16 MiB tensor 可忽略。
+**Moment（动量状态）**是 AdamW 为每个参数记住的历史梯度统计；$`m`$ 类似带衰减的梯度平均，$`v`$ 类似带衰减的梯度平方平均。课程 `torch.optim.AdamW` 的小 step counter 还会占少量空间，但相对 16 MiB tensor 可忽略。
 
-PyTorch AdamW 通常在第一次 `optimizer.step()` 时才懒分配 $m,v$；因此“刚构造 optimizer、尚未 step”的瞬间可能还看不到这 32 MiB，而稳定训练状态会持有它们。这里算的是**第一次更新后的训练状态**。
+PyTorch AdamW 通常在第一次 `optimizer.step()` 时才懒分配 $`m,v`$；因此“刚构造 optimizer、尚未 step”的瞬间可能还看不到这 32 MiB，而稳定训练状态会持有它们。这里算的是**第一次更新后的训练状态**。
 
-这张 64 MiB 表**只数** FP32 parameters、gradients、Adam $m,v$。它明确不包括：
+这张 64 MiB 表**只数** FP32 parameters、gradients、Adam $`m,v`$。它明确不包括：
 
 - forward 保存的 activations；
 - allocator（内存分配器）的保留/碎片；
@@ -2082,71 +2080,71 @@ loss.backward()                  # 填充每个 param.grad，shape [1024,1024]
 
 ### 11.6 为什么“等大 local batch + local mean + AVG”恰好等于 global mean
 
-先不用矩阵，只看一个标量参数 $w$。假设每个 sample 的 loss 是：
+先不用矩阵，只看一个标量参数 $`w`$。假设每个 sample 的 loss 是：
 
-$$
+```math
 \ell_j(w)=a_jw.
-$$
+```
 
-当 $w$ 增加一点点 $\Delta w$，loss 增加 $a_j\Delta w$，所以该 sample 对 $w$ 的 gradient 就是 $a_j$。
+当 $`w`$ 增加一点点 $`\Delta w`$，loss 增加 $`a_j\Delta w`$，所以该 sample 对 $`w`$ 的 gradient 就是 $`a_j`$。
 
 两个 ranks，每 rank 两个 samples：
 
 | rank | 两个 sample gradients | local mean gradient |
 |---:|---|---:|
-| 0 | $2,6$ | $(2+6)/2=4$ |
-| 1 | $10,14$ | $(10+14)/2=12$ |
+| 0 | $`2,6`$ | $`(2+6)/2=4`$ |
+| 1 | $`10,14`$ | $`(10+14)/2=12`$ |
 
 对两个 local means 做 AVG all-reduce：
 
-$$
+```math
 \frac{4+12}{2}=8.
-$$
+```
 
 若把四个 samples 当一个 global batch，global mean gradient 是：
 
-$$
+```math
 \frac{2+6+10+14}{4}
 =\frac{32}{4}
 =8.
-$$
+```
 
-两者相同。一般地，$p$ 个 ranks，每 rank 恰好 $b$ 个 samples，本地先除 $b$，跨 rank 再除 $p$：
+两者相同。一般地，$`p`$ 个 ranks，每 rank 恰好 $`b`$ 个 samples，本地先除 $`b`$，跨 rank 再除 $`p`$：
 
-$$
+```math
 \frac1p\sum_{r=1}^{p}
 \left(\frac1b\sum_{j=1}^{b}g_{r,j}\right)
 =\frac1{pb}\sum_{r=1}^{p}\sum_{j=1}^{b}g_{r,j}.
-$$
+```
 
-右边就是 $pb$ 个 samples 的 global mean gradient。课程在 [59:15](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3555s) 进入关键同步，[59:37](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3577s) 明确用 AVG，[59:47](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3587s) 得到各 rank 相同 gradient。
+右边就是 $`pb`$ 个 samples 的 global mean gradient。课程在 [59:15](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3555s) 进入关键同步，[59:37](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3577s) 明确用 AVG，[59:47](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3587s) 得到各 rank 相同 gradient。
 
 ### 11.7 本地 batch 不等大时，直接平均 local means 会错
 
 改成：
 
-- rank 0 只有 1 个 sample，gradient 为 $2$，local mean $=2$；
-- rank 1 有 3 个 samples，gradients 为 $6,10,14$，local mean $=(6+10+14)/3=10$。
+- rank 0 只有 1 个 sample，gradient 为 $`2`$，local mean $`=2`$；
+- rank 1 有 3 个 samples，gradients 为 $`6,10,14`$，local mean $`=(6+10+14)/3=10`$。
 
 错误的“两个 rank 等权 AVG”：
 
-$$
+```math
 \frac{2+10}{2}=6.
-$$
+```
 
 真正四样本 global mean：
 
-$$
+```math
 \frac{2+6+10+14}{4}=8.
-$$
+```
 
 正确做法按本地样本数加权：
 
-$$
+```math
 \frac14\times2+\frac34\times10
 =0.5+7.5
 =8.
-$$
+```
 
 所以“AVG gradients 等价 global mean”有条件：各 rank 的有效样本数/有效 token 权重相同，且 local loss 的 reduction 口径一致。Padding 的无效 tokens、最后一个不满 batch、动态 batch 都可能破坏这个条件。
 
@@ -2221,45 +2219,45 @@ optimizer.zero_grad(set_to_none=True)
 
 #### 边界 C：optimizer state 完整复制
 
-每个 rank 都各自构建 `AdamW(params, ...)`，所以 $m,v$ 也各复制一份。源码 [62:32](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3752s) 预告 FSDP/ZeRO，就是为了下一讲讨论怎样不让每个 rank 永久持有全部模型状态；本讲不提前把它们的具体阶段当作已讲内容。
+每个 rank 都各自构建 `AdamW(params, ...)`，所以 $`m,v`$ 也各复制一份。源码 [62:32](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3752s) 预告 FSDP/ZeRO，就是为了下一讲讨论怎样不让每个 rank 永久持有全部模型状态；本讲不提前把它们的具体阶段当作已讲内容。
 
 ---
 
 ## 12. Tensor parallel：把一个矩阵的输出列切给多个 ranks
 
-### 12.1 Column tensor parallel 切的是 $W$ 的 columns
+### 12.1 Column tensor parallel 切的是 $`W`$ 的 columns
 
 **Tensor parallelism（张量并行，TP）**把一个 layer 内部的大 tensor/矩阵运算拆到多个 ranks。课程只演示 **column parallel（列并行）**：按 weight matrix 的输出列切分。
 
 **【课程内容｜源码 439–459】【视频补充｜[62:59](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3779s)】**数据不切，每个 rank 都先有：
 
-$$
+```math
 x:\ [128,1024].
-$$
+```
 
 完整权重若写成：
 
-$$
+```math
 W:\ [1024,1024],
-$$
+```
 
 按 4 ranks 切输出宽度：
 
-$$
+```math
 \text{local\_num\_dim}
 =1024/4
 =256,
-$$
+```
 
-$$
+```math
 W_r:\ [1024,256].
-$$
+```
 
 可视为：
 
-$$
+```math
 W=[W_0\mid W_1\mid W_2\mid W_3].
-$$
+```
 
 竖线表示沿 columns 横向拼起来。视频 [63:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3783s) 说明“不切 data，切每层”，[64:07](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3847s) 给出本地 `[num_dim,local_num_dim]`，[64:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3875s) 命名 column tensor parallel。
 
@@ -2267,18 +2265,18 @@ $$
 
 **【课程代码｜源码 461–475】【视频补充｜[64:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3883s)】**每个 rank：
 
-$$
+```math
 [128,1024]\ @\ [1024,256]
 \longrightarrow [128,256].
-$$
+```
 
 矩阵乘的内侧 1024 对齐；输出保留左矩阵 rows=128 和右矩阵 columns=256。
 
 接着 `F.gelu` 是逐元素函数，shape 不变：
 
-$$
+```math
 x_r:[128,256].
-$$
+```
 
 每个 rank 预分配 4 个 `[128,256]` buffers，all-gather 后：
 
@@ -2297,10 +2295,10 @@ x = torch.cat(activations, dim=1)
 
 `dim=1` 是 column/output-feature 轴：
 
-$$
+```math
 [128,256]\times4\ \text{份}
 \longrightarrow [128,1024].
-$$
+```
 
 于是下一层又能接收完整宽度 `[128,1024]`。视频 [65:07](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3907s) 追踪 local matmul，[65:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3918s) 说明 GeLU 可在本地逐元素做，[65:54](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3954s) 选择 all-gather，[66:54](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4014s) 拼回完整宽度。
 
@@ -2308,57 +2306,57 @@ $$
 
 每 rank 的 local partial 元素数：
 
-$$
+```math
 128\times256=32{,}768.
-$$
+```
 
 FP32 bytes：
 
-$$
+```math
 32{,}768\times4
 =131{,}072\ \text{bytes}
 =128\ \text{KiB}.
-$$
+```
 
 四个 all-gather receive buffers：
 
-$$
+```math
 4\times128=512\ \text{KiB}.
-$$
+```
 
 拼好的 full activation 也有：
 
-$$
+```math
 128\times1024\times4
 =524{,}288\ \text{bytes}
 =512\ \text{KiB}.
-$$
+```
 
 因此，在 `torch.cat` 发生的一瞬间，四个 receive buffers 共 512 KiB，新的 concatenated output 又是 512 KiB；若两者同时存活，仅这两项就约 1 MiB。实际 peak 还要加 local `x`、旧 tensor、allocator 与 kernels 的临时空间。
 
 逻辑上，每 rank 自己贡献 128 KiB，需要取得其他三个 ranks 共：
 
-$$
+```math
 3\times128=384\ \text{KiB}
-$$
+```
 
 的远端 partials；物理发送量仍依 all-gather 算法与 topology，不能把 384 KiB 当作所有链路的唯一流量。
 
 ### 12.4 参数分片 bytes：每 rank 每层 1 MiB
 
-本地 $W_r$ 元素：
+本地 $`W_r`$ 元素：
 
-$$
+```math
 1024\times256=262{,}144.
-$$
+```
 
 FP32 bytes：
 
-$$
+```math
 262{,}144\times4
 =1{,}048{,}576\ \text{bytes}
 =1\ \text{MiB/layer/rank}.
-$$
+```
 
 四层是 4 MiB/rank。四 ranks 合计持有 16 MiB，恰好等于四个完整 `[1024,1024]` 层的 parameter bytes；TP 的目标是分摊到各 rank，而不是把数学模型参数凭空删掉。
 
@@ -2366,16 +2364,16 @@ $$
 
 **【补充例子】**设两 ranks，输入：
 
-$$
+```math
 x=
 \begin{bmatrix}
 1&2&0&-1\\
 0&1&1&2
 \end{bmatrix}
 \quad[2,4],
-$$
+```
 
-$$
+```math
 W=
 \begin{bmatrix}
 1&0&2&1\\
@@ -2384,116 +2382,116 @@ W=
 0&2&1&1
 \end{bmatrix}
 \quad[4,4].
-$$
+```
 
 Rank 0 拿前两列：
 
-$$
+```math
 W_0=
 \begin{bmatrix}
 1&0\\0&1\\1&1\\0&2
 \end{bmatrix}
 \quad[4,2].
-$$
+```
 
 第一行 `[1,2,0,-1]` 乘两列：
 
-$$
+```math
 1\times1+2\times0+0\times1+(-1)\times0=1,
-$$
+```
 
-$$
+```math
 1\times0+2\times1+0\times1+(-1)\times2=0.
-$$
+```
 
 第二行 `[0,1,1,2]`：
 
-$$
+```math
 0\times1+1\times0+1\times1+2\times0=1,
-$$
+```
 
-$$
+```math
 0\times0+1\times1+1\times1+2\times2=6.
-$$
+```
 
 所以：
 
-$$
+```math
 xW_0=
 \begin{bmatrix}1&0\\1&6\end{bmatrix}.
-$$
+```
 
 Rank 1 拿后两列：
 
-$$
+```math
 W_1=
 \begin{bmatrix}
 2&1\\1&0\\0&2\\1&1
 \end{bmatrix}.
-$$
+```
 
 第一输入行 `[1,2,0,-1]` 的两个格：
 
-$$
+```math
 1\times2+2\times1+0\times0+(-1)\times1=3,
-$$
+```
 
-$$
+```math
 1\times1+2\times0+0\times2+(-1)\times1=0.
-$$
+```
 
 第二输入行 `[0,1,1,2]` 的两个格：
 
-$$
+```math
 0\times2+1\times1+1\times0+2\times1=3,
-$$
+```
 
-$$
+```math
 0\times1+1\times0+1\times2+2\times1=4.
-$$
+```
 
 所以：
 
-$$
+```math
 xW_1=
 \begin{bmatrix}3&0\\3&4\end{bmatrix}.
-$$
+```
 
 沿 columns concat：
 
-$$
-\operatorname{cat}(xW_0,xW_1)
+```math
+\mathrm{cat}(xW_0,xW_1)
 =
 \begin{bmatrix}
 1&0&3&0\\
 1&6&3&4
 \end{bmatrix}
 =xW.
-$$
+```
 
-直接算完整 $xW$ 的第一行四个 dot products 也得到：
+直接算完整 $`xW`$ 的第一行四个 dot products 也得到：
 
-$$
+```math
 1\times1+2\times0+0\times1+(-1)\times0=1,
-$$
+```
 
-$$
+```math
 1\times0+2\times1+0\times1+(-1)\times2=0,
-$$
+```
 
-$$
+```math
 1\times2+2\times1+0\times0+(-1)\times1=3,
-$$
+```
 
-$$
+```math
 1\times1+2\times0+0\times2+(-1)\times1=0.
-$$
+```
 
 所以第一行确实是 `[1,0,3,0]`，不是只凭 concat 形式猜出来。
 
-这不是近似；当 $W$ 真正按不重叠 columns 切分时，它由矩阵乘每个输出 column 独立计算的定义得到。逐元素 GeLU 也可在 concat 前各自作用，因为它不会混合 columns。
+这不是近似；当 $`W`$ 真正按不重叠 columns 切分时，它由矩阵乘每个输出 column 独立计算的定义得到。逐元素 GeLU 也可在 concat 前各自作用，因为它不会混合 columns。
 
-### 12.6 源码初始化没有真的把一个完整 $W$ 切成四块
+### 12.6 源码初始化没有真的把一个完整 $`W`$ 切成四块
 
 **【关键源码边界｜源码 459、594–597】**课程每 rank 调用：
 
@@ -2511,21 +2509,21 @@ rank 0 local block == rank 1 local block == rank 2 local block == rank 3 local b
 
 还有第二个不等价：课程 local shard 的除数是：
 
-$$
+```math
 \sqrt{256}=16,
-$$
+```
 
 而先创建完整 `[1024,1024]` 再切 columns 时，helper 口径的除数会是：
 
-$$
+```math
 \sqrt{1024}=32.
-$$
+```
 
-对同一个原始随机数 $z$，local helper 给 $z/16$，完整矩阵 helper 给 $z/32$：
+对同一个原始随机数 $`z`$，local helper 给 $`z/16`$，完整矩阵 helper 给 $`z/32`$：
 
-$$
+```math
 \frac{z/16}{z/32}=\frac{32}{16}=2.
-$$
+```
 
 所以课程 TP block 的单元素尺度是该 full-helper-then-slice 对照的 2 倍。重复 block 与缩放差异都不影响 shape/collective 教学，却不能用来验证真实 TP 与某个未切模型的逐值等价。
 
@@ -2540,7 +2538,7 @@ if rank == 0:
 local_W = full_W[:, rank * 256 : (rank + 1) * 256]
 ```
 
-大模型不会要求 rank 0 永久先装完整 $W$；可用按 global index 可复现的 distributed initialization，直接让各 rank 生成自己负责且互不重复的 shard。核心条件是：所有 local shards 合起来要对应同一个定义明确的 global parameter。
+大模型不会要求 rank 0 永久先装完整 $`W`$；可用按 global index 可复现的 distributed initialization，直接让各 rank 生成自己负责且互不重复的 shard。核心条件是：所有 local shards 合起来要对应同一个定义明确的 global parameter。
 
 同理，因为每层也重置 seed，课程四层 local matrices 彼此相同；这是教学可复现设置，不是 TP 必须如此。
 
@@ -2596,21 +2594,21 @@ final activation
 
 §11 已算一层 `[1024,1024]` FP32 参数是 4 MiB。每 rank 持有两层：
 
-$$
+```math
 2\times4=8\ \text{MiB parameters/rank}.
-$$
+```
 
 两 ranks 合计：
 
-$$
+```math
 8+8=16\ \text{MiB},
-$$
+```
 
-等于完整四层模型。PP 分摊 parameters，但每个 stage 要保存本地 layers 的 gradients/optimizer state；若使用 AdamW FP32，单看 params+grads+$m$+$v$，本教学模型每 stage 是：
+等于完整四层模型。PP 分摊 parameters，但每个 stage 要保存本地 layers 的 gradients/optimizer state；若使用 AdamW FP32，单看 params+grads+$`m`$+$`v`$，本教学模型每 stage 是：
 
-$$
+```math
 8\times4=32\ \text{MiB}.
-$$
+```
 
 仍不含 activations、allocator、通信 buffers 等。
 
@@ -2620,11 +2618,11 @@ $$
 
 **Microbatch（微批次）**是从一个训练 batch 再切出来、依次送进 pipeline 的小批。课程：
 
-$$
+```math
 \text{micro\_batch\_size}
 =\frac{128}{4}
 =32.
-$$
+```
 
 四个 microbatches：
 
@@ -2641,17 +2639,17 @@ $$
 
 每个 microbatch 通过 stage 0 两层后，shape 仍 `[32,1024]`。FP32 bytes：
 
-$$
+```math
 32\times1024\times4
 =131{,}072\ \text{bytes}
 =128\ \text{KiB}.
-$$
+```
 
 四个 microbatches 从 rank 0 发给 rank 1：
 
-$$
+```math
 4\times128=512\ \text{KiB sends}.
-$$
+```
 
 rank 1 接收同样 512 KiB。这里是本例单个 stage boundary 的应用 payload；协议 overhead 与物理链路流量另算。
 
@@ -2704,74 +2702,74 @@ dist.recv(y1, src=0)
 
 若 backend 的 blocking send 需要匹配 recv 才能返回，两边都卡在第一行。安全 schedule 要让一边先 recv，或使用经过正确 `isend`/`irecv` 配对与 `wait` 管理的异步方案。
 
-### 13.7 $m=4,p=2$ 的五个时刻表
+### 13.7 $`m=4,p=2`$ 的五个时刻表
 
 先做一个**理想 forward-only 模型**：
 
-- $m=4$ microbatches；
-- $p=2$ stages；
+- $`m=4`$ microbatches；
+- $`p=2`$ stages；
 - 每个 stage 处理一个 microbatch 都恰好用 1 个时间单位；
 - 暂时忽略通信时间；
 - stage 0 处理下一个 microbatch 可与 stage 1 处理上一个重叠。
 
 | 时刻 | stage 0 / rank 0 | stage 1 / rank 1 |
 |---:|---|---|
-| $t_1$ | microbatch 0 | idle |
-| $t_2$ | microbatch 1 | microbatch 0 |
-| $t_3$ | microbatch 2 | microbatch 1 |
-| $t_4$ | microbatch 3 | microbatch 2 |
-| $t_5$ | idle | microbatch 3 |
+| $`t_1`$ | microbatch 0 | idle |
+| $`t_2`$ | microbatch 1 | microbatch 0 |
+| $`t_3`$ | microbatch 2 | microbatch 1 |
+| $`t_4`$ | microbatch 3 | microbatch 2 |
+| $`t_5`$ | idle | microbatch 3 |
 
 总设备时间槽：
 
-$$
+```math
 p\times(m+p-1)
 =2\times(4+2-1)
 =2\times5
 =10.
-$$
+```
 
 有用计算槽：
 
-$$
+```math
 m\times p=4\times2=8.
-$$
+```
 
 Utilization（利用率）：
 
-$$
+```math
 \frac{8}{10}=0.8=80\%.
-$$
+```
 
-Idle slots 是 $10-8=2$，所以 bubble fraction：
+Idle slots 是 $`10-8=2`$，所以 bubble fraction：
 
-$$
+```math
 \frac2{10}=0.2=20\%.
-$$
+```
 
 **Pipeline bubble（流水线气泡）**是 stage 因数据尚未到达或 pipeline 正在排空而 idle 的时间槽。视频 [72:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4348s) 说明为什么需要 microbatches，[73:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4383s) 命名 bubbles，[73:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4398s) 解释更多小批能减少气泡比例。
 
 ### 13.8 一般 forward utilization 公式从哪里来
 
-第一 microbatch 从 stage 0 走到 stage $p-1$ 要填满 pipeline；最后 microbatch 离开还要排空。等时 stage 下，总时刻数：
+第一 microbatch 从 stage 0 走到 stage $`p-1`$ 要填满 pipeline；最后 microbatch 离开还要排空。等时 stage 下，总时刻数：
 
-$$
+```math
 m+p-1.
-$$
+```
 
-每个 $p$ stages 对 $m$ microbatches 各做一次计算，有用槽 $mp$；总槽 $p(m+p-1)$：
+每个 $`p`$ stages 对 $`m`$ microbatches 各做一次计算，有用槽 $`mp`$；总槽 $`p(m+p-1)`$：
 
-$$
+```math
 U_{\text{forward}}
 =\frac{mp}{p(m+p-1)}
 =\frac{m}{m+p-1}.
-$$
+```
 
-代 $m=4,p=2$：
+代 $`m=4,p=2`$：
 
-$$
+```math
 U=\frac4{4+2-1}=\frac45=80\%.
-$$
+```
 
 这条公式只适用于本节假设：forward-only、各 stage 等时、通信可忽略或完全隐藏、microbatches 连续排程。真实 stage 不平衡、链路延迟、backward 与调度策略都会改变利用率。
 
@@ -2843,18 +2841,18 @@ TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency
 
 逐步判断：
 
-1. **纯 DDP 能否 fit？**每 rank 要复制 160 GiB，$160>64$，不能 fit。
-2. **先用 TP=4？**理想均分模型状态约 $160/4=40$ GiB/rank，留下约 $64-40=24$ GiB 给 activations/buffers；从容量看可能可行。
+1. **纯 DDP 能否 fit？**每 rank 要复制 160 GiB，$`160>64`$，不能 fit。
+2. **先用 TP=4？**理想均分模型状态约 $`160/4=40`$ GiB/rank，留下约 $`64-40=24`$ GiB 给 activations/buffers；从容量看可能可行。
 3. **TP group 放哪里？**每组 4 GPUs，优先放同一 node 的 NVLink 域，因为 TP 每层频繁通信。
 4. **16/4=4 个 TP replicas 怎么利用？**可令这 4 个 TP groups 处理不同 data，形成 DP degree=4；跨 replicas 同步相应 parameter-shard gradients。
 5. **若 24 GiB activation 仍不够？**先考虑 activation checkpoint/recompute；也可再引入 sequence parallel/FSDP。若模型按 layers 易平衡且必须跨慢链接，可考虑 PP，但要为 bubbles 和更复杂 schedule 付代价。
-6. **最后依据什么决定？**对候选 mesh 做真实 memory peak、collective profile 与 step-time benchmark，不能只看 $160/4$。
+6. **最后依据什么决定？**对候选 mesh 做真实 memory peak、collective profile 与 step-time benchmark，不能只看 $`160/4`$。
 
 这个例子不是唯一答案；它展示的是约束顺序：先 fit，再看通信域，再看利用率与优化复杂度。
 
 ### 14.6 Shape 与 batch 约束也会拒绝某些方案
 
-- 本讲 DP helper 要求 $128$ 被 world size 整除；真实系统可处理不等 batch，但 gradient 必须按有效样本/token 加权。
+- 本讲 DP helper 要求 $`128`$ 被 world size 整除；真实系统可处理不等 batch，但 gradient 必须按有效样本/token 加权。
 - 本讲 TP 要求 1024 被 4 整除；若维度不整除，需要不均匀 shard、padding 或改 TP degree。
 - 本讲 PP 要求 layers 能平均切、batch 能整分 microbatches；即使 layer 数整除，不同 layer 计算量也可能不同，导致一个 stage 成 straggler。
 - DP 继续扩大 global batch 还会遇到 optimization 的 critical batch size（临界批大小）：再增 batch 可能不再带来等比例学习收益。视频 [77:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4655s) 提到这一限制。
@@ -2867,27 +2865,27 @@ TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency
 
 **Device mesh（设备网格）**给每个 GPU/rank 一个多维坐标；每一维代表一种 parallelism。例：
 
-$$
+```math
 \text{DP degree}=2,
 \quad
 \text{TP degree}=2,
 \quad
 \text{PP degree}=2.
-$$
+```
 
 总 GPUs：
 
-$$
+```math
 2\times2\times2=8.
-$$
+```
 
-本例坐标写成 $(d,t,p)$，分别是 data、tensor、pipeline index；定义 rank 编号：
+本例坐标写成 $`(d,t,p)`$，分别是 data、tensor、pipeline index；定义 rank 编号：
 
-$$
+```math
 \text{rank}=4d+2p+t.
-$$
+```
 
-| rank | DP $d$ | TP $t$ | PP $p$ | 人话 |
+| rank | DP $`d`$ | TP $`t`$ | PP $`p`$ | 人话 |
 |---:|---:|---:|---:|---|
 | 0 | 0 | 0 | 0 | data replica 0、TP shard 0、前半 pipeline |
 | 1 | 0 | 1 | 0 | data replica 0、TP shard 1、前半 pipeline |
@@ -2902,7 +2900,7 @@ $$
 
 固定另外两维、只改变一维，就得到该 parallelism 的 process groups：
 
-**TP groups：同一 data replica、同一 pipeline stage，改变 $t$**
+**TP groups：同一 data replica、同一 pipeline stage，改变 $`t`$**
 
 ```text
 {0,1}, {2,3}, {4,5}, {6,7}
@@ -2910,7 +2908,7 @@ $$
 
 这些 ranks 在一个 layer 内交换 activation/partial results。
 
-**PP groups：同一 data replica、同一 TP shard，改变 $p$**
+**PP groups：同一 data replica、同一 TP shard，改变 $`p`$**
 
 ```text
 {0,2}, {1,3}, {4,6}, {5,7}
@@ -2918,7 +2916,7 @@ $$
 
 这些 ranks 在相邻 stages 间发送 boundary activations/gradients。
 
-**DP groups：同一 TP shard、同一 pipeline stage，改变 $d$**
+**DP groups：同一 TP shard、同一 pipeline stage，改变 $`d`$**
 
 ```text
 {0,4}, {1,5}, {2,6}, {3,7}
@@ -2926,7 +2924,7 @@ $$
 
 这些 replicas 处理不同 data，随后同步对应 parameter shards 的 gradients。
 
-例如 rank 1 坐标 $(0,1,0)$：
+例如 rank 1 坐标 $`(0,1,0)`$：
 
 - 与 rank 0 做 TP layer 内通信；
 - 与 rank 3 做 PP stage 边界通信；
@@ -3013,21 +3011,21 @@ PP：切 model depth
 
 **Fit** 指训练所需的峰值显存能否装进每张 GPU。先量而不是猜：
 
-$$
+```math
 M_{\text{peak}}
 =M_{\text{params}}+M_{\text{grads}}+M_{\text{optimizer}}
 +M_{\text{activations}}+M_{\text{temporary}}+M_{\text{communication}}.
-$$
+```
 
 公式中：
 
-- $M_{\text{peak}}$：实测或估算的峰值显存；
+- $`M_{\text{peak}}`$：实测或估算的峰值显存；
 - params/grads/optimizer：模型状态；
 - activations：forward 为 backward 留下的中间值；
 - temporary：kernels/workspace/allocator 碎片；
 - communication：collective buckets、send/recv buffers 等。
 
-若 $M_{\text{peak}}$ 大于 GPU 可用 HBM：
+若 $`M_{\text{peak}}`$ 大于 GPU 可用 HBM：
 
 ```text
 模型状态占主导？
@@ -3200,7 +3198,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 ### 17.3 Cost model 与带宽
 
 17. **错误：**“带宽高，小消息一定快。”  
-    **原因：**$T\approx sL+Q/B$ 中，小 $Q$ 时固定 latency/launch 可能主导。  
+    **原因：**$`T\approx sL+Q/B`$ 中，小 $`Q`$ 时固定 latency/launch 可能主导。  
     **正确：**同时报告消息大小、latency、bandwidth 与 steps。
 
 18. **错误：**“Payload、per-rank sends、aggregate sends 是一个数。”  
@@ -3212,11 +3210,11 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
     **正确：**四-rank 400 MiB ring all-reduce 是 2400 MiB aggregate sends，4800 MiB endpoint send+receive。
 
 20. **错误：**“GB 和 GiB 可以交换标签。”  
-    **原因：**$1\text{GB}=10^9$ bytes，$1\text{GiB}=2^{30}$ bytes。  
+    **原因：**$`1\text{GB}=10^9`$ bytes，$`1\text{GiB}=2^{30}`$ bytes。  
     **正确：**源码除 `1024**3` 得 GiB/s；打印 `GB/s` 是标签不严谨。
 
 21. **错误：**“源码 `total_duration=p*duration` 表示四 ranks 串行跑了四倍墙钟。”  
-    **原因：**ranks 并发；$p\times t$ 是 aggregate numerator 的 rank-seconds 归一化。  
+    **原因：**ranks 并发；$`p\times t`$ 是 aggregate numerator 的 rank-seconds 归一化。  
     **正确：**本例 operation wall time 仍约 10 ms。
 
 22. **错误：**“NCCL-tests busbw 就是一根网线的物理吞吐。”  
@@ -3225,7 +3223,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 23. **错误：**“Ring 公式对所有 NCCL 算法都是实际 bytes 真值。”  
     **原因：**Tree、hierarchical/offload 路径不同。  
-    **正确：**把 $2(p-1)S/p$ 标成理想 ring 或标准归一化因子；factor 2 是 reduce-scatter+all-gather 两阶段，不是 endpoint send+receive。固定同一完整输入 $S$ 时 AR 是 RS 流量 2 倍；课程实际 AR input 400 MiB、RS input 1600 MiB，所以实际 per-rank sends 却是 600 与 1200 MiB。
+    **正确：**把 $`2(p-1)S/p`$ 标成理想 ring 或标准归一化因子；factor 2 是 reduce-scatter+all-gather 两阶段，不是 endpoint send+receive。固定同一完整输入 $`S`$ 时 AR 是 RS 流量 2 倍；课程实际 AR input 400 MiB、RS input 1600 MiB，所以实际 per-rank sends 却是 600 与 1200 MiB。
 
 24. **错误：**“一次 warmup、一次测量就足够发表性能结论。”  
     **原因：**冷启动、抖动、contention、straggler 会改变单样本。  
@@ -3281,9 +3279,9 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
     **原因：**课程每 rank 有 4×128 KiB receive buffers，cat 还新建 512 KiB full output。  
     **正确：**通信分片、gather buffers 与峰值生命周期都要计。
 
-36. **错误：**“课程四个 `[1024,256]` blocks 是完整随机 $W$ 的不同 columns。”  
-    **原因：**各 rank 同 shape、同 seed，实际 blocks 相同；local helper 还除 $\sqrt{256}$，而 full helper 会除 $\sqrt{1024}$，元素尺度相差 2 倍。  
-    **正确：**真实验证需从一个 global $W$ 切不重叠 columns，或按 global indices 做缩放一致的分布式初始化。
+36. **错误：**“课程四个 `[1024,256]` blocks 是完整随机 $`W`$ 的不同 columns。”  
+    **原因：**各 rank 同 shape、同 seed，实际 blocks 相同；local helper 还除 $`\sqrt{256}`$，而 full helper 会除 $`\sqrt{1024}`$，元素尺度相差 2 倍。  
+    **正确：**真实验证需从一个 global $`W`$ 切不重叠 columns，或按 global indices 做缩放一致的分布式初始化。
 
 37. **错误：**“源码写 `.backward()` 就会自动产生正确 TP 通信。”  
     **原因：**TP 源码根本未写 backward；裸 autograd 不知道自定义分片语义。  
@@ -3307,7 +3305,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
     **原因：**bubble 比例会降，但每批变小可能降低 GEMM 效率、增加 launch/通信次数。  
     **正确：**在 bubble 与单 microbatch 效率间调参。
 
-42. **错误：**“$U=m/(m+p-1)$ 是任何 pipeline 训练的精确利用率。”  
+42. **错误：**“$`U=m/(m+p-1)`$ 是任何 pipeline 训练的精确利用率。”  
     **原因：**它假设 forward-only、stage 等时、通信隐藏；真实 backward/1F1B/不均衡会改变。  
     **正确：**把它当最小模型，再用 stage timeline 测量。
 
@@ -3383,15 +3381,15 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 13. **【手算】**用第 11 题结果验证 `reduce-scatter → all-gather` 与 all-reduce 逻辑等价。
 
-14. **【填表】**四 ranks 的 all-to-all 输入行分别为 `[a00,a01,a02,a03]` 到 `[a30,a31,a32,a33]`；每个 `aij` 表示 sender $i$ 发给 destination $j$。写 rank 0 与 rank 2 的输出。
+14. **【填表】**四 ranks 的 all-to-all 输入行分别为 `[a00,a01,a02,a03]` 到 `[a30,a31,a32,a33]`；每个 `aij` 表示 sender $`i`$ 发给 destination $`j`$。写 rank 0 与 rank 2 的输出。
 
 15. **【手算】**不均匀 all-to-all 中，四 senders 发往 rank 0 的元素数分别为 3、0、2、5。Rank 0 共收多少？为什么这不再等于“每列恰好四个元素”的转置例？
 
-16. **【手算】**Cost model $T\approx sL+Q/B$。若 $s=4$、$L=2\ \mu s$、$Q=16$ MiB、$B=8$ GiB/s，估算 $T$（ms）。
+16. **【手算】**Cost model $`T\approx sL+Q/B`$。若 $`s=4`$、$`L=2\ \mu s`$、$`Q=16`$ MiB、$`B=8`$ GiB/s，估算 $`T`$（ms）。
 
-17. **【手算】**沿用第 16 题，把 $Q$ 改为 8 KiB，其余不变。算 latency 项与 bandwidth 项各多少 $\mu s$，谁主导？
+17. **【手算】**沿用第 16 题，把 $`Q`$ 改为 8 KiB，其余不变。算 latency 项与 bandwidth 项各多少 $`\mu s`$，谁主导？
 
-18. **【手算】**理想 ring all-reduce，$p=4,S=16$ MiB。每 rank 在 reduce-scatter 与 all-gather 两阶段各发送多少？总发送多少？
+18. **【手算】**理想 ring all-reduce，$`p=4,S=16`$ MiB。每 rank 在 reduce-scatter 与 all-gather 两阶段各发送多少？总发送多少？
 
 19. **【手算】**沿用第 18 题，aggregate sends 与 aggregate send+receive 各多少 MiB？
 
@@ -3399,23 +3397,23 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 21. **【手算】**400 MiB all-reduce 用时 10 ms。算 `algbw`，分别用 GiB/s 和十进制 GB/s 表示。
 
-22. **【手算】**$p=4$ all-reduce 的 busbw 校正因子是多少？用第 21 题算 `busbw` 的 GiB/s 与 GB/s。
+22. **【手算】**$`p=4`$ all-reduce 的 busbw 校正因子是多少？用第 21 题算 `busbw` 的 GiB/s 与 GB/s。
 
-23. **【手算】**课程 all-reduce 源码分子 `S*2*(p-1)`、分母 `p*t`。代 $S=400$ MiB、$p=4$、$t=0.01$s，逐项复算为何得到 58.59375 GiB/s。
+23. **【手算】**课程 all-reduce 源码分子 `S*2*(p-1)`、分母 `p*t`。代 $`S=400`$ MiB、$`p=4`$、$`t=0.01`$s，逐项复算为何得到 58.59375 GiB/s。
 
 24. **【概念+手算】**第 23 题中的 `p*t=0.04` 为什么不是实际 wall time？实际 wall time 是多少？
 
-25. **【手算】**58.59375 GiB/s 换成 GB/s。提示：先乘 $2^{30}$ 得 bytes/s，再除 $10^9$。
+25. **【手算】**58.59375 GiB/s 换成 GB/s。提示：先乘 $`2^{30}`$ 得 bytes/s，再除 $`10^9`$。
 
-26. **【手算】**Reduce-scatter 每 rank output chunk $C=400$ MiB、$p=4$。完整 input 是多少 MiB？
+26. **【手算】**Reduce-scatter 每 rank output chunk $`C=400`$ MiB、$`p=4`$。完整 input 是多少 MiB？
 
 27. **【手算】**理想 ring reduce-scatter 中，每 rank send、每 rank receive、aggregate sends 各多少 MiB？
 
 28. **【手算】**第 26 题用时 10 ms。按 NCCL-tests 口径算 reduce-scatter `algbw`（GiB/s）。
 
-29. **【手算】**第 28 题乘 $(p-1)/p$，算 `busbw`（GiB/s）。
+29. **【手算】**第 28 题乘 $`(p-1)/p`$，算 `busbw`（GiB/s）。
 
-30. **【手算】**课程 reduce-scatter 源码分子 `input_bytes*(p-1)` 与分母 `p*t` 各是多少？复算第 29 题；再解释为什么课程实际 RS per-rank send 1200 MiB，反而是实际 AR 600 MiB 的 2 倍，而固定同一完整输入 $S$ 时 AR 又是 RS 的 2 倍。
+30. **【手算】**课程 reduce-scatter 源码分子 `input_bytes*(p-1)` 与分母 `p*t` 各是多少？复算第 29 题；再解释为什么课程实际 RS per-rank send 1200 MiB，反而是实际 AR 600 MiB 的 2 倍，而固定同一完整输入 $`S`$ 时 AR 又是 RS 的 2 倍。
 
 31. 课程通信 benchmark 的正式 `duration` 包含哪三类主要时间？哪些准备工作在区间外？
 
@@ -3435,7 +3433,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 39. **【手算】**四层第 38 题矩阵的 parameters 总共多少 MiB？Gradients 同 shape 又是多少？
 
-40. **【手算/填表】**每 rank 使用 FP32 AdamW，列 params、grads、$m$、$v$ 的大小并求合计；明确不含哪些至少三项。
+40. **【手算/填表】**每 rank 使用 FP32 AdamW，列 params、grads、$`m`$、$`v`$ 的大小并求合计；明确不含哪些至少三项。
 
 41. **【填表】**DP local input `[32,1024]` 连续过四个 `[1024,1024]` 矩阵和逐元素 GeLU。写每层 matmul 前后 shape、loss shape、每个 `param.grad` shape。
 
@@ -3445,35 +3443,35 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 44. **【推理填表】**`get_init_params` 每次内部 `manual_seed(0)`，shape 都相同。填“跨 rank 同 layer”“同 rank 不同 layer”是否数值相同，并解释。
 
-45. **【手算】**若 step0 backward 得 $g_0=3$，未 zero_grad；step1 backward 新贡献 $g_1=5$。第二次 `.grad` 是多少？若每步独立训练，本来应是多少？
+45. **【手算】**若 step0 backward 得 $`g_0=3`$，未 zero_grad；step1 backward 新贡献 $`g_1=5`$。第二次 `.grad` 是多少？若每步独立训练，本来应是多少？
 
 46. **【填表】**要保证 DDP ranks 更新后 parameters 仍相同，旧 parameters、同步后 gradients、optimizer state/规则三项各应满足什么？
 
-47. **【手算/填表】**TP 中 $x[128,1024]$、$W[1024,1024]$ 按 4 ranks 列切。写 local $W_r$、local output、all-gather 后 full output shape。
+47. **【手算/填表】**TP 中 $`x[128,1024]`$、$`W[1024,1024]`$ 按 4 ranks 列切。写 local $`W_r`$、local output、all-gather 后 full output shape。
 
 48. **【手算】**第 47 题 local output `[128,256]` FP32 是多少 KiB？四个 receive buffers 与 full concatenated output 各多少 KiB？
 
 49. **【手算】**每 rank 每层 `[1024,256]` FP32 parameter shard 是多少 MiB？四层是多少？四 ranks 合计是多少？
 
-50. **【手算】**用 §12.5 的 $x,W$，只计算 rank 0 的前两列输出，写出 2×2 结果。
+50. **【手算】**用 §12.5 的 $`x,W`$，只计算 rank 0 的前两列输出，写出 2×2 结果。
 
-51. **【手算】**用同一 $x,W$，计算 rank 1 的后两列输出。
+51. **【手算】**用同一 $`x,W`$，计算 rank 1 的后两列输出。
 
-52. **【手算】**把第 50、51 题沿 column concat；再直接检查完整 $xW$ 的第一行，验证相同。
+52. **【手算】**把第 50、51 题沿 column concat；再直接检查完整 $`xW`$ 的第一行，验证相同。
 
-53. **【推理】**为什么课程 `get_init_params(1024,256,rank)` 不能证明四 ranks 拿到一个随机完整 $W$ 的不同列？给一种概念上正确的初始化/切片办法。
+53. **【推理】**为什么课程 `get_init_params(1024,256,rank)` 不能证明四 ranks 拿到一个随机完整 $`W`$ 的不同列？给一种概念上正确的初始化/切片办法。
 
 54. **【手算】**PP 中 4 layers、2 stages。每 stage 几层？每层参数 4 MiB 时，每 stage parameters 和 FP32 Adam 训练状态下界各多少 MiB？
 
 55. **【手算/填表】**Batch128 切 4 microbatches。写每份行号、shape；一个 `[32,1024]` FP32 boundary activation 多大？四次 send payload 多大？
 
-56. **【填表】**$m=4,p=2$ forward-only pipeline。写 $t_1$ 到 $t_5$ 两 stages 分别处理哪个 microbatch/idle。
+56. **【填表】**$`m=4,p=2`$ forward-only pipeline。写 $`t_1`$ 到 $`t_5`$ 两 stages 分别处理哪个 microbatch/idle。
 
 57. **【手算】**第 56 题总 slots、有用 slots、利用率、bubble fraction 各是多少？
 
-58. **【手算】**理想公式 $U=m/(m+p-1)$。若 $m=8,p=4$，算利用率和 bubble fraction（百分比保留两位）。
+58. **【手算】**理想公式 $`U=m/(m+p-1)`$。若 $`m=8,p=4`$，算利用率和 bubble fraction（百分比保留两位）。
 
-59. **【手算】**若 $p=4$ 固定，希望理想 forward utilization 至少 80%，最小整数 $m$ 是多少？解不等式。
+59. **【手算】**若 $`p=4`$ 固定，希望理想 forward utilization 至少 80%，最小整数 $`m`$ 是多少？解不等式。
 
 60. **【填表】**课程 pipeline 在 rank0 与 rank1 上分别执行 recv/compute/send 哪些步骤？列出它未实现的四个训练功能。
 
@@ -3481,15 +3479,15 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 62. 解释 DDP、FSDP、ZeRO、TP 为什么不能当同义词。
 
-63. **【手算/填表】**在 §15 的 $2\times2\times2$ mesh 中，rank 6 的 $(d,t,p)$ 是多少？它的 TP、PP、DP groups 分别是什么？
+63. **【手算/填表】**在 §15 的 $`2\times2\times2`$ mesh 中，rank 6 的 $`(d,t,p)`$ 是多少？它的 TP、PP、DP groups 分别是什么？
 
-64. **【填表】**列出 $2\times2\times2$ mesh 的全部四个 TP groups、四个 PP groups、四个 DP groups。
+64. **【填表】**列出 $`2\times2\times2`$ mesh 的全部四个 TP groups、四个 PP groups、四个 DP groups。
 
-65. **【手算】**DP degree=3、TP degree=2、PP degree=4，共需多少 GPUs？一个固定 $(t,p)$ 的 DP group 有几个 ranks？
+65. **【手算】**DP degree=3、TP degree=2、PP degree=4，共需多少 GPUs？一个固定 $`(t,p)`$ 的 DP group 有几个 ranks？
 
 66. **【手算】**训练状态 160 GiB，单卡 64 GiB。纯 DDP 能否 fit？若理想 TP=4 均分状态，每卡状态多少 GiB、剩余多少 GiB？
 
-67. **【手算】**Cost model 中 $s=3,L=5\ \mu s,Q=400$ MiB、$B=100$ GiB/s。算总时间（ms）。
+67. **【手算】**Cost model 中 $`s=3,L=5\ \mu s,Q=400`$ MiB、$`B=100`$ GiB/s。算总时间（ms）。
 
 68. **【手算】**两个 DP ranks 的有效 token 数为 100 与 300，local mean gradients 为 2 与 6。错误等权 AVG 与正确 token-weighted global mean 各是多少？
 
@@ -3533,30 +3531,21 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 8. 逐位置 SUM：
 
-   $$
-   0+2+4+6=12,
-   $$
+   $`0+2+4+6=12,`$
 
-   $$
-   1+3+5+7=16.
-   $$
+   $`1+3+5+7=16.`$
 
    Root 0 得 `[12,16]`。
 
 9. 四 ranks AVG 就把第 8 题 SUM 除以 4：
 
-   $$
-   [12/4,16/4]=[3,4].
-   $$
+   $`[12/4,16/4]=[3,4].`$
 
 10. All-gather 后每个 rank 都有按 rank 顺序拼成的 `[0,1,2,3]`。
 
 11. 逐列 reduce：
 
-   $$
-   [0+1+2+3,\ 1+2+3+4,\ 2+3+4+5,\ 3+4+5+6]
-   =[6,10,14,18].
-   $$
+   $`[0+1+2+3,\ 1+2+3+4,\ 2+3+4+5,\ 3+4+5+6] =[6,10,14,18].`$
 
    再 scatter：rank0=`[6]`、rank1=`[10]`、rank2=`[14]`、rank3=`[18]`。
 
@@ -3568,191 +3557,127 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 15. Rank0 收到：
 
-   $$
-   3+0+2+5=10\ \text{elements}.
-   $$
+   $`3+0+2+5=10\ \text{elements}.`$
 
    均匀 4×4 转置例假设每 sender 给每 destination 1 个元素，所以每列 4 个；这里 splits 是 3/0/2/5，不是固定一元素列。
 
 16. Latency 项：
 
-   $$
-   sL=4\times2\ \mu s=8\ \mu s=0.008\ \text{ms}.
-   $$
+   $`sL=4\times2\ \mu s=8\ \mu s=0.008\ \text{ms}.`$
 
-   Bandwidth 项先换单位：$16$ MiB $=16/1024=0.015625$ GiB。
+   Bandwidth 项先换单位：$`16`$ MiB $`=16/1024=0.015625`$ GiB。
 
-   $$
-   Q/B=0.015625/8\ \text{s}=0.001953125\ \text{s}=1.953125\ \text{ms}.
-   $$
+   $`Q/B=0.015625/8\ \text{s}=0.001953125\ \text{s}=1.953125\ \text{ms}.`$
 
    总计：
 
-   $$
-   T\approx0.008+1.953125=1.961125\ \text{ms}.
-   $$
+   $`T\approx0.008+1.953125=1.961125\ \text{ms}.`$
 
-17. $8$ KiB $=8/1024/1024=1/131072$ GiB。Latency 仍是 $8\ \mu s$。Bandwidth 项：
+17. $`8`$ KiB $`=8/1024/1024=1/131072`$ GiB。Latency 仍是 $`8\ \mu s`$。Bandwidth 项：
 
-   $$
-   \frac{1/131072}{8}\ \text{s}
-   =\frac1{1{,}048{,}576}\ \text{s}
-   \approx0.953674\ \mu s.
-   $$
+   $`\frac{1/131072}{8}\ \text{s} =\frac1{1{,}048{,}576}\ \text{s} \approx0.953674\ \mu s.`$
 
-   因为 $8>0.954$，latency 项主导；总约 $8.954\ \mu s$。
+   因为 $`8>0.954`$，latency 项主导；总约 $`8.954\ \mu s`$。
 
 18. 每阶段发送：
 
-   $$
-   \frac{p-1}{p}S=\frac34\times16=12\ \text{MiB}.
-   $$
+   $`\frac{p-1}{p}S=\frac34\times16=12\ \text{MiB}.`$
 
-   Reduce-scatter 12 MiB，all-gather 12 MiB，总发送 $12+12=24$ MiB/rank。
+   Reduce-scatter 12 MiB，all-gather 12 MiB，总发送 $`12+12=24`$ MiB/rank。
 
 19. Aggregate sends：
 
-   $$
-   4\times24=96\ \text{MiB}.
-   $$
+   $`4\times24=96\ \text{MiB}.`$
 
    对称 ring 每 rank 也接收 24 MiB，所以 endpoint send+receive：
 
-   $$
-   4\times(24+24)=192\ \text{MiB}.
-   $$
+   $`4\times(24+24)=192\ \text{MiB}.`$
 
 20. 元素数：
 
-   $$
-   100\times1024^2
-   =100\times1{,}048{,}576
-   =104{,}857{,}600.
-   $$
+   $`100\times1024^2 =100\times1{,}048{,}576 =104{,}857{,}600.`$
 
    Bytes：
 
-   $$
-   104{,}857{,}600\times4=419{,}430{,}400.
-   $$
+   $`104{,}857{,}600\times4=419{,}430{,}400.`$
 
    MiB：
 
-   $$
-   419{,}430{,}400/1{,}048{,}576=400\ \text{MiB}.
-   $$
+   $`419{,}430{,}400/1{,}048{,}576=400\ \text{MiB}.`$
 
-21. $400$ MiB $=400/1024=0.390625$ GiB；$10$ ms $=0.01$s：
+21. $`400`$ MiB $`=400/1024=0.390625`$ GiB；$`10`$ ms $`=0.01`$s：
 
-   $$
-   \text{algbw}=0.390625/0.01=39.0625\ \text{GiB/s}.
-   $$
+   $`\text{algbw}=0.390625/0.01=39.0625\ \text{GiB/s}.`$
 
    十进制：
 
-   $$
-   419{,}430{,}400/0.01/10^9=41.94304\ \text{GB/s}.
-   $$
+   $`419{,}430{,}400/0.01/10^9=41.94304\ \text{GB/s}.`$
 
 22. 校正因子：
 
-   $$
-   2(p-1)/p=2\times3/4=1.5.
-   $$
+   $`2(p-1)/p=2\times3/4=1.5.`$
 
    所以：
 
-   $$
-   39.0625\times1.5=58.59375\ \text{GiB/s},
-   $$
+   $`39.0625\times1.5=58.59375\ \text{GiB/s},`$
 
-   $$
-   41.94304\times1.5=62.91456\ \text{GB/s}.
-   $$
+   $`41.94304\times1.5=62.91456\ \text{GB/s}.`$
 
 23. 分子：
 
-   $$
-   400\times2\times(4-1)=2400\ \text{MiB}.
-   $$
+   $`400\times2\times(4-1)=2400\ \text{MiB}.`$
 
    分母：
 
-   $$
-   4\times0.01=0.04\ \text{rank-seconds}.
-   $$
+   $`4\times0.01=0.04\ \text{rank-seconds}.`$
 
    相除：
 
-   $$
-   2400/0.04=60{,}000\ \text{MiB/s},
-   $$
+   $`2400/0.04=60{,}000\ \text{MiB/s},`$
 
-   $$
-   60{,}000/1024=58.59375\ \text{GiB/s}.
-   $$
+   $`60{,}000/1024=58.59375\ \text{GiB/s}.`$
 
-24. 四 ranks 并发执行，并未串行跑四次；`p*t` 是把所有 ranks 的 aggregate-send 分子归一化所用的 rank-seconds。每个 rank 实测 operation duration 仍是 $t=0.01$s=10ms，不是 40ms。
+24. 四 ranks 并发执行，并未串行跑四次；`p*t` 是把所有 ranks 的 aggregate-send 分子归一化所用的 rank-seconds。每个 rank 实测 operation duration 仍是 $`t=0.01`$s=10ms，不是 40ms。
 
 25. 先换 bytes/s：
 
-   $$
-   58.59375\times2^{30}=62{,}914{,}560{,}000\ \text{bytes/s}.
-   $$
+   $`58.59375\times2^{30}=62{,}914{,}560{,}000\ \text{bytes/s}.`$
 
-   再除 $10^9$：
+   再除 $`10^9`$：
 
-   $$
-   62{,}914{,}560{,}000/10^9=62.91456\ \text{GB/s}.
-   $$
+   $`62{,}914{,}560{,}000/10^9=62.91456\ \text{GB/s}.`$
 
-26. 完整 input 有 $p$ 个 output chunks：
+26. 完整 input 有 $`p`$ 个 output chunks：
 
-   $$
-   pC=4\times400=1600\ \text{MiB}.
-   $$
+   $`pC=4\times400=1600\ \text{MiB}.`$
 
 27. 每 rank 发送：
 
-   $$
-   (p-1)C=3\times400=1200\ \text{MiB}.
-   $$
+   $`(p-1)C=3\times400=1200\ \text{MiB}.`$
 
    对称模型下每 rank receive 也是 1200 MiB。Aggregate sends：
 
-   $$
-   4\times1200=4800\ \text{MiB}.
-   $$
+   $`4\times1200=4800\ \text{MiB}.`$
 
-28. $1600$ MiB $=1600/1024=1.5625$ GiB：
+28. $`1600`$ MiB $`=1600/1024=1.5625`$ GiB：
 
-   $$
-   \text{algbw}=1.5625/0.01=156.25\ \text{GiB/s}.
-   $$
+   $`\text{algbw}=1.5625/0.01=156.25\ \text{GiB/s}.`$
 
-29. 校正因子 $(p-1)/p=3/4=0.75$：
+29. 校正因子 $`(p-1)/p=3/4=0.75`$：
 
-   $$
-   \text{busbw}=156.25\times0.75=117.1875\ \text{GiB/s}.
-   $$
+   $`\text{busbw}=156.25\times0.75=117.1875\ \text{GiB/s}.`$
 
 30. 分子：
 
-   $$
-   1600\times(4-1)=4800\ \text{MiB}.
-   $$
+   $`1600\times(4-1)=4800\ \text{MiB}.`$
 
-   分母：$4\times0.01=0.04$ rank-seconds。于是：
+   分母：$`4\times0.01=0.04`$ rank-seconds。于是：
 
-   $$
-   4800/0.04=120{,}000\ \text{MiB/s},
-   $$
+   $`4800/0.04=120{,}000\ \text{MiB/s},`$
 
-   $$
-   120{,}000/1024=117.1875\ \text{GiB/s}.
-   $$
+   $`120{,}000/1024=117.1875\ \text{GiB/s}.`$
 
-   固定相同完整输入 $S$ 时，RS send $=(p-1)S/p$，AR send $=2(p-1)S/p$，所以 AR 是 RS 两倍。课程却给 AR 完整输入 400 MiB、RS 完整输入 1600 MiB；后者大 4 倍，抵消算法的 $1/2$ 后仍是 $4/2=2$ 倍，因此课程实际 RS 1200 MiB 是 AR 600 MiB 的两倍。
+   固定相同完整输入 $`S`$ 时，RS send $`=(p-1)S/p`$，AR send $`=2(p-1)S/p`$，所以 AR 是 RS 两倍。课程却给 AR 完整输入 400 MiB、RS 完整输入 1600 MiB；后者大 4 倍，抵消算法的 $`1/2`$ 后仍是 $`4/2=2`$ 倍，因此课程实际 RS 1200 MiB 是 AR 600 MiB 的两倍。
 
 31. 按设计意图，正式区间包含 collective 的 host 提交/执行、正确 device 的 `cuda.synchronize` 等待、末尾 barrier 的 straggler 等待。区间外有 setup、输入随机分配、warmup collective、warmup 后同步与起跑 barrier；打印和 cleanup 也在 `end_time` 后。当前原码没 `set_device` 且 synchronize 无参数，可能同步错 current device，所以“正确 device 等待”是意图，不是已无条件满足的事实。
 
@@ -3785,7 +3710,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 35. Reduce-scatter：每 rank input `[4]`、output `[1]`。随后 all-gather：每 rank input `[1]`、预分配 output `[4]`；完成后每 rank output `[4]`。
 
-36. Local batch：$128/4=32$。
+36. Local batch：$`128/4=32`$。
 
    | rank | `[start,end)` | 实际行号 | local batch |
    |---:|---|---|---:|
@@ -3794,63 +3719,43 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
    | 2 | `[64,96)` | 64–95 | 32 |
    | 3 | `[96,128)` | 96–127 | 32 |
 
-37. 元素数 $32\times1024=32{,}768$。FP32 bytes：
+37. 元素数 $`32\times1024=32{,}768`$。FP32 bytes：
 
-   $$
-   32{,}768\times4=131{,}072\ \text{bytes}.
-   $$
+   $`32{,}768\times4=131{,}072\ \text{bytes}.`$
 
-   $$
-   131{,}072/1024=128\ \text{KiB}.
-   $$
+   $`131{,}072/1024=128\ \text{KiB}.`$
 
-38. 元素数：$1024^2=1{,}048{,}576$。Bytes：
+38. 元素数：$`1024^2=1{,}048{,}576`$。Bytes：
 
-   $$
-   1{,}048{,}576\times4=4{,}194{,}304\ \text{bytes}.
-   $$
+   $`1{,}048{,}576\times4=4{,}194{,}304\ \text{bytes}.`$
 
-   $$
-   4{,}194{,}304/1{,}048{,}576=4\ \text{MiB}.
-   $$
+   $`4{,}194{,}304/1{,}048{,}576=4\ \text{MiB}.`$
 
-39. 四层 parameters：$4\times4=16$ MiB。每个 parameter 有同 shape gradient，所以 gradients 也为 16 MiB。
+39. 四层 parameters：$`4\times4=16`$ MiB。每个 parameter 有同 shape gradient，所以 gradients 也为 16 MiB。
 
-40. 分项：parameters 16 MiB、gradients 16 MiB、Adam $m$ 16 MiB、Adam $v$ 16 MiB；合计：
+40. 分项：parameters 16 MiB、gradients 16 MiB、Adam $`m`$ 16 MiB、Adam $`v`$ 16 MiB；合计：
 
-   $$
-   16+16+16+16=64\ \text{MiB/rank}.
-   $$
+   $`16+16+16+16=64\ \text{MiB/rank}.`$
 
-   不含 activations、allocator 保留/碎片、GEMM workspace、通信 buffers、CUDA context 等。Adam $m,v$ 通常在第一次 step 才懒分配。
+   不含 activations、allocator 保留/碎片、GEMM workspace、通信 buffers、CUDA context 等。Adam $`m,v`$ 通常在第一次 step 才懒分配。
 
 41. 每层都是：
 
-   $$
-   [32,1024]@[1024,1024]\to[32,1024],
-   $$
+   $`[32,1024]@[1024,1024]\to[32,1024],`$
 
    GeLU 后仍 `[32,1024]`。四层都相同。`square().mean()` 得 scalar，shape `[]`。每个 `param.grad` 与 parameter 同 shape `[1024,1024]`。
 
 42. Local means：
 
-   $$
-   (2+6)/2=4,
-   \qquad
-   (10+14)/2=12.
-   $$
+   $`(2+6)/2=4, \qquad (10+14)/2=12.`$
 
-   两 rank AVG：$(4+12)/2=8$。Global mean：
+   两 rank AVG：$`(4+12)/2=8`$。Global mean：
 
-   $$
-   (2+6+10+14)/4=32/4=8.
-   $$
+   $`(2+6+10+14)/4=32/4=8.`$
 
-43. Local means：rank0=$2$；rank1=$(6+10+14)/3=30/3=10$。错误等权 AVG：$(2+10)/2=6$。正确加权：
+43. Local means：rank0=$`2`$；rank1=$`(6+10+14)/3=30/3=10`$。错误等权 AVG：$`(2+10)/2=6`$。正确加权：
 
-   $$
-   \frac14\times2+\frac34\times10=0.5+7.5=8.
-   $$
+   $`\frac14\times2+\frac34\times10=0.5+7.5=8.`$
 
 44. 在相同生成条件与 shape 下：
 
@@ -3863,11 +3768,9 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 45. 默认 accumulation：第二次 `.grad` 为：
 
-   $$
-   g_0+g_1=3+5=8.
-   $$
+   $`g_0+g_1=3+5=8.`$
 
-   若每 step 应独立且 step1 前已 zero_grad，第二次应只有 $g_1=5$。
+   若每 step 应独立且 step1 前已 zero_grad，第二次应只有 $`g_1=5`$。
 
 46. 三条件都要对齐：
 
@@ -3875,162 +3778,113 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
    |---|---|
    | 旧 parameters | 各 ranks 对应参数值相同 |
    | 同步后 gradients | AVG/SUM 缩放后值相同 |
-   | optimizer | $m,v$/step 等状态相同，超参数与更新规则相同 |
+   | optimizer | $`m,v`$/step 等状态相同，超参数与更新规则相同 |
 
    缺任何一项都可能更新到不同参数。
 
-47. 输出宽度 $1024/4=256$：
+47. 输出宽度 $`1024/4=256`$：
 
-   $$
-   W_r:[1024,256],
-   $$
+   $`W_r:[1024,256],`$
 
-   $$
-   [128,1024]@[1024,256]\to[128,256].
-   $$
+   $`[128,1024]@[1024,256]\to[128,256].`$
 
    All-gather 四份并沿 `dim=1` concat：`[128,1024]`。
 
 48. Local output：
 
-   $$
-   128\times256\times4=131{,}072\ \text{bytes}=128\ \text{KiB}.
-   $$
+   $`128\times256\times4=131{,}072\ \text{bytes}=128\ \text{KiB}.`$
 
-   四 receive buffers：$4\times128=512$ KiB。Full concat：
+   四 receive buffers：$`4\times128=512`$ KiB。Full concat：
 
-   $$
-   128\times1024\times4=524{,}288\ \text{bytes}=512\ \text{KiB}.
-   $$
+   $`128\times1024\times4=524{,}288\ \text{bytes}=512\ \text{KiB}.`$
 
 49. 每层：
 
-   $$
-   1024\times256\times4=1{,}048{,}576\ \text{bytes}=1\ \text{MiB}.
-   $$
+   $`1024\times256\times4=1{,}048{,}576\ \text{bytes}=1\ \text{MiB}.`$
 
-   四层 $=4$ MiB/rank；四 ranks 合计 $4\times4=16$ MiB，等于完整四层 parameter bytes。
+   四层 $`=4`$ MiB/rank；四 ranks 合计 $`4\times4=16`$ MiB，等于完整四层 parameter bytes。
 
-50. Rank0 拿 $W$ 前两列。第一输入行输出：$[1,0]$；第二输入行输出：$[1,6]$，所以：
+50. Rank0 拿 $`W`$ 前两列。第一输入行输出：$`[1,0]`$；第二输入行输出：$`[1,6]`$，所以：
 
-   $$
-   xW_0=\begin{bmatrix}1&0\\1&6\end{bmatrix}.
-   $$
+   $`xW_0=\begin{bmatrix}1&0\\1&6\end{bmatrix}.`$
 
-   例如第二行第二列：$0\times0+1\times1+1\times1+2\times2=6$。
+   例如第二行第二列：$`0\times0+1\times1+1\times1+2\times2=6`$。
 
 51. Rank1 拿后两列：
 
    四个格分别是：
 
-   $$
-   1\times2+2\times1+0\times0+(-1)\times1=3,
-   $$
+   $`1\times2+2\times1+0\times0+(-1)\times1=3,`$
 
-   $$
-   1\times1+2\times0+0\times2+(-1)\times1=0,
-   $$
+   $`1\times1+2\times0+0\times2+(-1)\times1=0,`$
 
-   $$
-   0\times2+1\times1+1\times0+2\times1=3,
-   $$
+   $`0\times2+1\times1+1\times0+2\times1=3,`$
 
-   $$
-   0\times1+1\times0+1\times2+2\times1=4.
-   $$
+   $`0\times1+1\times0+1\times2+2\times1=4.`$
 
-   $$
-   xW_1=\begin{bmatrix}3&0\\3&4\end{bmatrix}.
-   $$
+   $`xW_1=\begin{bmatrix}3&0\\3&4\end{bmatrix}.`$
 
 52. Concat：
 
-   $$
-   [xW_0\mid xW_1]
-   =\begin{bmatrix}1&0&3&0\\1&6&3&4\end{bmatrix}.
-   $$
+   $`[xW_0\mid xW_1] =\begin{bmatrix}1&0&3&0\\1&6&3&4\end{bmatrix}.`$
 
-   完整 $xW$ 第一行四个 dot products：
+   完整 $`xW`$ 第一行四个 dot products：
 
-   $$
-   1\times1+2\times0+0\times1+(-1)\times0=1,
-   $$
+   $`1\times1+2\times0+0\times1+(-1)\times0=1,`$
 
-   $$
-   1\times0+2\times1+0\times1+(-1)\times2=0,
-   $$
+   $`1\times0+2\times1+0\times1+(-1)\times2=0,`$
 
-   $$
-   1\times2+2\times1+0\times0+(-1)\times1=3,
-   $$
+   $`1\times2+2\times1+0\times0+(-1)\times1=3,`$
 
-   $$
-   1\times1+2\times0+0\times2+(-1)\times1=0.
-   $$
+   $`1\times1+2\times0+0\times2+(-1)\times1=0.`$
 
    因而完整第一行 `[1,0,3,0]` 与 concat 第一行相同；第二行也为 `[1,6,3,4]`。
 
-53. Helper 在每 rank 对同 shape 先设 seed 0，因此四个 blocks 数值相同，不是不同 columns。它还除以 $\sqrt{256}=16$；若按同 helper 先生成 full `[1024,1024]`，会除以 $\sqrt{1024}=32$。同一原始数 $z$ 的尺度比为 $(z/16)/(z/32)=2$，所以 local block 还大 2 倍。概念正确方法：只生成一次 global $W[1024,1024]$，给 rank $r$ 切 `W[:,r*256:(r+1)*256]`；规模大时用按 global index 可复现的分布式初始化直接生成互不重叠且缩放一致的 shards。
+53. Helper 在每 rank 对同 shape 先设 seed 0，因此四个 blocks 数值相同，不是不同 columns。它还除以 $`\sqrt{256}=16`$；若按同 helper 先生成 full `[1024,1024]`，会除以 $`\sqrt{1024}=32`$。同一原始数 $`z`$ 的尺度比为 $`(z/16)/(z/32)=2`$，所以 local block 还大 2 倍。概念正确方法：只生成一次 global $`W[1024,1024]`$，给 rank $`r`$ 切 `W[:,r*256:(r+1)*256]`；规模大时用按 global index 可复现的分布式初始化直接生成互不重叠且缩放一致的 shards。
 
-54. 每 stage：$4/2=2$ layers。Parameters：$2\times4=8$ MiB。若按 params+grads+$m$+$v$ 四份 FP32 状态：
+54. 每 stage：$`4/2=2`$ layers。Parameters：$`2\times4=8`$ MiB。若按 params+grads+$`m`$+$`v`$ 四份 FP32 状态：
 
-   $$
-   8\times4=32\ \text{MiB/stage}.
-   $$
+   $`8\times4=32\ \text{MiB/stage}.`$
 
    课程 PP 同样反复调用内部 `manual_seed(0)` 的 helper，所以同 shape 的两层/两 stages 会重复初值；这不影响本题 bytes，却不是正常四层模型的不同参数。
 
 55. 四份各 32 行：0–31、32–63、64–95、96–127，shape 都 `[32,1024]`。每份 bytes：
 
-   $$
-   32\times1024\times4=131{,}072\ \text{bytes}=128\ \text{KiB}.
-   $$
+   $`32\times1024\times4=131{,}072\ \text{bytes}=128\ \text{KiB}.`$
 
-   四次 send：$4\times128=512$ KiB。
+   四次 send：$`4\times128=512`$ KiB。
 
 56. 时间表：
 
    | 时刻 | stage0 | stage1 |
    |---:|---|---|
-   | $t_1$ | mb0 | idle |
-   | $t_2$ | mb1 | mb0 |
-   | $t_3$ | mb2 | mb1 |
-   | $t_4$ | mb3 | mb2 |
-   | $t_5$ | idle | mb3 |
+   | $`t_1`$ | mb0 | idle |
+   | $`t_2`$ | mb1 | mb0 |
+   | $`t_3`$ | mb2 | mb1 |
+   | $`t_4`$ | mb3 | mb2 |
+   | $`t_5`$ | idle | mb3 |
 
-57. 总 slots：$2\times5=10$。有用 slots：$4\times2=8$。利用率 $8/10=80\%$；idle/bubble slots $10-8=2$，bubble fraction $2/10=20\%$。
+57. 总 slots：$`2\times5=10`$。有用 slots：$`4\times2=8`$。利用率 $`8/10=80\%`$；idle/bubble slots $`10-8=2`$，bubble fraction $`2/10=20\%`$。
 
 58. 
 
-   $$
-   U=\frac8{8+4-1}=\frac8{11}\approx0.72727=72.73\%.
-   $$
+   $`U=\frac8{8+4-1}=\frac8{11}\approx0.72727=72.73\%.`$
 
    Bubble fraction：
 
-   $$
-   1-U=3/11\approx27.27\%.
-   $$
+   $`1-U=3/11\approx27.27\%.`$
 
 59. 解：
 
-   $$
-   \frac{m}{m+4-1}\ge0.8,
-   $$
+   $`\frac{m}{m+4-1}\ge0.8,`$
 
-   $$
-   m\ge0.8(m+3)=0.8m+2.4,
-   $$
+   $`m\ge0.8(m+3)=0.8m+2.4,`$
 
-   $$
-   0.2m\ge2.4,
-   $$
+   $`0.2m\ge2.4,`$
 
-   $$
-   m\ge12.
-   $$
+   $`m\ge12.`$
 
-   最小整数 $m=12$；检查 $12/(12+3)=12/15=80\%$。
+   最小整数 $`m=12`$；检查 $`12/(12+3)=12/15=80\%`$。
 
 60. Rank0：不 recv→本地两层 compute→send rank1。Rank1：recv rank0→本地两层 compute→不再 send。未实现至少：loss、backward、反向 gradient 通信、1F1B schedule、显式 communication/computation overlap、optimizer update；写任意四项即可。
 
@@ -4038,7 +3892,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 62. DDP 复制完整模型状态、只切 data；FSDP 分片 parameters/gradients/optimizer 并按需 gather/reshard；ZeRO 按阶段消除不同模型状态的 data-parallel 冗余；TP 切 layer 内矩阵并让 ranks 合作完成同一层。它们的状态生命周期与通信位置不同。
 
-63. Rank 公式 $r=4d+2p+t$。对 rank6：$d=1$；余数 $6-4=2$，所以 $p=1,t=0$，坐标 $(1,0,1)$。TP group 固定 $d=1,p=1$、变 $t$：`{6,7}`。PP 固定 $d=1,t=0$、变 $p$：`{4,6}`。DP 固定 $t=0,p=1$、变 $d$：`{2,6}`。
+63. Rank 公式 $`r=4d+2p+t`$。对 rank6：$`d=1`$；余数 $`6-4=2`$，所以 $`p=1,t=0`$，坐标 $`(1,0,1)`$。TP group 固定 $`d=1,p=1`$、变 $`t`$：`{6,7}`。PP 固定 $`d=1,t=0`$、变 $`p`$：`{4,6}`。DP 固定 $`t=0,p=1`$、变 $`d`$：`{2,6}`。
 
 64. 
 
@@ -4048,68 +3902,47 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 65. 总 GPUs：
 
-   $$
-   3\times2\times4=24.
-   $$
+   $`3\times2\times4=24.`$
 
-   固定 $(t,p)$、只改变 data coordinate，有 DP degree 3，所以该 DP group 有 3 ranks。
+   固定 $`(t,p)`$、只改变 data coordinate，有 DP degree 3，所以该 DP group 有 3 ranks。
 
-66. 纯 DDP 每 rank 复制 160 GiB，$160>64$，不能 fit。理想 TP=4：
+66. 纯 DDP 每 rank 复制 160 GiB，$`160>64`$，不能 fit。理想 TP=4：
 
-   $$
-   160/4=40\ \text{GiB/rank}.
-   $$
+   $`160/4=40\ \text{GiB/rank}.`$
 
    账面剩余：
 
-   $$
-   64-40=24\ \text{GiB}.
-   $$
+   $`64-40=24\ \text{GiB}.`$
 
    还需验证 activations、buffers、碎片的实际峰值。
 
 67. Latency：
 
-   $$
-   sL=3\times5=15\ \mu s=0.015\ \text{ms}.
-   $$
+   $`sL=3\times5=15\ \mu s=0.015\ \text{ms}.`$
 
-   $400$ MiB $=0.390625$ GiB：
+   $`400`$ MiB $`=0.390625`$ GiB：
 
-   $$
-   Q/B=0.390625/100\ \text{s}=0.00390625\ \text{s}=3.90625\ \text{ms}.
-   $$
+   $`Q/B=0.390625/100\ \text{s}=0.00390625\ \text{s}=3.90625\ \text{ms}.`$
 
    总计：
 
-   $$
-   T\approx3.90625+0.015=3.92125\ \text{ms}.
-   $$
+   $`T\approx3.90625+0.015=3.92125\ \text{ms}.`$
 
 68. 错误等权 AVG：
 
-   $$
-   (2+6)/2=4.
-   $$
+   $`(2+6)/2=4.`$
 
-   正确 token-weighted：总 tokens $100+300=400$：
+   正确 token-weighted：总 tokens $`100+300=400`$：
 
-   $$
-   \frac{100}{400}\times2+\frac{300}{400}\times6
-   =0.5+4.5=5.
-   $$
+   $`\frac{100}{400}\times2+\frac{300}{400}\times6 =0.5+4.5=5.`$
 
 69. 其他三个 ranks：
 
-   $$
-   3\times128=384\ \text{KiB}.
-   $$
+   $`3\times128=384\ \text{KiB}.`$
 
    加上自己的 128 KiB，完整 activation：
 
-   $$
-   384+128=512\ \text{KiB}.
-   $$
+   $`384+128=512\ \text{KiB}.`$
 
 70. 一种有证据的顺序：
 
@@ -4288,7 +4121,7 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 | Ring all-reduce | 600 MiB | 39.0625 GiB/s | 58.59375 GiB/s |
 | Ring reduce-scatter，input 1600 MiB | 1200 MiB | 156.25 GiB/s | 117.1875 GiB/s |
 
-表中 RS sends 比 AR 大 2 倍，是因为课程 RS 完整输入 1600 MiB、AR 只有 400 MiB；若固定同一个完整输入 $S$ 比算法，AR 的两阶段 sends 才是 RS 的 2 倍。
+表中 RS sends 比 AR 大 2 倍，是因为课程 RS 完整输入 1600 MiB、AR 只有 400 MiB；若固定同一个完整输入 $`S`$ 比算法，AR 的两阶段 sends 才是 RS 的 2 倍。
 
 ### 22.3 看到并行策略，先画切分轴
 
@@ -4318,7 +4151,7 @@ PP：切 model depth
 - 算出 DDP params/grads/Adam 状态 64 MiB/rank，并指出未计项；
 - 从 `[128,1024]@[1024,256]` 追踪 TP partial、gather、cat 的 shape/bytes；
 - 用 2×4 与 4×4 小矩阵验证列切 concat 等于完整 matmul；
-- 画 $m=4,p=2$ pipeline timeline，算 80% utilization/20% bubble；
+- 画 $`m=4,p=2`$ pipeline timeline，算 80% utilization/20% bubble；
 - 为 2×2×2 device mesh 列出 DP/TP/PP 三类子 groups；
 - 识别课程代码的 data、seed、zero-grad、TP-shard、backward、overlap 局限；
 - 按 correctness→fit→profile→topology/placement→retest 做并行选型，而不是背一条万能规则。
