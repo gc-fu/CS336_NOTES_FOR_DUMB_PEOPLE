@@ -1,7 +1,7 @@
 # CS336 Lecture 9：Scaling Laws I——从幂律、临界 Batch 到 Kaplan 与 Chinchilla
 
-> **目标读者：**只会加、减、乘、除，第一次接触 scaling law（缩放定律）的初学者。  
-> **目标：**不看 77 分钟视频，也能从零推导本讲公式、看懂图、复算数字，并知道哪些结论只能在实验范围内使用。  
+> **目标读者：** 只会加、减、乘、除，第一次接触 scaling law（缩放定律）的初学者。  
+> **目标：** 不看 77 分钟视频，也能从零推导本讲公式、看懂图、复算数字，并知道哪些结论只能在实验范围内使用。  
 > **官方课件：**[Stanford CS336 Lecture 9 PDF](https://github.com/stanford-cs336/lectures/blob/main/lecture_09.pdf)，57 页。  
 > **官方视频：**[Stanford Online：Lecture 9](https://www.youtube.com/watch?v=Q15rhEWZPQ4)。
 
@@ -77,7 +77,7 @@
 
 Scaling law 的价值不是“算命”，而是让昂贵决策有实验依据。视频 [02:48](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=168s) 称它是强力工具，但 [03:04](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=184s) 随即提醒它可能很 tricky（棘手）。
 
-本讲说的 **pretraining（预训练）**是先让语言模型在大规模通用文本上学习 next-token prediction（根据前文预测下一个 token），之后才进入具体任务或服务。
+本讲说的 **pretraining（预训练）** 是先让语言模型在大规模通用文本上学习 next-token prediction（根据前文预测下一个 token），之后才进入具体任务或服务。
 
 ---
 
@@ -122,7 +122,7 @@ Scaling law 的价值不是“算命”，而是让昂贵决策有实验依据�
 
 ### 2.1 次方和负指数
 
-**Exponent（指数）**告诉我们一个数要乘几次：
+**Exponent（指数）** 告诉我们一个数要乘几次：
 
 ```math
 2^3=2\times2\times2=8.
@@ -138,7 +138,7 @@ $`\sqrt n`$（平方根）是“哪个正数乘自己得到 $`n`$”。例如 $`
 
 ### 2.2 log 是什么
 
-**Logarithm（对数）**是指数的反问题。本文未写底数时，$`\log`$ 可理解为任一固定底；斜率推导对底数选择不敏感。手算表常用 $`\log_{10}`$：
+**Logarithm（对数）** 是指数的反问题。本文未写底数时，$`\log`$ 可理解为任一固定底；斜率推导对底数选择不敏感。手算表常用 $`\log_{10}`$：
 
 ```math
 \log_{10}(1000)=3,
@@ -177,9 +177,9 @@ m=\frac{1-5}{3-1}=\frac{-4}{2}=-2.
 
 ### 2.4 loss、accuracy 与 residual
 
-**Loss（损失）**是训练目标的“坏程度”，通常越小越好。**Accuracy（准确率）**是答对比例，通常越大越好。一个 scaling law 预测 loss，不代表 accuracy 一定按同样形状变化。
+**Loss（损失）** 是训练目标的“坏程度”，通常越小越好。**Accuracy（准确率）** 是答对比例，通常越大越好。一个 scaling law 预测 loss，不代表 accuracy 一定按同样形状变化。
 
-**Residual（残差）**不是 Transformer 的 residual connection；这里指：
+**Residual（残差）** 不是 Transformer 的 residual connection；这里指：
 
 ```math
 \text{residual}=\text{实测值}-\text{曲线预测值}.
@@ -220,7 +220,7 @@ Scaling law（缩放定律）是一个简单预测规则：当训练资源有规
 
 ### 3.3 经验律不是物理定律，也不是理论上界
 
-**Gradient（梯度）**是 loss 对 parameters 的局部变化率：某个 parameter 改一点，loss 大约怎样变。**Learning rate（学习率）**是一次参数更新要走多大一步。**Optimizer（优化器）**读取 gradient，并按 learning rate 等规则更新 parameters。现在才能定义：**Training recipe（训练配方）**是 architecture、optimizer、learning rate、batch size、warmup、数据处理等训练选择的整套组合。**Empirical law（经验律）**由观察拟合出来，意思只是：“在我们试过的模型、数据和 training recipe 中像这样。”
+**Gradient（梯度）** 是 loss 对 parameters 的局部变化率：某个 parameter 改一点，loss 大约怎样变。**Learning rate（学习率）** 是一次参数更新要走多大一步。**Optimizer（优化器）** 读取 gradient，并按 learning rate 等规则更新 parameters。现在才能定义：**Training recipe（训练配方）** 是 architecture、optimizer、learning rate、batch size、warmup、数据处理等训练选择的整套组合。**Empirical law（经验律）** 由观察拟合出来，意思只是：“在我们试过的模型、数据和 training recipe 中像这样。”
 
 **Generalization bound（泛化界）**：理论给出的最坏情况保证，形式常为“真实误差不超过某个上界”。它可能很松，但目标是保证。
 
@@ -252,13 +252,13 @@ Scaling law（缩放定律）是一个简单预测规则：当训练资源有规
 
 ## 4. 一条够用的历史线
 
-**【课程】【PDF 7–10】**历史不是为了背年份，而是看问题如何从“画学习曲线”变成“大模型资源决策”。
+**【课程】【PDF 7–10】** 历史不是为了背年份，而是看问题如何从“画学习曲线”变成“大模型资源决策”。
 
-1. **1993，Cortes 等：** **Learning curve（学习曲线）**是横轴放数据量、steps 或 compute，纵轴放 loss/error 等表现的曲线。这项工作比较 training set size 与泛化表现，并讨论从小样本预测更大样本。视频 [07:42](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=462s) 展示多种候选函数。
-2. **2001，Banko 与 Brill：** **NLP（Natural Language Processing，自然语言处理）**研究计算机怎样处理人类语言。论文在 NLP 歧义消解上把训练语料扩到很大规模，展示更多数据可持续改善不同方法；重点不是“算法无所谓”，而是数据规模本身是重要轴。[原论文入口](https://aclanthology.org/P01-1005/)
-3. **2012，Kolachina 等：**研究机器翻译 learning curve 的提前预测，说明“预测尚未训练的数据规模”早于现代 LLM。[原论文入口](https://aclanthology.org/P12-1003/)
-4. **2017，Hestness 等：**跨语言、视觉、语音任务观察 **power-law generalization error**，即未见数据上的 error 随数据量按固定幂次下降；论文强调这些指数当时缺少充分理论解释。[原论文](https://arxiv.org/abs/1712.00409)
-5. **2020 以后：** **LLM（Large Language Model，大语言模型）**是用大量参数和文本训练的语言模型。Kaplan、Rosenfeld、Chinchilla 把 data、model、compute 联合起来，用于决定昂贵 LLM 怎么训。视频 [09:09](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=549s) 将此称为 2020s 的现代阶段。
+1. **1993，Cortes 等：** **Learning curve（学习曲线）** 是横轴放数据量、steps 或 compute，纵轴放 loss/error 等表现的曲线。这项工作比较 training set size 与泛化表现，并讨论从小样本预测更大样本。视频 [07:42](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=462s) 展示多种候选函数。
+2. **2001，Banko 与 Brill：** **NLP（Natural Language Processing，自然语言处理）** 研究计算机怎样处理人类语言。论文在 NLP 歧义消解上把训练语料扩到很大规模，展示更多数据可持续改善不同方法；重点不是“算法无所谓”，而是数据规模本身是重要轴。[原论文入口](https://aclanthology.org/P01-1005/)
+3. **2012，Kolachina 等：** 研究机器翻译 learning curve 的提前预测，说明“预测尚未训练的数据规模”早于现代 LLM。[原论文入口](https://aclanthology.org/P12-1003/)
+4. **2017，Hestness 等：** 跨语言、视觉、语音任务观察 **power-law generalization error**，即未见数据上的 error 随数据量按固定幂次下降；论文强调这些指数当时缺少充分理论解释。[原论文](https://arxiv.org/abs/1712.00409)
+5. **2020 以后：** **LLM（Large Language Model，大语言模型）** 是用大量参数和文本训练的语言模型。Kaplan、Rosenfeld、Chinchilla 把 data、model、compute 联合起来，用于决定昂贵 LLM 怎么训。视频 [09:09](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=549s) 将此称为 2020s 的现代阶段。
 
 ---
 
@@ -305,7 +305,7 @@ $`A`$ 和 $`n^{-\alpha}`$ 都约掉了，所以只剩资源倍数 $`r`$ 与指�
 
 注意：资源 4 倍只让“超过 $`L_\infty`$ 的部分”减半，不是让总 loss 减半。
 
-**课程中的真实小指数例。**PDF p15 从 Kaplan 图中写出：
+**课程中的真实小指数例。** PDF p15 从 Kaplan 图中写出：
 
 ```math
 L(D)=\left(\frac{D}{5.4\times10^{13}}\right)^{-0.095}.
@@ -346,7 +346,7 @@ y=\log A+(-\alpha)x.
 
 这正是“截距 $`\log A`$、斜率 $`-\alpha`$”的直线。视频 [15:18](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=918s) 称其为 scale-free/power-law relation。
 
-**防坑：**log-log 图直，不代表原坐标图直。原图是向 $`L_\infty`$ 弯曲的曲线。
+**防坑：** log-log 图直，不代表原坐标图直。原图是向 $`L_\infty`$ 弯曲的曲线。
 
 ### 5.4 least squares 与残差
 
@@ -374,7 +374,7 @@ $`R^2`$（决定系数）粗略衡量曲线解释了多少观测波动，越接�
 
 **Parametric（参数化统计模型）**：未知对象能用固定有限个数描述。估计总体均值 $`\mu`$ 只需估一个数，所以是最简单的 parametric 问题。
 
-假设有样本 $`X_1,\ldots,X_n`$。**独立（independent）**的意思是：知道 $`X_i`$ 取了什么值，不会改变另一个 $`X_j`$ 的概率分布。这里还假设每个样本都来自同一总体，因此：
+假设有样本 $`X_1,\ldots,X_n`$。**独立（independent）** 的意思是：知道 $`X_i`$ 取了什么值，不会改变另一个 $`X_j`$ 的概率分布。这里还假设每个样本都来自同一总体，因此：
 
 ```math
 \mathbb E[X_i]=\mu,
@@ -382,7 +382,7 @@ $`R^2`$（决定系数）粗略衡量曲线解释了多少观测波动，越接�
 \mathrm{Var}(X_i)=\sigma^2.
 ```
 
-$`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平均。**Variance（方差）**的定义是：
+$`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平均。**Variance（方差）** 的定义是：
 
 ```math
 \mathrm{Var}(X)
@@ -401,7 +401,7 @@ $`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平�
 
 ### 6.2 为什么它无偏：把期望逐项写开
 
-**Unbiased（无偏）**表示平均预测正好等于真值：
+**Unbiased（无偏）** 表示平均预测正好等于真值：
 
 ```math
 \begin{aligned}
@@ -418,7 +418,7 @@ $`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平�
 
 ### 6.3 为什么独立时 covariance 交叉项为 0
 
-两个随机量的 **covariance（协方差）**定义为：
+两个随机量的 **covariance（协方差）** 定义为：
 
 ```math
 \mathrm{Cov}(X,Y)
@@ -476,7 +476,7 @@ $`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平�
 \end{aligned}
 ```
 
-**MSE（mean squared error，均方误差）**是估计值与真值之差的平方的期望。因为刚刚证明 $`\mathbb E[\bar X]=\mu`$，所以：
+**MSE（mean squared error，均方误差）** 是估计值与真值之差的平方的期望。因为刚刚证明 $`\mathbb E[\bar X]=\mu`$，所以：
 
 ```math
 \begin{aligned}
@@ -488,7 +488,7 @@ $`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平�
 \end{aligned}
 ```
 
-**SE（standard error，标准误差）**是估计量 $`\bar X`$ 自身的标准差，不是 MSE：
+**SE（standard error，标准误差）** 是估计量 $`\bar X`$ 自身的标准差，不是 MSE：
 
 ```math
 \mathrm{SE}(\bar X)
@@ -522,13 +522,13 @@ $`\mathbb E[X]`$ 是把同一随机过程重复很多次后 $`X`$ 的长期平�
 
 ### 7.1 nonparametric 不是“没有参数”
 
-**Nonparametric（非参数）**不是零参数，而是模型复杂度可随数据增加。这里的 regression（回归）是从输入位置预测一个数值函数。要估计任意平滑二维函数 $`f(x_1,x_2)`$，我们可以把平面切成小箱，每箱估一个均值；箱越多，要估的局部值越多。
+**Nonparametric（非参数）** 不是零参数，而是模型复杂度可随数据增加。这里的 regression（回归）是从输入位置预测一个数值函数。要估计任意平滑二维函数 $`f(x_1,x_2)`$，我们可以把平面切成小箱，每箱估一个均值；箱越多，要估的局部值越多。
 
 视频 [18:25](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1105s) 从均值转到 arbitrary smooth function。
 
 ### 7.2 PDF p19 的二维分箱推导
 
-**【课程】【PDF 19；已查看高清原页】**设总样本数为 $`n`$。下面的 $`h`$ **只表示这个二维例子里每个正方形箱的边长**，不是最后的误差率。课件给定：
+**【课程】【PDF 19；已查看高清原页】** 设总样本数为 $`n`$。下面的 $`h`$ **只表示这个二维例子里每个正方形箱的边长**，不是最后的误差率。课件给定：
 
 ```math
 h=n^{-1/4}.
@@ -584,7 +584,7 @@ n^{1/4}=10,
 
 课件 p19 的 $`1/\sqrt n+`$ smoothness 是教学启发，不是所有二维回归的万能精确公式。
 
-**【补充解释】一个可能的平衡直觉。**如果额外假设函数足够平滑，使 squared-bias 项约为 $`h^2`$，二维每箱样本数约为 $`nh^2`$，variance 项约为 $`1/(nh^2)`$。让两种错误同量级：
+**【补充解释】一个可能的平衡直觉。** 如果额外假设函数足够平滑，使 squared-bias 项约为 $`h^2`$，二维每箱样本数约为 $`nh^2`$，variance 项约为 $`1/(nh^2)`$。让两种错误同量级：
 
 ```math
 h^2=\frac1{nh^2}
@@ -606,7 +606,7 @@ n^{-1/d}=n^{-1/2}=\frac1{\sqrt n},
 
 **Intrinsic dimension（内在维度）**：数据真正变化所需的自由方向数，可能小于原始向量坐标数。视频 [20:13](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1213s) 明确说相关解释依赖难以可靠估计的 intrinsic dimension；所以“从指数反推出语言维度”只能当不严密直觉，不是定理。
 
-**Regime（区间/状态范围）**是同一组近似规律仍适用的一段规模和训练状态。课堂问题 [20:42](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1242s) 问模型大于数据是什么意思。老师的边界是：当模型相对数据过小，模型容量会成为瓶颈并接近另一条 asymptote；本讲主要研究尚处于 power-law regime 的区域。
+**Regime（区间/状态范围）** 是同一组近似规律仍适用的一段规模和训练状态。课堂问题 [20:42](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1242s) 问模型大于数据是什么意思。老师的边界是：当模型相对数据过小，模型容量会成为瓶颈并接近另一条 asymptote；本讲主要研究尚处于 power-law regime 的区域。
 
 ---
 
@@ -614,7 +614,7 @@ n^{-1/d}=n^{-1/2}=\frac1{\sqrt n},
 
 ### 8.1 distribution shift
 
-**Distribution（分布）**描述哪些样本常见、哪些少见。**Distribution shift（分布偏移）**表示训练数据与目标测试/部署数据的分布不同。
+**Distribution（分布）** 描述哪些样本常见、哪些少见。**Distribution shift（分布偏移）** 表示训练数据与目标测试/部署数据的分布不同。
 
 例：训练 90% 是新闻、10% 是代码；部署问题 80% 是代码。即便 token 数相同，模型面对的学习问题已经不同。
 
@@ -630,8 +630,8 @@ n^{-1/d}=n^{-1/2}=\frac1{\sqrt n},
 
 中：
 
-- 改变 **offset（上下位置）**主要对应 $`A`$ 变。
-- 改变 **slope（斜率）**对应 $`\alpha`$ 变。
+- 改变 **offset（上下位置）** 主要对应 $`A`$ 变。
+- 改变 **slope（斜率）** 对应 $`\alpha`$ 变。
 
 PDF p22 引用的特定研究观察到数据分布变化主要移动 offset、斜率较稳定。视频 [22:45](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1365s) 也用这个口径讲解。但这只是特定任务、模型与数据范围的观察，不是“所有数据清洗都只改截距”的定律。若过滤改变样本难度、覆盖面或进入另一 regime，指数也可能变。
 
@@ -666,9 +666,9 @@ B 虽然初始 offset 更高，却下降更快，规模足够大时可能反超�
 
 **Data repetition（数据重复）**：同一批 unique tokens 被看多次。**Effective data（有效数据量）**：把重复样本递减的信息价值折算成“相当于多少全新 tokens”。
 
-**Epoch（训练遍数）**表示把当前可用的 unique training data 完整看一遍；总计 1 epoch 是首遍，2 epochs 是首遍后再重复一次。
+**Epoch（训练遍数）** 表示把当前可用的 unique training data 完整看一遍；总计 1 epoch 是首遍，2 epochs 是首遍后再重复一次。
 
-**【课程】【PDF 24；高清核验】**课件给出：
+**【课程】【PDF 24；高清核验】** 课件给出：
 
 ```math
 D'=U_D+U_D R_D^*\left(1-e^{-R_D/R_D^*}\right).
@@ -688,7 +688,7 @@ D'=U_D+U_D R_D^*\left(1-e^{-R_D/R_D^*}\right).
 
    $`D'=U_D+U_DR_D^*(1-e^0)=U_D.`$
 
-2. **有限重复：**会增加 $`D'`$，但小于把每遍都当全新数据。
+2. **有限重复：** 会增加 $`D'`$，但小于把每遍都当全新数据。
 3. **重复很多 $`R_D\to\infty`$：**$`e^{-R_D/R_D^*}\to0`$，所以：
 
    $`D'\to U_D(1+R_D^*).`$
@@ -726,7 +726,7 @@ Muennighoff 等的原始实验在数据受限 regime 中观察到少量重复的
 
 ### 10.1 architecture 与 optimizer
 
-回忆 §3.3：gradient 是 loss 对所有 parameters 的局部变化率向量，它告诉参数往哪个方向动会使 loss 增减；learning rate 是每次更新沿 gradient 方向走多大一步。**Architecture（架构）**是数据怎样流过模型的结构。**Hyperparameter（超参数）**是训练前由人选择、而不是通过 gradient 学出的设置，例如 learning rate、batch size、层数。
+回忆 §3.3：gradient 是 loss 对所有 parameters 的局部变化率向量，它告诉参数往哪个方向动会使 loss 增减；learning rate 是每次更新沿 gradient 方向走多大一步。**Architecture（架构）** 是数据怎样流过模型的结构。**Hyperparameter（超参数）** 是训练前由人选择、而不是通过 gradient 学出的设置，例如 learning rate、batch size、层数。
 
 **【课程】【PDF 29–36】【视频补充】[30:16](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=1816s)** 课程把 scaling law 当工程比较工具：不是只在一个小模型上比较 A/B，而是画多种规模的曲线。
 
@@ -762,7 +762,7 @@ Vh=50,000\times1,000=50,000,000
 
 ### 10.4 MoE：total 与 active parameters 不同
 
-**MoE（Mixture of Experts，专家混合）**包含多个 expert（专家，即不同的 FFN；FFN 是 feed-forward network，逐 token 运行的前馈子网络），并用 router（路由器，即给 experts 打分并选择去向的小网络）为每个 token 选择少数 experts。**Sparsity（稀疏度）**表示大量 experts 对当前 token 没被激活。Total parameters 决定存储容量；active parameters 决定该 token 实际经过多少权重，进而影响 compute。
+**MoE（Mixture of Experts，专家混合）** 包含多个 expert（专家，即不同的 FFN；FFN 是 feed-forward network，逐 token 运行的前馈子网络），并用 router（路由器，即给 experts 打分并选择去向的小网络）为每个 token 选择少数 experts。**Sparsity（稀疏度）** 表示大量 experts 对当前 token 没被激活。Total parameters 决定存储容量；active parameters 决定该 token 实际经过多少权重，进而影响 compute。
 
 例如 8 个各 100M 的 experts，top-2：
 
@@ -773,7 +773,7 @@ PDF p36 的图分别以 total 和 active parameters 为横轴，并加入 sparsi
 
 ### 10.5 pretraining loss 与 downstream
 
-**Downstream task（下游任务）**是预训练后用于问答、分类、推理等具体评测。**Cross-entropy loss（交叉熵损失）**衡量模型给真实下一个 token 的 probability 有多低；给真 token 的 probability 越高，loss 通常越小。Perplexity（困惑度）是由平均 cross-entropy 指数化得到的语言模型指标，越低通常越好；PDF p41 左轴画其对数的负数，右边画 SuperGLUE benchmark（由多项语言理解任务组成的评测集合）accuracy。左图随参数较平滑，右图排序更乱。
+**Downstream task（下游任务）** 是预训练后用于问答、分类、推理等具体评测。**Cross-entropy loss（交叉熵损失）** 衡量模型给真实下一个 token 的 probability 有多低；给真 token 的 probability 越高，loss 通常越小。Perplexity（困惑度）是由平均 cross-entropy 指数化得到的语言模型指标，越低通常越好；PDF p41 左轴画其对数的负数，右边画 SuperGLUE benchmark（由多项语言理解任务组成的评测集合）accuracy。左图随参数较平滑，右图排序更乱。
 
 因此：
 
@@ -806,11 +806,11 @@ PDF p36 的图分别以 total 和 active parameters 为横轴，并加入 sparsi
 
 ### 11.2 noise-limited 与 bias-limited 直觉
 
-回忆 §10.1：gradient 是 loss 对所有 parameters 的局部变化率向量，优化器通常沿其反方向减小 loss。单个小 batch 的 gradient 是有限样本估计，带随机噪声。**Gradient noise（梯度噪声）**是不同 mini-batches 给出的 gradient 波动。Batch 较小时，多放样本能显著减少这种噪声，steps 近似按比例下降，称 noise-limited。
+回忆 §10.1：gradient 是 loss 对所有 parameters 的局部变化率向量，优化器通常沿其反方向减小 loss。单个小 batch 的 gradient 是有限样本估计，带随机噪声。**Gradient noise（梯度噪声）** 是不同 mini-batches 给出的 gradient 波动。Batch 较小时，多放样本能显著减少这种噪声，steps 近似按比例下降，称 noise-limited。
 
 Batch 很大后，gradient 已较准确，继续放更多相似样本不能让更新方向无限变好；优化器沿损失曲面的系统方向/曲率限制占主导，可粗称 bias-limited。此处 bias 是优化更新的系统性限制，不是 §7 分箱 bias 的同一具体量。
 
-论文用 gradient covariance（梯度协方差矩阵）描述各坐标共同波动；**trace（迹）**是矩阵对角线之和，即各 gradient 坐标 variance 的总和。无需用它复算本讲曲线，但它帮助估计 gradient noise scale。[原论文](https://arxiv.org/abs/1812.06162)
+论文用 gradient covariance（梯度协方差矩阵）描述各坐标共同波动；**trace（迹）** 是矩阵对角线之和，即各 gradient 坐标 variance 的总和。无需用它复算本讲曲线，但它帮助估计 gradient noise scale。[原论文](https://arxiv.org/abs/1812.06162)
 
 ### 11.3 精确 trade-off 曲线
 
@@ -948,11 +948,11 @@ S=2S_{\min},\qquad E=2E_{\min}.
 
 ## 12. 学习率与 muP：本讲只预告
 
-回忆 §10.1：**learning rate（学习率，LR）**决定每次参数沿 negative gradient 方向走多大步。普通 parameterization（参数化方式，即权重初始化和缩放规则）下，宽度改变会改变 activation、gradient 的尺度，所以在小模型上最佳的 LR 到大模型可能漂移。
+回忆 §10.1：**learning rate（学习率，LR）** 决定每次参数沿 negative gradient 方向走多大步。普通 parameterization（参数化方式，即权重初始化和缩放规则）下，宽度改变会改变 activation、gradient 的尺度，所以在小模型上最佳的 LR 到大模型可能漂移。
 
 PDF p40 左图显示 standard practice 中不同 width 的最佳 LR 横向移动；右图的 scale-aware 方法让 optimum 更稳定。
 
-**muP（Maximal Update Parameterization，最大更新参数化）**是一套随 width 调整初始化与学习率尺度的规则，目标是让小模型调好的许多 hyperparameters 能转移到大模型。视频 [49:57](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=2997s) 首次命名 muP。
+**muP（Maximal Update Parameterization，最大更新参数化）** 是一套随 width 调整初始化与学习率尺度的规则，目标是让小模型调好的许多 hyperparameters 能转移到大模型。视频 [49:57](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=2997s) 首次命名 muP。
 
 本讲只需记住：
 
@@ -1006,7 +1006,7 @@ PDF p43 对 Kaplan 形式按其自己的 $`m,n`$ 记号原样写作：
 - **Activation gradient**：loss 对某个 activation 的梯度；它把“错误信号”传给更前面的层。
 - **Weight gradient**：loss 对某个 weight/parameter 的梯度；optimizer 用它更新该参数。
 
-现在才开始算 FLOPs。**Multiply-add（乘加）**是一次乘法后把结果加到累加器，按“一乘 + 一加 = 2 FLOPs”计：
+现在才开始算 FLOPs。**Multiply-add（乘加）** 是一次乘法后把结果加到累加器，按“一乘 + 一加 = 2 FLOPs”计：
 
 1. forward 中参数矩阵乘每个参数约参与一次 multiply-add。
 2. 一个 multiply-add 约按 2 FLOPs（一次乘、一次加）计，因此 forward 约 $`2ND`$。
@@ -1255,7 +1255,7 @@ L=E+A N^{-\alpha}+B D^{-\beta},
 - Method 2 每个预算独立找碗底，直观但实验数多。
 - Method 3 借所有数据联合拟合，样本利用率高，但更依赖函数形式与优化器是否找到正确解。
 
-**Confidence interval（置信区间）**是按某套重复抽样程序表达估计不确定性的区间；它不是“真值保证有某个百分比一定在这里”。PDF p46 的 2022 课件表（括号为页上 confidence interval）是：
+**Confidence interval（置信区间）** 是按某套重复抽样程序表达估计不确定性的区间；它不是“真值保证有某个百分比一定在这里”。PDF p46 的 2022 课件表（括号为页上 confidence interval）是：
 
 | 方法 | $`N_{opt}`$ exponent | $`D_{opt}`$ exponent |
 |---|---:|---:|
@@ -1274,11 +1274,11 @@ L=E+A N^{-\alpha}+B D^{-\beta},
 
 **【课程】【PDF 50–53】【视频补充】[67:42](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4062s)** 重要因素：
 
-1. **Parameter count：**是否计 embedding/output layer；小模型中这些占比很大。
-2. **Warmup：**训练初期逐步升高 LR。若小模型训练很短，warmup 结束时它还没正常收敛，会让小模型看起来异常差。
-3. **Batch size：**一个固定大 batch 对小模型可能远超合适范围。
-4. **Compute range：**低 compute 区对固定开销和非线性特别敏感。
-5. **Optimization fairness：**不同规模是否都调好 LR、decay、batch 和训练时长。这里 decay 是学习率到训练后期逐步降低的 schedule（时间安排）。
+1. **Parameter count：** 是否计 embedding/output layer；小模型中这些占比很大。
+2. **Warmup：** 训练初期逐步升高 LR。若小模型训练很短，warmup 结束时它还没正常收敛，会让小模型看起来异常差。
+3. **Batch size：** 一个固定大 batch 对小模型可能远超合适范围。
+4. **Compute range：** 低 compute 区对固定开销和非线性特别敏感。
+5. **Optimization fairness：** 不同规模是否都调好 LR、decay、batch 和训练时长。这里 decay 是学习率到训练后期逐步降低的 schedule（时间安排）。
 
 视频 [68:53](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4133s) 从 parameter count 开始；[69:40](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4180s) 讲 warmup；[70:03](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4203s) 讲固定 batch。
 
@@ -1365,7 +1365,7 @@ break-even（两者相等的分界点）：
 
 ### 17.3 “overtrained”不是过拟合
 
-**Validation loss** 是在不用于 gradient 更新的验证集上计算的 loss，用来观察未训练数据上的表现。**传统 overfitting（过拟合）**是 training loss 继续改善，但 validation/test loss 反而变差。视频 [75:08](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4508s) 刻意给 “overtrained” 加引号：它只指训练 tokens 超过 **training-compute-optimal** 配比，不表示 validation loss 已经反弹，也不等于传统 overfitting。
+**Validation loss** 是在不用于 gradient 更新的验证集上计算的 loss，用来观察未训练数据上的表现。**传统 overfitting（过拟合）** 是 training loss 继续改善，但 validation/test loss 反而变差。视频 [75:08](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4508s) 刻意给 “overtrained” 加引号：它只指训练 tokens 超过 **training-compute-optimal** 配比，不表示 validation loss 已经反弹，也不等于传统 overfitting。
 
 ### 17.4 课件 p54 的 tokens/parameter 快照与冲突
 
@@ -1380,7 +1380,7 @@ break-even（两者相等的分界点）：
 | Mistral 7B | 110 |
 | Llama 3 70B | 215 |
 
-**材料内部冲突：**视频 [75:18](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4518s) 口述 GPT-3 为 **3** tokens/parameter，PDF 明确印 **2**。本笔记保留两者，不暗自修正。其余数字也只是课程时点的粗比例快照，会受 parameter/token count 口径影响。
+**材料内部冲突：** 视频 [75:18](https://www.youtube.com/watch?v=Q15rhEWZPQ4&t=4518s) 口述 GPT-3 为 **3** tokens/parameter，PDF 明确印 **2**。本笔记保留两者，不暗自修正。其余数字也只是课程时点的粗比例快照，会受 parameter/token count 口径影响。
 
 ---
 
@@ -1399,14 +1399,14 @@ break-even（两者相等的分界点）：
 ### 18.2 从小网格到大 run
 
 1. **先定义 x 轴。**$`N`$ 是 total 还是 non-embedding？$`D`$ 是 unique 还是 seen tokens？
-2. **固定 recipe。**tokenizer、数据质量、optimizer family、目标 loss 尽量一致。
-3. **选多个 compute budgets。**每个 budget 用 $`C\approx6ND`$ 生成候选网格。
-4. **每个 budget 扫 $`N/D`$。**确保碗底左右都有点，不是最低点落在边界。
-5. **拟合每个碗底。**不要只挑肉眼最好点；记录不确定度与 residual。
+2. **固定 recipe。** tokenizer、数据质量、optimizer family、目标 loss 尽量一致。
+3. **选多个 compute budgets。** 每个 budget 用 $`C\approx6ND`$ 生成候选网格。
+4. **每个 budget 扫 $`N/D`$。** 确保碗底左右都有点，不是最低点落在边界。
+5. **拟合每个碗底。** 不要只挑肉眼最好点；记录不确定度与 residual。
 6. **跨 budgets 拟合 $`N_{\text{opt}}(C),D_{\text{opt}}(C)`$。**
-7. **做 backtest（回测）。**故意只用较小预算拟合，把一个已实际跑过的较大预算留作 held-out scale（拟合时不让模型看到的规模），再比较预测与实测。
-8. **保留验证预算。**不要把全部钱都花在拟合网格；留一个大 run 检验外推。
-9. **大 run 仍监控。**若 early loss、gradient、throughput 偏离小模型趋势，及时停查。
+7. **做 backtest（回测）。** 故意只用较小预算拟合，把一个已实际跑过的较大预算留作 held-out scale（拟合时不让模型看到的规模），再比较预测与实测。
+8. **保留验证预算。** 不要把全部钱都花在拟合网格；留一个大 run 检验外推。
+9. **大 run 仍监控。** 若 early loss、gradient、throughput 偏离小模型趋势，及时停查。
 
 ### 18.3 何时失真
 
@@ -1566,61 +1566,61 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 ### 22.2 四则运算与公式复算（16–70）
 
-16. **【手算】**算 $`2^4`$、$`2^{-2}`$、$`16^{1/2}`$。
-17. **【手算】**为什么 $`\log_{10}(1000)=3`$？计算器中 `4^(-0.5)` 是多少？
-18. **【手算】**点 $`(2,7)`$ 与 $`(6,3)`$ 之间斜率是多少？
-19. **【手算】**预测为 $`[2.0,2.5,3.0]`$，实测为 $`[2.1,2.3,3.2]`$。列 residual，并算 SSE。
+16. **【手算】** 算 $`2^4`$、$`2^{-2}`$、$`16^{1/2}`$。
+17. **【手算】** 为什么 $`\log_{10}(1000)=3`$？计算器中 `4^(-0.5)` 是多少？
+18. **【手算】** 点 $`(2,7)`$ 与 $`(6,3)`$ 之间斜率是多少？
+19. **【手算】** 预测为 $`[2.0,2.5,3.0]`$，实测为 $`[2.1,2.3,3.2]`$。列 residual，并算 SSE。
 20. **【手算】**$`L_\infty=1,A=8,\alpha=0.5,n=1`$ 时，总 loss 是多少？
-21. **【手算】**沿用 Q20，$`n=4`$ 时总 loss 是多少？资源 4 倍改变的是哪一部分？
-22. **【手算】**沿用 Q20，$`n=10`$ 时额外 loss 与总 loss 各约多少？
-23. **【手算】**资源每翻倍，额外 loss 乘 0.8。由 $`2^{-\alpha}=0.8`$ 算 $`\alpha=-\ln0.8/\ln2`$，保留三位小数。
-24. **【手算】**从 $`L-L_\infty=An^{-\alpha}`$ 逐步取 log，写出直线斜率与截距。
-25. **【手算】**某 log-log 直线为 $`y=\ln4-0.25x`$。对应 $`A`$、$`\alpha`$ 各是多少？
-26. **【手算】**若误差 $`e(n)=1/\sqrt n`$，要 $`e\le0.05`$，最少需要多少样本？
-27. **【手算】**样本 $`[1,3,5,7]`$ 的样本均值是多少？
-28. **【手算】**若每个 $`X_i`$ 的期望都是 10，写出 $`n=4`$ 时 $`\mathbb E[\bar X]`$ 的逐项计算。
-29. **【手算】**独立样本 variance 都是 9，$`n=9`$ 时：先写含 covariance 交叉项的均值 variance 公式，再说明交叉项为何为 0，最后算结果。
+21. **【手算】** 沿用 Q20，$`n=4`$ 时总 loss 是多少？资源 4 倍改变的是哪一部分？
+22. **【手算】** 沿用 Q20，$`n=10`$ 时额外 loss 与总 loss 各约多少？
+23. **【手算】** 资源每翻倍，额外 loss 乘 0.8。由 $`2^{-\alpha}=0.8`$ 算 $`\alpha=-\ln0.8/\ln2`$，保留三位小数。
+24. **【手算】** 从 $`L-L_\infty=An^{-\alpha}`$ 逐步取 log，写出直线斜率与截距。
+25. **【手算】** 某 log-log 直线为 $`y=\ln4-0.25x`$。对应 $`A`$、$`\alpha`$ 各是多少？
+26. **【手算】** 若误差 $`e(n)=1/\sqrt n`$，要 $`e\le0.05`$，最少需要多少样本？
+27. **【手算】** 样本 $`[1,3,5,7]`$ 的样本均值是多少？
+28. **【手算】** 若每个 $`X_i`$ 的期望都是 10，写出 $`n=4`$ 时 $`\mathbb E[\bar X]`$ 的逐项计算。
+29. **【手算】** 独立样本 variance 都是 9，$`n=9`$ 时：先写含 covariance 交叉项的均值 variance 公式，再说明交叉项为何为 0，最后算结果。
 30. **【手算】**$`\sigma=2`$ 时，先从无偏性写出“均值估计量的 MSE = variance”，再算 $`n=4,16`$ 的 MSE。
-31. **【手算】**沿用 Q30，先用一句人话定义 standard error，再算两种情况下的 standard error。说明为何不是都按 $`1/n`$。
-32. **【手算】**二维分箱 $`n=10,000`$：边长、每边箱数、总箱数、每箱样本数各是多少？
-33. **【手算】**二维分箱 $`n=65,536=16^4`$：重复 Q32 四个量，并算方差型量级。
-34. **【手算】**仅按课件 $`d`$ 维简化的**误差率** $`n^{-1/d}`$，$`n=10^6,d=3`$ 是多少？这里的 $`n^{-1/d}`$ 是边长还是误差？为什么不能把它当完整定理？
-35. **【手算】**2000 tokens 按 60% 网页、25% 代码、15% 书籍混合，各是多少 tokens？
-36. **【手算】**两曲线 $`L_A=1+4D^{-0.2}`$、$`L_B=1+6D^{-0.3}`$ 在何处相交？提示化为 $`D^{0.1}=1.5`$，算 $`1.5^{10}`$。
-37. **【手算】**重复公式中 $`U_D=100,R_D^*=2,R_D=0`$，算 $`D'`$；总 epochs 是多少？
-38. **【手算】**沿用 Q37，$`R_D=1`$ 时算 $`D'`$；总 epochs 是多少？用 $`e^{-0.5}\approx0.6065`$。
-39. **【手算】**沿用 Q37，当 $`R_D\to\infty`$，$`D'`$ 上限是多少？
-40. **【手算】**沿用 Q37，$`R_D=2`$ 时实际 processed tokens 与 effective tokens 各是多少？用 $`e^{-1}\approx0.3679`$。
-41. **【手算】**词表 50,000、hidden width 1000，embedding 参数量是多少？若主体也是 50M，计入后总参数翻几倍？
-42. **【手算】**8 个 100M experts、top-2：total expert parameters 与每 token active expert parameters 各多少？
+31. **【手算】** 沿用 Q30，先用一句人话定义 standard error，再算两种情况下的 standard error。说明为何不是都按 $`1/n`$。
+32. **【手算】** 二维分箱 $`n=10,000`$：边长、每边箱数、总箱数、每箱样本数各是多少？
+33. **【手算】** 二维分箱 $`n=65,536=16^4`$：重复 Q32 四个量，并算方差型量级。
+34. **【手算】** 仅按课件 $`d`$ 维简化的**误差率** $`n^{-1/d}`$，$`n=10^6,d=3`$ 是多少？这里的 $`n^{-1/d}`$ 是边长还是误差？为什么不能把它当完整定理？
+35. **【手算】** 2000 tokens 按 60% 网页、25% 代码、15% 书籍混合，各是多少 tokens？
+36. **【手算】** 两曲线 $`L_A=1+4D^{-0.2}`$、$`L_B=1+6D^{-0.3}`$ 在何处相交？提示化为 $`D^{0.1}=1.5`$，算 $`1.5^{10}`$。
+37. **【手算】** 重复公式中 $`U_D=100,R_D^*=2,R_D=0`$，算 $`D'`$；总 epochs 是多少？
+38. **【手算】** 沿用 Q37，$`R_D=1`$ 时算 $`D'`$；总 epochs 是多少？用 $`e^{-0.5}\approx0.6065`$。
+39. **【手算】** 沿用 Q37，当 $`R_D\to\infty`$，$`D'`$ 上限是多少？
+40. **【手算】** 沿用 Q37，$`R_D=2`$ 时实际 processed tokens 与 effective tokens 各是多少？用 $`e^{-1}\approx0.3679`$。
+41. **【手算】** 词表 50,000、hidden width 1000，embedding 参数量是多少？若主体也是 50M，计入后总参数翻几倍？
+42. **【手算】** 8 个 100M experts、top-2：total expert parameters 与每 token active expert parameters 各多少？
 43. **【手算】**$`B=32`$ examples/step、$`S=250`$，$`E`$ 是多少？
 44. **【手算】**$`E_{\min}=1200`$ examples、$`S_{\min}=100`$ steps，$`B_{crit}`$ 是多少，单位是什么？
 45. **【手算】**$`S_{min}=100,E_{min}=1000,B=5`$，算 $`S,E`$，并验证 $`E=SB`$。
-46. **【手算】**同 Q45，但 $`B=10`$；验证双曲线两括号乘积为 1。
-47. **【手算】**同 Q45，但 $`B=20`$；算出相对最少 steps/examples 的倍数。
-48. **【手算】**定义 $`s=S/S_{min},e=E/E_{min},b=B/B_{crit}`$。从 $`b=e/s`$ 与 $`(s-1)(e-1)=1`$ 完整推出 $`s=1+1/b,e=1+b`$，再验证 $`E/S=B`$。
+46. **【手算】** 同 Q45，但 $`B=10`$；验证双曲线两括号乘积为 1。
+47. **【手算】** 同 Q45，但 $`B=20`$；算出相对最少 steps/examples 的倍数。
+48. **【手算】** 定义 $`s=S/S_{min},e=E/E_{min},b=B/B_{crit}`$。从 $`b=e/s`$ 与 $`(s-1)(e-1)=1`$ 完整推出 $`s=1+1/b,e=1+b`$，再验证 $`E/S=B`$。
 49. **【手算】**$`S_{min}=100,E_{min}=1000`$，观察到 $`S=250`$。由精确曲线求 $`E`$ 与 $`B`$。
-50. **【手算】**gradient covariance 对角线是 $`[4,9,16]`$，trace 是多少？它用人话表示什么？
-51. **【手算】**dense 训练 $`N=2`$M parameters、$`D=3`$M tokens，按 $`C=6ND`$ 算 FLOPs。
-52. **【手算】**Q51 中 forward 与 backward 粗略各多少 FLOPs？
-53. **【手算】**固定 $`C/6=ND=120`$，若 $`N=10`$，$`D`$ 是多少；若 $`N=20`$，$`D`$ 又是多少？
-54. **【手算】**联合 law 中 $`\alpha=0.4,\beta=0.6`$。$`N_{opt}`$ 与 $`D_{opt}`$ 对 $`C`$ 的 exponent 各多少？
-55. **【手算】**沿用 Q54，compute 增 $`16`$ 倍，$`N,D`$ 分别约增多少倍？计算 $`16^{0.6}`$ 与 $`16^{0.4}`$。
+50. **【手算】** gradient covariance 对角线是 $`[4,9,16]`$，trace 是多少？它用人话表示什么？
+51. **【手算】** dense 训练 $`N=2`$M parameters、$`D=3`$M tokens，按 $`C=6ND`$ 算 FLOPs。
+52. **【手算】** Q51 中 forward 与 backward 粗略各多少 FLOPs？
+53. **【手算】** 固定 $`C/6=ND=120`$，若 $`N=10`$，$`D`$ 是多少；若 $`N=20`$，$`D`$ 又是多少？
+54. **【手算】** 联合 law 中 $`\alpha=0.4,\beta=0.6`$。$`N_{opt}`$ 与 $`D_{opt}`$ 对 $`C`$ 的 exponent 各多少？
+55. **【手算】** 沿用 Q54，compute 增 $`16`$ 倍，$`N,D`$ 分别约增多少倍？计算 $`16^{0.6}`$ 与 $`16^{0.4}`$。
 56. **【手算】**$`\alpha=\beta=0.5`$，compute 增 9 倍时，最优 $`N,D`$ 各增几倍？验证乘积增 9 倍。
-57. **【手算】**取 $`E=1,A=B=1,\alpha=\beta=0.5`$，比较 $`(N,D)=(4,16)`$ 与 $`(16,4)`$ 的 loss。
-58. **【手算】**固定 $`ND=36`$，计算 $`(N,D)=(4,9),(6,6),(9,4)`$ 的 $`1/\sqrt N+1/\sqrt D`$，哪个最低？
-59. **【手算】**compute=20 时三个 recipe loss 为 2.7、2.5、2.9；lower envelope 是哪一个？若新 recipe 得 2.3，envelope 如何变？
-60. **【手算】**模型主体 100M、embedding 50M、output 50M。分别算 total、non-embedding、排除 embedding 但保留 output 三种参数口径。
-61. **【手算】**Kaplan exponent 下 compute 增 100 倍，$`N,D`$ 各约多少倍？
-62. **【手算】**Chinchilla 0.5/0.5 下 compute 增 100 倍，$`N,D`$ 各多少倍？
-63. **【手算】**若 $`N\propto C^{0.7},D\propto C^{0.3}`$，$`D/N`$ 对 $`C`$ 的 exponent 是多少？compute 增 100 倍时比率乘多少？
-64. **【手算】**Method 3 小例中 $`E=1,A=B=1,\alpha=\beta=0.5`$，算 $`(N,D)=(9,16)`$ 的 loss。
-65. **【手算】**四个 residual 为 $`0.1,-0.1,0.2,-0.2`$，SSE 是多少？残差平均虽为 0，为何仍不能说拟合完美？
-66. **【手算】**候选 A：$`1000+10Q`$；B：$`1600+4Q`$。求 break-even 请求数，并判断 $`Q=200`$ 谁便宜。
-67. **【手算】**粗略每生成 token 是 $`2N`$ FLOPs。$`N=7`$B、生成 1000 tokens，算 FLOPs；这里忽略了什么？
-68. **【手算】**按 PDF 快照，Llama 3 70B、215 tokens/parameter，对应约多少训练 tokens？用 T 表示。
-69. **【手算/核对】**PDF 与视频给 GPT-3 的 tokens/parameter 分别是多少？应该怎样记录？
-70. **【填表】**把下列现象分别归入“x 轴定义、recipe 公平、数据问题、拟合诊断”：不计 output layer；小模型 warmup 占满全程；validation 泄漏；残差随规模持续为正。
+57. **【手算】** 取 $`E=1,A=B=1,\alpha=\beta=0.5`$，比较 $`(N,D)=(4,16)`$ 与 $`(16,4)`$ 的 loss。
+58. **【手算】** 固定 $`ND=36`$，计算 $`(N,D)=(4,9),(6,6),(9,4)`$ 的 $`1/\sqrt N+1/\sqrt D`$，哪个最低？
+59. **【手算】** compute=20 时三个 recipe loss 为 2.7、2.5、2.9；lower envelope 是哪一个？若新 recipe 得 2.3，envelope 如何变？
+60. **【手算】** 模型主体 100M、embedding 50M、output 50M。分别算 total、non-embedding、排除 embedding 但保留 output 三种参数口径。
+61. **【手算】** Kaplan exponent 下 compute 增 100 倍，$`N,D`$ 各约多少倍？
+62. **【手算】** Chinchilla 0.5/0.5 下 compute 增 100 倍，$`N,D`$ 各多少倍？
+63. **【手算】** 若 $`N\propto C^{0.7},D\propto C^{0.3}`$，$`D/N`$ 对 $`C`$ 的 exponent 是多少？compute 增 100 倍时比率乘多少？
+64. **【手算】** Method 3 小例中 $`E=1,A=B=1,\alpha=\beta=0.5`$，算 $`(N,D)=(9,16)`$ 的 loss。
+65. **【手算】** 四个 residual 为 $`0.1,-0.1,0.2,-0.2`$，SSE 是多少？残差平均虽为 0，为何仍不能说拟合完美？
+66. **【手算】** 候选 A：$`1000+10Q`$；B：$`1600+4Q`$。求 break-even 请求数，并判断 $`Q=200`$ 谁便宜。
+67. **【手算】** 粗略每生成 token 是 $`2N`$ FLOPs。$`N=7`$B、生成 1000 tokens，算 FLOPs；这里忽略了什么？
+68. **【手算】** 按 PDF 快照，Llama 3 70B、215 tokens/parameter，对应约多少训练 tokens？用 T 表示。
+69. **【手算/核对】** PDF 与视频给 GPT-3 的 tokens/parameter 分别是多少？应该怎样记录？
+70. **【填表】** 把下列现象分别归入“x 轴定义、recipe 公平、数据问题、拟合诊断”：不计 output layer；小模型 warmup 占满全程；validation 泄漏；残差随规模持续为正。
 
 ### 22.3 综合判断（71–80）
 
@@ -1641,21 +1641,21 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 ### 23.1 答案 1–15
 
-1. **答：**Scaling law 是在特定模型、数据、训练 recipe 与规模范围内，资源和表现之间观察并拟合出的简单规律。它不保证跨出该范围仍准，也不保证 pretraining loss 能精确预测 downstream accuracy。
-2. **答：**3B 位于 2B 与 4B 之间，是 interpolation；80B 超出最大 8B，是 extrapolation。80B 更危险，因为可能跨入没有测过的新 regime。
-3. **答：**Empirical law 来自实验点拟合；generalization bound 来自明确假设下的数学证明。前者追求实际预测，后者追求最坏情况保证。
-4. **答：**Monotonic 表示输入增加时输出只朝同一方向走，例如 loss 只下降；asymptote 是曲线越来越接近的极限线，例如 $`L_\infty`$。
-5. **答：**Loss 是连续训练目标；accuracy 常由离散答对/答错形成，还受 prompt、任务分布与阈值影响。因此两者排序与曲线形状可能不同。
-6. **答：**Nonparametric 方法仍可有大量局部参数，只是有效自由度不是预先固定的有限数，会随数据增加。
-7. **答：**Intrinsic dimension 是描述数据真正变化所需的自由方向数。把 exponent 连接到它需要 smoothness、估计器与数据流形等假设，而且 dimension 本身难可靠测量，所以不能严格反推。
-8. **答：**Distribution shift 是训练分布与目标分布不一致。例如训练 90% 新闻、10% 代码，部署却 80% 问题是代码。
-9. **答：**Lower envelope 是每个资源水平上已试候选的最低 loss。新 recipe、新数据或新架构仍可更低，所以不是数学上的不可突破下界。
-10. **答：**它平衡少 training steps 的时间效率与少 processed examples 的样本/计算效率。
-11. **答：**muP 想减少普通参数化下最佳 LR 等超参数随 width 漂移。本讲只预告，具体 tensor 缩放需完整 parameterization 背景，留到 Lecture 11。
-12. **答：**IsoFLOP 是固定训练 FLOPs，在同一预算下扫描 $`N,D`$ 或其它自由度，寻找最低 loss 的实验设计。
-13. **答：**Train-optimal 只最小化一次训练成本下的 loss；deployment-optimal 还加上所有未来请求的 prefill/decode 推理成本。
-14. **答：**这里的 “overtrained” 只表示 tokens 超过 training-compute-optimal 配比；validation loss 仍可继续下降。传统过拟合则指训练表现改善、泛化表现恶化。
-15. **答：**FLOP 是一次浮点操作；FLOPs 在本文语境常指完成任务所需操作总数；FLOP/s 才是每秒吞吐。
+1. **答：** Scaling law 是在特定模型、数据、训练 recipe 与规模范围内，资源和表现之间观察并拟合出的简单规律。它不保证跨出该范围仍准，也不保证 pretraining loss 能精确预测 downstream accuracy。
+2. **答：** 3B 位于 2B 与 4B 之间，是 interpolation；80B 超出最大 8B，是 extrapolation。80B 更危险，因为可能跨入没有测过的新 regime。
+3. **答：** Empirical law 来自实验点拟合；generalization bound 来自明确假设下的数学证明。前者追求实际预测，后者追求最坏情况保证。
+4. **答：** Monotonic 表示输入增加时输出只朝同一方向走，例如 loss 只下降；asymptote 是曲线越来越接近的极限线，例如 $`L_\infty`$。
+5. **答：** Loss 是连续训练目标；accuracy 常由离散答对/答错形成，还受 prompt、任务分布与阈值影响。因此两者排序与曲线形状可能不同。
+6. **答：** Nonparametric 方法仍可有大量局部参数，只是有效自由度不是预先固定的有限数，会随数据增加。
+7. **答：** Intrinsic dimension 是描述数据真正变化所需的自由方向数。把 exponent 连接到它需要 smoothness、估计器与数据流形等假设，而且 dimension 本身难可靠测量，所以不能严格反推。
+8. **答：** Distribution shift 是训练分布与目标分布不一致。例如训练 90% 新闻、10% 代码，部署却 80% 问题是代码。
+9. **答：** Lower envelope 是每个资源水平上已试候选的最低 loss。新 recipe、新数据或新架构仍可更低，所以不是数学上的不可突破下界。
+10. **答：** 它平衡少 training steps 的时间效率与少 processed examples 的样本/计算效率。
+11. **答：** muP 想减少普通参数化下最佳 LR 等超参数随 width 漂移。本讲只预告，具体 tensor 缩放需完整 parameterization 背景，留到 Lecture 11。
+12. **答：** IsoFLOP 是固定训练 FLOPs，在同一预算下扫描 $`N,D`$ 或其它自由度，寻找最低 loss 的实验设计。
+13. **答：** Train-optimal 只最小化一次训练成本下的 loss；deployment-optimal 还加上所有未来请求的 prefill/decode 推理成本。
+14. **答：** 这里的 “overtrained” 只表示 tokens 超过 training-compute-optimal 配比；validation loss 仍可继续下降。传统过拟合则指训练表现改善、泛化表现恶化。
+15. **答：** FLOP 是一次浮点操作；FLOPs 在本文语境常指完成任务所需操作总数；FLOP/s 才是每秒吞吐。
 
 ### 23.2 答案 16–40
 
@@ -1667,12 +1667,12 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
     $`16^{1/2}=\sqrt{16}=4.`$
 
-17. **答：**因为 $`10^3=1000`$，所以 $`\log_{10}(1000)=3`$。$`4^{-0.5}=1/\sqrt4=1/2=0.5`$。
+17. **答：** 因为 $`10^3=1000`$，所以 $`\log_{10}(1000)=3`$。$`4^{-0.5}=1/\sqrt4=1/2=0.5`$。
 18. **答：**
 
     $`m=\frac{3-7}{6-2}=\frac{-4}{4}=-1.`$
 
-19. **答：**Residual = 实测 − 预测：
+19. **答：** Residual = 实测 − 预测：
 
     $`[2.1-2.0,\ 2.3-2.5,\ 3.2-3.0]=[0.1,-0.2,0.2].`$
 
@@ -1703,7 +1703,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`\log(L-L_\infty)=\log A+\log(n^{-\alpha}) =\log A-\alpha\log n.`$
 
     横轴 $`x=\log n`$、纵轴 $`y=\log(L-L_\infty)`$，斜率 $`-\alpha`$，截距 $`\log A`$。
-25. **答：**与 $`y=\log A-\alpha x`$ 对照：截距是 $`\ln4`$，所以 $`A=4`$；斜率是 $`-0.25`$，所以 $`\alpha=0.25`$。
+25. **答：** 与 $`y=\log A-\alpha x`$ 对照：截距是 $`\ln4`$，所以 $`A=4`$；斜率是 $`-0.25`$，所以 $`\alpha=0.25`$。
 26. **答：**
 
     $`\frac1{\sqrt n}\le0.05=\frac1{20} \Rightarrow \sqrt n\ge20 \Rightarrow n\ge400.`$
@@ -1732,7 +1732,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
     $`\mathrm{Var}(\bar X) =\frac1{81}(9\times9) =\frac{81}{81}=1.`$
 
-30. **答：**因为样本均值无偏，即 $`\mathbb E[\bar X]=\mu`$：
+30. **答：** 因为样本均值无偏，即 $`\mathbb E[\bar X]=\mu`$：
 
     $`\mathrm{MSE}(\bar X) =\mathbb E[(\bar X-\mu)^2] =\mathbb E[(\bar X-\mathbb E[\bar X])^2] =\mathrm{Var}(\bar X) =\frac{\sigma^2}{n}.`$
 
@@ -1740,7 +1740,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
     $`n=4:\ 4/4=1; \qquad n=16:\ 4/16=0.25.`$
 
-31. **答：**Standard error（标准误）是“如果反复抽样，估计量本身会晃动多少”的标准差。对样本均值：
+31. **答：** Standard error（标准误）是“如果反复抽样，估计量本身会晃动多少”的标准差。对样本均值：
 
     $`\mathrm{SE}(\bar X) =\sqrt{\mathrm{Var}(\bar X)} =\sqrt{\frac{\sigma^2}{n}} =\frac{\sigma}{\sqrt n}.`$
 
@@ -1754,7 +1754,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`n^{1/4}=10, \qquad h=n^{-1/4}=0.1.`$
 
     $`h`$ 是二维平面上每个正方形箱子的**边长**。每边 $`1/h=10`$ 箱，总箱 $`10^2=100`$，每箱平均 $`10,000/100=100`$ 样本。若只看每箱平均带来的 variance 型误差，其量级是 $`1/100=0.01=n^{-1/2}`$；不能把这个数误叫边长。
-33. **答：**因为 $`65,536=16^4`$：
+33. **答：** 因为 $`65,536=16^4`$：
 
     $`h=1/16,`$
 
@@ -1773,7 +1773,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`\text{书籍}=2000\times0.15=300.`$
 
     检查：$`1200+500+300=2000`$。
-36. **答：**相交时：
+36. **答：** 相交时：
 
     $`4D^{-0.2}=6D^{-0.3} \Rightarrow D^{0.1}=6/4=1.5.`$
 
@@ -1811,7 +1811,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`50,000\times1000=50,000,000=50\text{M}.`$
 
     主体也是 50M 时，总参数 $`50+50=100`$M，是只计主体的 $`100/50=2`$ 倍。
-42. **答：**Total：
+42. **答：** Total：
 
     $`8\times100\text{M}=800\text{M}.`$
 
@@ -1918,7 +1918,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`C_{backward}\approx4ND=2.4\times10^{13}.`$
 
     合计 $`3.6\times10^{13}`$。
-53. **答：**固定 $`ND=120`$：
+53. **答：** 固定 $`ND=120`$：
 
     $`N=10\Rightarrow D=120/10=12;`$
 
@@ -1939,7 +1939,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`D\text{ 倍数}=16^{0.4}\approx3.031.`$
 
     检查：$`5.278\times3.031\approx16.0`$，与 compute 倍数一致。
-56. **答：**两者 exponent 都是 $`0.5`$：
+56. **答：** 两者 exponent 都是 $`0.5`$：
 
     $`9^{0.5}=\sqrt9=3.`$
 
@@ -1960,7 +1960,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`(9,4):\ 1/3+1/2=0.8333.`$
 
     最低是 $`(6,6)`$。
-59. **答：**原 envelope 是三者最小值 2.5，对应 B。加入 2.3 后，新 envelope 变为 2.3；这证明 envelope 只是候选集合相关。
+59. **答：** 原 envelope 是三者最小值 2.5，对应 B。加入 2.3 后，新 envelope 变为 2.3；这证明 envelope 只是候选集合相关。
 60. **答：**
 
     - total：$`100+50+50=200`$M。
@@ -1997,7 +1997,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
     $`\text{SSE}=0.1^2+(-0.1)^2+0.2^2+(-0.2)^2 =0.01+0.01+0.04+0.04=0.10.`$
 
     平均 residual 为 0 只说明正负抵消；每个点仍有误差，且 residual 还可能有随规模变化的结构。
-66. **答：**令成本相等：
+66. **答：** 令成本相等：
 
     $`1000+10Q=1600+4Q \Rightarrow6Q=600 \Rightarrow Q=100.`$
 
@@ -2015,7 +2015,7 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
     $`D=70\times10^9\times215 =15,050\times10^9 =15.05\times10^{12} =15.05\text{T tokens}.`$
 
-69. **答：**PDF p54 写 2；视频 75:18 口述 3。正确做法是同时记录并标“课程材料内部冲突”，不能无说明地挑一个。
+69. **答：** PDF p54 写 2；视频 75:18 口述 3。正确做法是同时记录并标“课程材料内部冲突”，不能无说明地挑一个。
 70. **答：**
 
     | 现象 | 类别 |
@@ -2027,15 +2027,15 @@ PDF p55 展示 autoregressive、diffusion、MoE 的多种 IsoFLOP 曲面，说�
 
 ### 23.4 答案 71–80
 
-71. **答：**Backtest 是只用小规模点拟合，再预测一个当时不让拟合器看到、但我们已有实测的大规模点。验证点在拟合区外，才能真正检查 extrapolation，而非只检查 interpolation。
-72. **答：**窄范围内许多不同曲线都能给高 $`R^2`$；若 residual 有系统形状，或外部点偏离，外推仍会失败。还要检查 residual、参数稳定性、不同拟合窗口与 held-out scale。
-73. **答：**例如：（1）长序列 attention 的 $`O(s^2)`$ 项主导；（2）MoE 每 token 只激活部分 total parameters。其它例子包括 activation checkpoint 重算、embedding/output 占比很高和通信主导 wall-clock。
-74. **答：**至少要知道预计请求数，以及每请求 prompt/generated tokens 或实际推理成本。否则无法判断更高训练成本何时被更低 serving 成本摊回。
-75. **答：**任选四个：embedding/output parameter count；last-layer FLOPs；warmup 占训练比例；batch size 是否随规模调；LR/optimizer tuning；compute range；小模型是否收敛；数据/tokenizer 口径。
-76. **答：**Method 2 IsoFLOP 最直接，因为它在每个固定 compute budget 内直接扫 $`N/D`$ 并看碗底，不必先从不同训练曲线估 lower envelope，也不必立即联合拟合五个参数。
-77. **答：**能用，但单位必须统一。若 $`B`$ 是 tokens/step，$`E`$ 就必须是 processed tokens，不能仍写 examples；若一个 example 长度不同，还要先把它们换成 token 数。
-78. **答：**不能。这个 exponential effective-data 公式随重复单调增加并最终 plateau，不会让有效数据减少。原论文拟合时也排除了“过多 epoch/参数导致表现变坏”的样本；真实训练仍可能因过拟合或超参不合适而变坏。
-79. **答：**一种合格流程：（1）定义 $`N,D,C,loss`$ 口径；（2）固定可比 recipe；（3）选多个 compute budgets；（4）每个预算扫足够宽的候选网格；（5）拟合并看 residual/不确定度；（6）做 held-out-scale backtest；（7）保留验证预算；（8）执行大 run 并监控早期偏差。
+71. **答：** Backtest 是只用小规模点拟合，再预测一个当时不让拟合器看到、但我们已有实测的大规模点。验证点在拟合区外，才能真正检查 extrapolation，而非只检查 interpolation。
+72. **答：** 窄范围内许多不同曲线都能给高 $`R^2`$；若 residual 有系统形状，或外部点偏离，外推仍会失败。还要检查 residual、参数稳定性、不同拟合窗口与 held-out scale。
+73. **答：** 例如：（1）长序列 attention 的 $`O(s^2)`$ 项主导；（2）MoE 每 token 只激活部分 total parameters。其它例子包括 activation checkpoint 重算、embedding/output 占比很高和通信主导 wall-clock。
+74. **答：** 至少要知道预计请求数，以及每请求 prompt/generated tokens 或实际推理成本。否则无法判断更高训练成本何时被更低 serving 成本摊回。
+75. **答：** 任选四个：embedding/output parameter count；last-layer FLOPs；warmup 占训练比例；batch size 是否随规模调；LR/optimizer tuning；compute range；小模型是否收敛；数据/tokenizer 口径。
+76. **答：** Method 2 IsoFLOP 最直接，因为它在每个固定 compute budget 内直接扫 $`N/D`$ 并看碗底，不必先从不同训练曲线估 lower envelope，也不必立即联合拟合五个参数。
+77. **答：** 能用，但单位必须统一。若 $`B`$ 是 tokens/step，$`E`$ 就必须是 processed tokens，不能仍写 examples；若一个 example 长度不同，还要先把它们换成 token 数。
+78. **答：** 不能。这个 exponential effective-data 公式随重复单调增加并最终 plateau，不会让有效数据减少。原论文拟合时也排除了“过多 epoch/参数导致表现变坏”的样本；真实训练仍可能因过拟合或超参不合适而变坏。
+79. **答：** 一种合格流程：（1）定义 $`N,D,C,loss`$ 口径；（2）固定可比 recipe；（3）选多个 compute budgets；（4）每个预算扫足够宽的候选网格；（5）拟合并看 residual/不确定度；（6）做 held-out-scale backtest；（7）保留验证预算；（8）执行大 run 并监控早期偏差。
 80. **答：**（1）许多学习问题在一定范围出现 power law，均值与分箱例子说明不同 exponent 可来自不同统计难度。（2）模型与数据的误差项可联合写成 $`E+A/N^\alpha+B/D^\beta`$，固定 $`6ND`$ 后能推最优扩张指数。（3）Critical batch 用精确双曲线交换 steps 与 examples，在 $`B_{crit}`$ 处两者各约极限 2 倍。（4）Kaplan 与 Chinchilla 给出不同 compute 分配，差异受 parameter count、warmup、batch、范围与拟合方法影响。（5）训练 compute-optimal 不等于部署最优，请求多时，更多 tokens 训练的小模型可能总成本更低。
 
 ---

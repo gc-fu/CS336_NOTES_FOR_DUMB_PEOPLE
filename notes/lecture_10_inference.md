@@ -9,8 +9,8 @@
 > - quantization 用少 bit 近似数值，scale 是步长，zero point 是整数零点，clamp 是截到边界；PTQ（Post-Training Quantization）和 QAT（Quantization-Aware Training）是训练后/训练中量化，Hessian 是 loss（模型“坏程度”）对参数的二阶变化信息。pruning 是删除结构，distillation 是 student 学 teacher，calibration 是用小样本估计范围/重要性。
 > - proposal/target 是提候选/决定最终分布的模型，rejection/residual 是拒绝过量候选/补足概率；ragged batch 是长度不齐的批，iteration scheduling 是每轮重排请求；fragmentation 是碎片，paging/block table 是分页与块映射，copy-on-write 是要写共享块时才复制。
 
-> **目标读者：**只会加、减、乘、除，第一次系统学习大语言模型推理。  
-> **目标：**不看完整 85 分钟视频，也能解释一次请求怎样运行、重算课程的 FLOPs/显存/延迟模型，并知道每种优化究竟压缩了什么。  
+> **目标读者：** 只会加、减、乘、除，第一次系统学习大语言模型推理。  
+> **目标：** 不看完整 85 分钟视频，也能解释一次请求怎样运行、重算课程的 FLOPs/显存/延迟模型，并知道每种优化究竟压缩了什么。  
 > **官方代码讲义：**[`lecture_10.py`，commit `8b59b507`](https://github.com/stanford-cs336/lectures/blob/8b59b50730766695c2ffedd1a79c50cd09b9eb91/lecture_10.py)。  
 > **官方视频：**[Stanford Online Lecture 10](https://www.youtube.com/watch?v=EfM546A79aM)。
 
@@ -134,7 +134,7 @@ decode 每步只能知道下一枚 token；生成依赖前一步
 
 ### 2.1 request、prompt、token、response
 
-**Inference（推理）**是使用已经训练好的模型产生预测或文本。一次 **request（请求）**是客户端交给服务的一项工作；**prompt（提示）**是请求中的输入文本；**tokenizer（分词器）**是把文本按一套固定规则转换成 token IDs 的程序；**token（词元）**是模型实际处理的离散编号单位；**response（响应）**是模型输出。同一段可见文字若用了不同 tokenizer，token IDs 可能不同，KV cache 也不能直接共享。
+**Inference（推理）** 是使用已经训练好的模型产生预测或文本。一次 **request（请求）** 是客户端交给服务的一项工作；**prompt（提示）** 是请求中的输入文本；**tokenizer（分词器）** 是把文本按一套固定规则转换成 token IDs 的程序；**token（词元）** 是模型实际处理的离散编号单位；**response（响应）** 是模型输出。同一段可见文字若用了不同 tokenizer，token IDs 可能不同，KV cache 也不能直接共享。
 
 视频 [00:17](https://www.youtube.com/watch?v=EfM546A79aM&t=17s) 用最短定义开场：模型已训练好，收到 prompt，要尽可能准确、快速地给 response。
 
@@ -157,7 +157,7 @@ Inference 不只等于聊天：
 
 **【课程内容】【视频补充】[05:02](https://www.youtube.com/watch?v=EfM546A79aM&t=302s)**
 
-- **Latency（延迟）**泛指等待多久；必须写清是 TTFT、ITL 还是端到端，不能只写“latency”。
+- **Latency（延迟）** 泛指等待多久；必须写清是 TTFT、ITL 还是端到端，不能只写“latency”。
 - **TTFT（Time To First Token，首 token 时间）**：请求到达至第一枚输出 token 可见。
 - **ITL（Inter-Token Latency，token 间延迟）**：相邻输出 token 出现时间之差。文献也常写 **TPOT（Time Per Output Token）**。
 - **End-to-end latency（端到端延迟）**：请求到达到最后一枚输出 token 完成。
@@ -191,7 +191,7 @@ t=1.10  输出 token 4，请求结束
 
 ### 2.4 为什么训练和推理的形状不同
 
-训练时，目标序列已知，许多 token 位置能一起进入矩阵乘。Inference 的 **autoregressive（自回归）**意思是下一枚 token 的概率依赖已经出现的所有 token；尚未生成的 token 不存在，不能提前并行算。
+训练时，目标序列已知，许多 token 位置能一起进入矩阵乘。Inference 的 **autoregressive（自回归）** 意思是下一枚 token 的概率依赖已经出现的所有 token；尚未生成的 token 不存在，不能提前并行算。
 
 视频 [07:47](https://www.youtube.com/watch?v=EfM546A79aM&t=467s) 开始对比；[07:50](https://www.youtube.com/watch?v=EfM546A79aM&t=470s) 明确说生成必须 sequential。这个串行依赖是后面薄矩阵、低 arithmetic intensity 与动态 batching 的根源。
 
@@ -201,7 +201,7 @@ t=1.10  输出 token 4，请求结束
 
 ### 3.1 从 logits 到下一枚 token
 
-模型读入 token IDs 后，对词表中每个候选输出一个 **logit（未归一化分数）**。若词表大小为 $`V`$，一个位置的 logits shape 是 $`[V]`$；batch 版本是 $`[B,V]`$。Softmax 把 logits 变成总和为 1 的概率。**Greedy decoding（贪心解码）**每次直接选概率最大的 token；**sampling（随机采样）**按概率随机抽一枚，所以小概率 token 仍可能被抽中。
+模型读入 token IDs 后，对词表中每个候选输出一个 **logit（未归一化分数）**。若词表大小为 $`V`$，一个位置的 logits shape 是 $`[V]`$；batch 版本是 $`[B,V]`$。Softmax 把 logits 变成总和为 1 的概率。**Greedy decoding（贪心解码）** 每次直接选概率最大的 token；**sampling（随机采样）** 按概率随机抽一枚，所以小概率 token 仍可能被抽中。
 
 例如 logits 对三个词是 $`[2,1,0]`$。减去最大值后为 $`[0,-1,-2]`$，取指数约 $`[1,0.368,0.135]`$，总和 $`1.503`$，概率约 $`[0.665,0.245,0.090]`$。选出的 token 拼到历史末尾，模型才能计算下一步。
 
@@ -212,7 +212,7 @@ t=1.10  输出 token 4，请求结束
 
 视频 [20:30](https://www.youtube.com/watch?v=EfM546A79aM&t=1230s) 开始推理算术；[20:41](https://www.youtube.com/watch?v=EfM546A79aM&t=1241s) 展示最朴素的“整段历史重新过模型”。
 
-**为什么 token 间不能完全并行？**第 2 枚输出的 probability 要看第 1 枚实际采样结果；第 3 枚又要看前两枚。若第 1 枚不同，后面条件分布也会不同。
+**为什么 token 间不能完全并行？** 第 2 枚输出的 probability 要看第 1 枚实际采样结果；第 3 枚又要看前两枚。若第 1 枚不同，后面条件分布也会不同。
 
 ### 3.3 KV cache 存什么，为什么不存 Q
 
@@ -222,7 +222,7 @@ Attention 把当前 hidden state 投影成：
 - **K（Key，键向量）**：历史位置“可用什么索引来匹配”。
 - **V（Value，值向量）**：匹配后真正汇总的内容。
 
-**KV cache（键值缓存）**把历史 token 的 K 和 V 保存在 GPU 的 **HBM（High-Bandwidth Memory，高带宽显存）**中。历史 token 的 Q 不会被未来位置重复使用；未来位置会产生自己的新 Q，所以不需要长期缓存历史 Q。
+**KV cache（键值缓存）** 把历史 token 的 K 和 V 保存在 GPU 的 **HBM（High-Bandwidth Memory，高带宽显存）** 中。历史 token 的 Q 不会被未来位置重复使用；未来位置会产生自己的新 Q，所以不需要长期缓存历史 Q。
 
 视频 [21:28](https://www.youtube.com/watch?v=EfM546A79aM&t=1288s) 指出朴素重复计算很昂贵；[22:09](https://www.youtube.com/watch?v=EfM546A79aM&t=1329s) 解释前缀工作能复用；[22:45](https://www.youtube.com/watch?v=EfM546A79aM&t=1365s) 引入 KV cache。因 causal attention 中旧位置不看未来，追加 token 不会改变旧 K/V。
 
@@ -230,7 +230,7 @@ Attention 把当前 hidden state 投影成：
 
 这里临时用 $`T_{gen}`$ 表示“连续生成多少枚 token”，避免与 §4 中一次并行处理的 query 长度 $`T`$ 混淆。
 
-**无 cache：**第 $`t`$ 步把长度约 $`t`$ 的整段历史重新送入 full attention。一层 attention 的 score 数约 $`t^2`$：
+**无 cache：** 第 $`t`$ 步把长度约 $`t`$ 的整段历史重新送入 full attention。一层 attention 的 score 数约 $`t^2`$：
 
 ```math
 1^2+2^2+\cdots+T_{gen}^2
@@ -239,7 +239,7 @@ Attention 把当前 hidden state 投影成：
 
 最高次是 $`2T_{gen}^3/6`$，所以记作 $`O(T_{gen}^3)`$。
 
-**有 cache：**第 $`t`$ 步只用一个新 Q 去看 $`t`$ 个 K，score 数约 $`t`$：
+**有 cache：** 第 $`t`$ 步只用一个新 Q 去看 $`t`$ 个 K，score 数约 $`t`$：
 
 ```math
 1+2+\cdots+T_{gen}
@@ -247,7 +247,7 @@ Attention 把当前 hidden state 投影成：
 =O(T_{gen}^2).
 ```
 
-**纯求和玩具：**先只把四次 forward 的可见长度编号为 1、2、3、4，用来观察增长率；这张表**不是**下面“prompt=3、生成4枚”的真实调用表。
+**纯求和玩具：** 先只把四次 forward 的可见长度编号为 1、2、3、4，用来观察增长率；这张表**不是**下面“prompt=3、生成4枚”的真实调用表。
 
 | 步 $`t`$ | 无 cache attention 量 $`t^2`$ | 有 cache 新 Q 对历史量 $`t`$ |
 |---:|---:|---:|
@@ -317,7 +317,7 @@ Attention 把当前 hidden state 投影成：
 
 ### 4.2 contraction 与 batch dimension
 
-**Contraction dimension（收缩维）**在两个输入中都出现、在输出中消失，表示沿该轴乘加求和。**Batch dimension（批维）**在两个输入和输出里都保留，表示多份相互独立的计算。
+**Contraction dimension（收缩维）** 在两个输入中都出现、在输出中消失，表示沿该轴乘加求和。**Batch dimension（批维）** 在两个输入和输出里都保留，表示多份相互独立的计算。
 
 矩阵例：
 
@@ -443,13 +443,13 @@ I=128/112\approx1.143\text{ FLOP/byte}.
 
 ### 5.5 Roofline：295 从哪里来
 
-**Compute-bound（计算受限）**表示计算单元峰值先成为上限；**memory-bound（内存带宽受限）**表示搬数据先成为上限。Roofline 教学上界：
+**Compute-bound（计算受限）** 表示计算单元峰值先成为上限；**memory-bound（内存带宽受限）** 表示搬数据先成为上限。Roofline 教学上界：
 
 ```math
 P_{actual}\le\min(P_{peak},\ I\times BW).
 ```
 
-**Tensor Core（张量核心）**是 NVIDIA GPU 中专门加速矩阵乘加的硬件单元；它只在受支持的 dtype、shape 和指令路径上达到相应峰值。课程采用 H100 SXM 的 dense BF16 Tensor Core 峰值约 $`989\times10^{12}`$ FLOP/s，以及 HBM 带宽 $`3.35\times10^{12}`$ byte/s：
+**Tensor Core（张量核心）** 是 NVIDIA GPU 中专门加速矩阵乘加的硬件单元；它只在受支持的 dtype、shape 和指令路径上达到相应峰值。课程采用 H100 SXM 的 dense BF16 Tensor Core 峰值约 $`989\times10^{12}`$ FLOP/s，以及 HBM 带宽 $`3.35\times10^{12}`$ byte/s：
 
 ```math
 I_{roof}=\frac{989\times10^{12}}{3.35\times10^{12}}
@@ -459,7 +459,7 @@ I_{roof}=\frac{989\times10^{12}}{3.35\times10^{12}}
 
 因此在这个特定理论模型中，$`I<295`$ 倾向 memory-bound，$`I>295`$ 才可能 compute-bound。视频 [17:15](https://www.youtube.com/watch?v=EfM546A79aM&t=1035s) 开始硬件 roof 比较；[17:50](https://www.youtube.com/watch?v=EfM546A79aM&t=1070s) 给出 H100 条件。
 
-边界很重要：**structured sparsity（结构化稀疏）**要求权重按硬件支持的固定模式出现零，例如每小组满足规定数量的非零；硬件才能跳过部分工作，它不同于随便把零散权重置零。[NVIDIA H100 官方规格](https://www.nvidia.com/en-sg/data-center/h100/)表中 BF16 `1,979 TFLOPS` 带 structured sparsity 星号；dense 口径约为一半，即课程使用的 989。实际 kernel 还受 shape、时钟、同步、cache 命中和软件效率影响，因此 295 是理论 roof point，不是实测承诺。
+边界很重要：**structured sparsity（结构化稀疏）** 要求权重按硬件支持的固定模式出现零，例如每小组满足规定数量的非零；硬件才能跳过部分工作，它不同于随便把零散权重置零。[NVIDIA H100 官方规格](https://www.nvidia.com/en-sg/data-center/h100/)表中 BF16 `1,979 TFLOPS` 带 structured sparsity 星号；dense 口径约为一半，即课程使用的 989。实际 kernel 还受 shape、时钟、同步、cache 命中和软件效率影响，因此 295 是理论 roof point，不是实测承诺。
 
 $`B=1`$ 且 $`D=F=4096`$ 时：
 
@@ -529,7 +529,7 @@ U/G 各写一次共 $`4BTF`$ bytes，再各读一次又是 $`4BTF`$ bytes，所�
 \boxed{4BTD+8BTF+6DF}.
 ```
 
-若 up 与 gate 不能共享 X 的那次 HBM 读取，或中间乘积也落 HBM，流量还会更多。**Compiler（编译器）**把高层代码变成硬件可执行的程序；**layout（数据布局）**说明 tensor 元素在内存里的排列方式；**fusion（算子融合）**把原本分开的操作合进更少的 kernel，以减少中间数据落回 HBM。它们连同 cache 决定实测值；不能从 Python 表达式臆测固定 kernel 数或固定 bytes。
+若 up 与 gate 不能共享 X 的那次 HBM 读取，或中间乘积也落 HBM，流量还会更多。**Compiler（编译器）** 把高层代码变成硬件可执行的程序；**layout（数据布局）** 说明 tensor 元素在内存里的排列方式；**fusion（算子融合）** 把原本分开的操作合进更少的 kernel，以减少中间数据落回 HBM。它们连同 cache 决定实测值；不能从 Python 表达式臆测固定 kernel 数或固定 bytes。
 
 视频 [26:53](https://www.youtube.com/watch?v=EfM546A79aM&t=1613s) 总结 FLOPs 依赖 $`B,T,D,F`$；[27:15](https://www.youtube.com/watch?v=EfM546A79aM&t=1635s) 再次用 FLOPs/bytes。
 
@@ -660,7 +660,7 @@ I=256/320=0.8.
 
 ### 7.4 Prefill 与 decode 两个极端
 
-**Prefill 简化：**设 prompt 长度为 $`P`$。调用前没有 cache，所以 $`S_{old}=0`$；本次输入 $`T=P`$；append 后 $`S_{total}=P`$：
+**Prefill 简化：** 设 prompt 长度为 $`P`$。调用前没有 cache，所以 $`S_{old}=0`$；本次输入 $`T=P`$；append 后 $`S_{total}=P`$：
 
 ```math
 I_{prefill}
@@ -671,7 +671,7 @@ I_{prefill}
 
 若 $`P=1024`$，强度约 $`512`$ FLOP/byte，高于课程 H100 roof point 295，理论上可能 compute-bound。视频 [30:33](https://www.youtube.com/watch?v=EfM546A79aM&t=1833s) 推这一项。
 
-**Decode：**调用前 cache 为 $`S_{old}`$，本次输入一枚，故 $`T=1,S_{total}=S_{old}+1`$：
+**Decode：** 调用前 cache 为 $`S_{old}`$，本次输入一枚，故 $`T=1,S_{total}=S_{old}+1`$：
 
 ```math
 I_{decode}=\frac{S_{total}}{S_{total}+1}<1.
@@ -1005,7 +1005,7 @@ BF16 参数 memory：$`22.675456`$ GB。
 
 ### 11.1 MLA 的 latent cache
 
-**MLA（Multi-head Latent Attention，多头潜在注意力）**不直接缓存完整 K/V，而先把 hidden state 压成小 latent：
+**MLA（Multi-head Latent Attention，多头潜在注意力）** 不直接缓存完整 K/V，而先把 hidden state 压成小 latent：
 
 ```math
 c_t=W_{down}^{KV}h_t,
@@ -1019,7 +1019,7 @@ k_t=W_{up}^{K}c_t,
 v_t=W_{up}^{V}c_t.
 ```
 
-**Latent（潜变量）**是更短的中间向量。缓存 $`c_t`$ 而不是完整 $`k_t,v_t`$，压缩的是每 token 的 feature dimension。视频 [51:33](https://www.youtube.com/watch?v=EfM546A79aM&t=3093s) 转入 MLA；[51:45](https://www.youtube.com/watch?v=EfM546A79aM&t=3105s) 对比 MHA/GQA；[52:43](https://www.youtube.com/watch?v=EfM546A79aM&t=3163s) 说先投影到 $`C`$。
+**Latent（潜变量）** 是更短的中间向量。缓存 $`c_t`$ 而不是完整 $`k_t,v_t`$，压缩的是每 token 的 feature dimension。视频 [51:33](https://www.youtube.com/watch?v=EfM546A79aM&t=3093s) 转入 MLA；[51:45](https://www.youtube.com/watch?v=EfM546A79aM&t=3105s) 对比 MHA/GQA；[52:43](https://www.youtube.com/watch?v=EfM546A79aM&t=3163s) 说先投影到 $`C`$。
 
 ### 11.2 为什么可以在 query 侧“吸收”上投影
 
@@ -1035,7 +1035,7 @@ q_s^Tk_t
 
 ### 11.3 RoPE 为什么需要解耦分量
 
-**RoPE（Rotary Position Embedding，旋转位置编码）**按位置给 Q/K 施加不同旋转。带 RoPE 的 score 类似：
+**RoPE（Rotary Position Embedding，旋转位置编码）** 按位置给 Q/K 施加不同旋转。带 RoPE 的 score 类似：
 
 ```math
 (R_s q_s)^T(R_tW_{up}^{K}c_t)
@@ -1074,7 +1074,7 @@ MLA 简化 cache：
 
 ### 11.6 CLA 共享 layer 轴
 
-**CLA（Cross-Layer Attention，跨层注意力）**让相邻层共享 K/V；每层仍有自己的 Q 与 attention 计算。它压缩的是 layer 轴 $`L`$，不是 KV head 或 feature 轴。[CLA 原论文](https://arxiv.org/abs/2405.12981)
+**CLA（Cross-Layer Attention，跨层注意力）** 让相邻层共享 K/V；每层仍有自己的 Q 与 attention 计算。它压缩的是 layer 轴 $`L`$，不是 KV head 或 feature 轴。[CLA 原论文](https://arxiv.org/abs/2405.12981)
 
 例：4 层、每 2 层共享一次：
 
@@ -1095,7 +1095,7 @@ layer 3 产生 KV-B；layer 4 复用 KV-B
 
 ### 12.1 Sliding window
 
-**Local/sliding-window attention（局部/滑动窗口注意力）**让当前 token 只看最近 $`W`$ 个 token。Full attention 每层 cache 随 $`S_{total}`$ 增长；local layer 只需保留最近 $`\min(S_{total},W)`$ 个位置。
+**Local/sliding-window attention（局部/滑动窗口注意力）** 让当前 token 只看最近 $`W`$ 个 token。Full attention 每层 cache 随 $`S_{total}`$ 增长；local layer 只需保留最近 $`\min(S_{total},W)`$ 个位置。
 
 本地 `longformer-attention.png` 依次画：full $`n^2`$、连续窗口、dilated window（间隔采样）与 global+window（少数全局 token 加局部带）。视频 [56:53](https://www.youtube.com/watch?v=EfM546A79aM&t=3413s) 开始 whirlwind tour；[57:01](https://www.youtube.com/watch?v=EfM546A79aM&t=3421s) 命名 sliding window。
 
@@ -1130,7 +1130,7 @@ layer 3 产生 KV-B；layer 4 复用 KV-B
 
 视频 [62:18](https://www.youtube.com/watch?v=EfM546A79aM&t=3738s) 开始 V4；[62:38](https://www.youtube.com/watch?v=EfM546A79aM&t=3758s) 列缩写；[63:01](https://www.youtube.com/watch?v=EfM546A79aM&t=3781s) 说每 $`m`$ 个压成一个；[63:06](https://www.youtube.com/watch?v=EfM546A79aM&t=3786s) 转入 top-$`k`$；[63:15](https://www.youtube.com/watch?v=EfM546A79aM&t=3795s) 描述 lightning indexer。
 
-本地 `deepseek-v4-attention.png` 的数据流是：原始 hidden states→token-level compressor→compressed entries；另一路 compressor 产生 indexer keys，当前 query 产生 indexer query，轻量 MQA 得 scores，**top-$`k`$（只保留分数最高的 $`k`$ 项）**选 compressed entries；最后把 selected compressed entries 与 sliding-window entries 拼给 shared-KV MQA。
+本地 `deepseek-v4-attention.png` 的数据流是：原始 hidden states→token-level compressor→compressed entries；另一路 compressor 产生 indexer keys，当前 query 产生 indexer query，轻量 MQA 得 scores，**top-$`k`$（只保留分数最高的 $`k`$ 项）** 选 compressed entries；最后把 selected compressed entries 与 sliding-window entries 拼给 shared-KV MQA。
 
 [DeepSeek V4 官方模型卡/报告](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro)声称：1M context 下 V4-Pro 的 single-token inference FLOPs 为 V3.2 的 27%，KV cache 为 10%。这是 DeepSeek 在指定模型/上下文下的报告值，不可推广成所有 CSA 模型。官方摘要准确说 hybrid 是 CSA+HCA；课件把 CSA/DSA/HCA 连续列出容易让人误以为三者同层级。
 
@@ -1142,7 +1142,7 @@ layer 3 产生 KV-B；layer 4 复用 KV-B
 
 ### 13.1 量化公式：round、zero point、clamp
 
-**Quantization（量化）**把高精度实数映射到较少离散整数/浮点档位。对常见 affine integer quantization：
+**Quantization（量化）** 把高精度实数映射到较少离散整数/浮点档位。对常见 affine integer quantization：
 
 格式名先认清：**FP32** 是 32-bit floating-point（浮点）格式，通常每元素 4 bytes；**FP8** 是多种 8-bit 浮点格式的家族；**INT8/INT4** 是 8-bit/4-bit integer（整数）格式，分别只给每个数 256/16 个离散编码档位。
 
@@ -1191,7 +1191,7 @@ q=52+4=56,
 - **Per-channel**：每个输出/输入 channel 一组 scale；更准，scale 更多。
 - **Per-group**：每连续一小组 weights 共用 scale；在精度、metadata、kernel 之间折中。
 
-**Calibration（校准）**是在代表性样本上观察 weight/activation range，决定 scale、zero point 或 clipping threshold；样本不代表真实流量时，量化误差也会偏。
+**Calibration（校准）** 是在代表性样本上观察 weight/activation range，决定 scale、zero point 或 clipping threshold；样本不代表真实流量时，量化误差也会偏。
 
 ### 13.3 Weight-only 与 W+A
 
@@ -1224,7 +1224,7 @@ q=52+4=56,
 
 ### 14.1 三个动作
 
-**Pruning（剪枝）**删除模型的一部分。典型流程：
+**Pruning（剪枝）** 删除模型的一部分。典型流程：
 
 1. **Importance estimation（重要性估计）**：用 calibration set 观察删除某 layer/head/channel 后的影响。
 2. Remove/trim：真正移除低重要性结构。
@@ -1247,7 +1247,7 @@ q=52+4=56,
 
 ### 14.4 Distillation 是什么
 
-**Distillation（知识蒸馏）**让小 **student（学生模型）**模仿大 **teacher（教师模型）**的 output probabilities、logits 或中间 features，而不只学习 **one-hot 标签**。One-hot 是“正确类别位置写1，其余全写0”的向量，例如三分类第2类是 `[0,1,0]`；teacher 的软概率还能告诉 student 其它类别有多相似。
+**Distillation（知识蒸馏）** 让小 **student（学生模型）** 模仿大 **teacher（教师模型）** 的 output probabilities、logits 或中间 features，而不只学习 **one-hot 标签**。One-hot 是“正确类别位置写1，其余全写0”的向量，例如三分类第2类是 `[0,1,0]`；teacher 的软概率还能告诉 student 其它类别有多相似。
 
 本地 `pruning-kd-loop.png` 画出：trained LLM→估 importance→rank→trim→distillation，并可迭代。本地 `pruning-kd.png` 横轴是训练成本（trillion tokens），纵轴 MMLU；图宣称 Minitron 4B/8B 从 15B pruning start 出发，以远少于从零训练的 token 成本接近相似规模模型。这是 [NVIDIA Minitron 论文](https://arxiv.org/abs/2407.14679) 的实验快照。
 
@@ -1297,13 +1297,13 @@ r(x)\propto\max(q(x)-p(x),0)
 
 ### 15.3 两词完整事件树：为什么最终恰好等于 $`q`$
 
-**【补充理解/例子】**设只有 A、B：
+**【补充理解/例子】** 设只有 A、B：
 
 ```math
 p=[0.7,0.3],\qquad q=[0.4,0.6].
 ```
 
-**路径 1：proposal 抽到 A。**概率为 $`0.7`$。
+**路径 1：proposal 抽到 A。** 概率为 $`0.7`$。
 
 接受 A 的概率：
 
@@ -1323,7 +1323,7 @@ p=[0.7,0.3],\qquad q=[0.4,0.6].
 0.7\times(1-4/7)=0.7\times3/7=0.3.
 ```
 
-**路径 2：proposal 抽到 B。**概率为 $`0.3`$。因为 $`q(B)/p(B)=0.6/0.3=2`$，所以接受率为 $`\min(1,2)=1`$，最终直接输出 B 的概率是 $`0.3`$。
+**路径 2：proposal 抽到 B。** 概率为 $`0.3`$。因为 $`q(B)/p(B)=0.6/0.3=2`$，所以接受率为 $`\min(1,2)=1`$，最终直接输出 B 的概率是 $`0.3`$。
 
 拒绝路径的残差先算：
 
@@ -1442,7 +1442,7 @@ Kc_d+c_q(K)<E[Y]c_q(1),
 
 ### 15.7 Exact 的条件与不 exact 的边界
 
-**Temperature（温度）**把 logits 除以一个正数再做 softmax：温度低通常更尖锐，温度高通常更平；**top-$`k`$ sampling**只保留概率最高的 $`k`$ 项再归一化；**top-$`p`$ sampling**保留累计概率刚达到阈值 $`p`$ 的最小候选集合再归一化。
+**Temperature（温度）** 把 logits 除以一个正数再做 softmax：温度低通常更尖锐，温度高通常更平；**top-$`k`$ sampling**只保留概率最高的 $`k`$ 项再归一化；**top-$`p`$ sampling**保留累计概率刚达到阈值 $`p`$ 的最小候选集合再归一化。
 
 **正确实现**需要：proposal/target 针对同一上下文；目标概率与实际 target 采样设置一致；temperature、top-k、top-p 等概率变换在验收式中一致处理；随机数和 residual normalization 没有 bug。若把 $`\min(1,q/p)`$ 省掉、拒绝后直接从错误分布抽、或 target 验证时用了另一套采样设置，结果就不再保证为 $`q`$。
 
@@ -1465,9 +1465,9 @@ Kc_d+c_q(K)<E[Y]c_q(1),
 
 **【课程内容】【源码 553–575】【视频补充】[76:55](https://www.youtube.com/watch?v=EfM546A79aM&t=4615s)**
 
-静态批处理把一批请求一起开始，并等最慢者结束。若 A 只生成 2 枚、B 要 6 枚，A 完成后仍占着一个空槽。**Continuous batching（连续批处理）**在每个 decode iteration 边界重新排队：完成的请求立即退出，新请求可立即填空。
+静态批处理把一批请求一起开始，并等最慢者结束。若 A 只生成 2 枚、B 要 6 枚，A 完成后仍占着一个空槽。**Continuous batching（连续批处理）** 在每个 decode iteration 边界重新排队：完成的请求立即退出，新请求可立即填空。
 
-这里 **iteration-level scheduling（迭代级调度）**指“每生成一轮 token，就重新决定这一轮哪些请求上 GPU”，不是等整批全部结束才调度。视频 [77:01](https://www.youtube.com/watch?v=EfM546A79aM&t=4621s) 从不同完成长度说明浪费；[77:09](https://www.youtube.com/watch?v=EfM546A79aM&t=4629s) 给出 continuous batching。
+这里 **iteration-level scheduling（迭代级调度）** 指“每生成一轮 token，就重新决定这一轮哪些请求上 GPU”，不是等整批全部结束才调度。视频 [77:01](https://www.youtube.com/watch?v=EfM546A79aM&t=4621s) 从不同完成长度说明浪费；[77:09](https://www.youtube.com/watch?v=EfM546A79aM&t=4629s) 给出 continuous batching。
 
 ### 16.2 到达—完成时间表
 
@@ -1484,7 +1484,7 @@ Kc_d+c_q(K)<E[Y]c_q(1),
 
 ### 16.3 Ragged selective batching
 
-**Ragged batch（参差批）**表示不同请求的有效序列长度不同，不能简单堆成一个完整长方体而不产生 **padding（填充）**；padding 是为了凑齐 shape 人为加入的无效占位 token，若 kernel 不跳过它们就会浪费计算。**Selective batching（选择性拼批）**是：
+**Ragged batch（参差批）** 表示不同请求的有效序列长度不同，不能简单堆成一个完整长方体而不产生 **padding（填充）**；padding 是为了凑齐 shape 人为加入的无效占位 token，若 kernel 不跳过它们就会浪费计算。**Selective batching（选择性拼批）** 是：
 
 - attention 需要各自长度、位置与 KV block table，通常按请求边界处理或由 ragged attention kernel 处理；
 - LayerNorm、MLP 等非 attention 操作只关心每个 token 的 hidden 向量，可以把所有有效 token 拼在一起。
@@ -1506,7 +1506,7 @@ attention：仍需 lengths=[3,9,5] 与各自 KV 地址
 
 调度器还要检查：KV cache 是否放得下、某请求是否快超过 SLO、prefill 会不会阻塞 decode、租户优先级、公平性与取消请求。batch 越大吞吐可能越高，但单请求排队时间也可能越长，所以优化目标应是 goodput，不只是 tokens/s。视频 [77:58](https://www.youtube.com/watch?v=EfM546A79aM&t=4678s) 讨论 GPU utilization；[78:08](https://www.youtube.com/watch?v=EfM546A79aM&t=4688s) 连接 latency constraint；[78:13](https://www.youtube.com/watch?v=EfM546A79aM&t=4693s) 强调动态 workload。
 
-**【延伸】**Orca 论文把 iteration-level scheduling 与 selective batching 系统化；具体 serving engine 的策略、抢占和 chunked prefill 属于实现选择，并非源码这几行就保证。视频 [78:22](https://www.youtube.com/watch?v=EfM546A79aM&t=4702s) 开始从调度转向内存管理。
+**【延伸】** Orca 论文把 iteration-level scheduling 与 selective batching 系统化；具体 serving engine 的策略、抢占和 chunked prefill 属于实现选择，并非源码这几行就保证。视频 [78:22](https://www.youtube.com/watch?v=EfM546A79aM&t=4702s) 开始从调度转向内存管理。
 
 ---
 
@@ -1516,7 +1516,7 @@ attention：仍需 lengths=[3,9,5] 与各自 KV 地址
 
 **【课程内容】【源码 576–611】【视频补充】[79:34](https://www.youtube.com/watch?v=EfM546A79aM&t=4774s)**
 
-**Fragmentation（碎片）**指总空闲空间看似够，却因分配粒度或位置而浪费。
+**Fragmentation（碎片）** 指总空闲空间看似够，却因分配粒度或位置而浪费。
 
 1. **Internal fragmentation（内部碎片）**：给一项任务保留的块内部没用满。例：预留 16 个 token 槽，只用 6 个，浪费 $`16-6=10`$ 个，浪费率 $`10/16=62.5\%`$。
 2. **External fragmentation（外部碎片）**：空闲块散开。例：两处空洞分别有 3 和 4 个槽，总共 $`3+4=7`$；若旧分配器要求连续 5 槽，任何一个洞都放不下。
@@ -1525,7 +1525,7 @@ attention：仍需 lengths=[3,9,5] 与各自 KV 地址
 
 ### 17.2 Paging、logical block、physical block
 
-**Paging（分页）**把逻辑上连续的 KV cache 切成等长小块；物理上这些块可以散落。**Logical block（逻辑块）**表示序列眼中的第 0、1、2 块；**physical block（物理块）**表示 HBM 里的真实槽位。**Block table（块表）**保存逻辑块到物理块的映射。
+**Paging（分页）** 把逻辑上连续的 KV cache 切成等长小块；物理上这些块可以散落。**Logical block（逻辑块）** 表示序列眼中的第 0、1、2 块；**physical block（物理块）** 表示 HBM 里的真实槽位。**Block table（块表）** 保存逻辑块到物理块的映射。
 
 块大小为 4 tokens，一条 10-token 序列需要：
 
@@ -1563,7 +1563,7 @@ $`\lfloor x\rfloor`$ 是向下取整；$`a\bmod b`$ 是 $`a`$ 除以 $`b`$ 的�
 
 ### 17.4 Prefix sharing 与 copy-on-write
 
-**Prefix sharing（前缀共享）**让 tokenized prefix 完全相同、模型/KV 语义也相同的请求指向同一批只读物理块。**Copy-on-write，COW（写时复制）**表示“只读时继续共享；某请求要改共享块时，才为它复制一份”。
+**Prefix sharing（前缀共享）** 让 tokenized prefix 完全相同、模型/KV 语义也相同的请求指向同一批只读物理块。**Copy-on-write，COW（写时复制）** 表示“只读时继续共享；某请求要改共享块时，才为它复制一份”。
 
 例：块大小 4，两个请求共同拥有 8-token system prompt，因此共享逻辑块 0、1；每个物理块引用计数（reference count）为 2。
 
@@ -1599,7 +1599,7 @@ reference count: block3=2, block8=2
 
 “把 block read 与 attention 融合、使用更合适 kernel”来自源码 line 603–605 的文字列表，不是这张图本身的证据。视频 [82:05](https://www.youtube.com/watch?v=EfM546A79aM&t=4925s) 讨论 block granularity；[82:24](https://www.youtube.com/watch?v=EfM546A79aM&t=4944s) 说明 metadata；[82:29](https://www.youtube.com/watch?v=EfM546A79aM&t=4949s) 提到 specialized kernels；[82:42](https://www.youtube.com/watch?v=EfM546A79aM&t=4962s) 总结内存利用率收益。
 
-**【延伸】**PagedAttention 由 vLLM 论文提出；当前 vLLM 实现细节会变化，本文只把论文/官方文档用于解释机制，不把某一版本性能当保证。视频 [83:02](https://www.youtube.com/watch?v=EfM546A79aM&t=4982s) 给出 serving throughput 结果图；[83:17](https://www.youtube.com/watch?v=EfM546A79aM&t=4997s) 提醒 workload 会改变收益；[83:28](https://www.youtube.com/watch?v=EfM546A79aM&t=5008s) 进入全讲收束。
+**【延伸】** PagedAttention 由 vLLM 论文提出；当前 vLLM 实现细节会变化，本文只把论文/官方文档用于解释机制，不把某一版本性能当保证。视频 [83:02](https://www.youtube.com/watch?v=EfM546A79aM&t=4982s) 给出 serving throughput 结果图；[83:17](https://www.youtube.com/watch?v=EfM546A79aM&t=4997s) 提醒 workload 会改变收益；[83:28](https://www.youtube.com/watch?v=EfM546A79aM&t=5008s) 进入全讲收束。
 
 ---
 
@@ -1756,71 +1756,71 @@ reference count: block3=2, block8=2
 
 ### 21.2 手算、shape 与时间线（11–75）
 
-11. **【手算】**请求在 0 ms 到达；排队 10 ms；prefill 30 ms；四枚输出在 40、55、70、85 ms 可见。求 TTFT、三个 ITL、平均 ITL、E2E latency。
-12. **【手算】**同一请求输出 5 枚，TTFT=120 ms，之后 4 个 ITL 都是 25 ms。最后一枚何时到？E2E 是多少？
-13. **【手算】**10 秒完成 800 枚 token，其中 600 枚满足 SLO。求 throughput 与 goodput。
-14. **【填表】**prompt 长 3，生成 $`y_1,y_2,y_3,y_4`$ 四枚。列出 1 次 prefill 和 3 次后续 decode 的“调用前 cache、本次输入、采样输出、调用后 cache”；解释为什么不是 4 次 decode，以及最后 cache 为什么是 6 不是 7。
-15. **【手算】**不用 KV cache，四步 attention 重算量按 $`1^2,2^2,3^2,4^2`$。求总和，并和末长度 $`T=4`$ 的 $`T^3=64`$ 比较常数差。
-16. **【手算】**有 KV cache，四步按 $`1,2,3,4`$。求总和，并写成 $`T(T+1)/2`$ 验证。
+11. **【手算】** 请求在 0 ms 到达；排队 10 ms；prefill 30 ms；四枚输出在 40、55、70、85 ms 可见。求 TTFT、三个 ITL、平均 ITL、E2E latency。
+12. **【手算】** 同一请求输出 5 枚，TTFT=120 ms，之后 4 个 ITL 都是 25 ms。最后一枚何时到？E2E 是多少？
+13. **【手算】** 10 秒完成 800 枚 token，其中 600 枚满足 SLO。求 throughput 与 goodput。
+14. **【填表】** prompt 长 3，生成 $`y_1,y_2,y_3,y_4`$ 四枚。列出 1 次 prefill 和 3 次后续 decode 的“调用前 cache、本次输入、采样输出、调用后 cache”；解释为什么不是 4 次 decode，以及最后 cache 为什么是 6 不是 7。
+15. **【手算】** 不用 KV cache，四步 attention 重算量按 $`1^2,2^2,3^2,4^2`$。求总和，并和末长度 $`T=4`$ 的 $`T^3=64`$ 比较常数差。
+16. **【手算】** 有 KV cache，四步按 $`1,2,3,4`$。求总和，并写成 $`T(T+1)/2`$ 验证。
 17. **【画 shape】**$`B=2,S_{old}=5,T=3,S_{total}=8,N=4,H=8`$。写 Q、merged K/V 和 attention score 的 shape；若 GQA $`K=2`$，K/V shape 怎么变？
 18. **【手算】**$`N=16,K=4`$，求 $`G`$；列出 query heads 0–7 分别使用哪一个 KV head，假设连续每 $`G`$ 个一组。
-19. **【手算】**矩阵 $`[B,D]@[D,F]`$，$`B=2,D=4,F=8`$、BF16。求 FLOPs、读 X、读 W、写 Y bytes、总 bytes、强度。
+19. **【手算】** 矩阵 $`[B,D]@[D,F]`$，$`B=2,D=4,F=8`$、BF16。求 FLOPs、读 X、读 W、写 Y bytes、总 bytes、强度。
 20. **【手算】**$`B=1,D=F=4096`$，由 $`I=B/(B/F+1+B/D)`$ 算近似强度。
-21. **【手算】**H100 教学峰值 989 TFLOP/s、带宽 3.35 TB/s。求 ridge point。
-22. **【判断+手算】**若 kernel 强度 100 FLOP/byte，带宽 roof 是多少 TFLOP/s？与 989 比，教学 Roofline 判为哪边受限？
-23. **【手算】**SwiGLU MLP 取 $`B=2,T=3,D=4,F=6`$。求 $`6BTDF`$ FLOPs，并分别求：课程单边账 $`4BTD+4BTF+6DF`$、完全融合账 $`4BTD+6DF`$、U/G 落 HBM 再读账 $`4BTD+8BTF+6DF`$。
-24. **【手算】**用第 23 题结果求三种强度；再算近似 $`BT`$。为什么三种精确值不同，却能在什么条件下趋近同一个 $`BT`$？
-25. **【手算】**attention 取 $`B=2,S_{old}=2,T=3`$，故 $`S_{total}=5`$，$`D=4`$。求 $`4BTS_{total}D`$ FLOPs、$`4BS_{total}D+4BTD`$ bytes 和强度。
-26. **【手算】**prompt 长 $`P=8`$ 时，prefill 的 $`S_{old},T,S_{total}`$ 和强度各是什么？某次 decode 调用前 $`S_{old}=7`$ 时，append 后 $`S_{total}`$ 和强度是什么？
-27. **【填表】**给出课程参数公式 $`2VD+3DFL+2DNHL+2DKHL`$；把四组项分别对应到模型模块。
-28. **【手算】**Llama 2 13B 教学配置 $`V=32000,D=5120,F=13824,L=40,N=K=40,H=128`$。分别算 embedding、MLP、Q/O、K/V 参数，再相加。
-29. **【手算】**第 28 题参数用 BF16 存储，求十进制 GB。
-30. **【手算】**调用完成后 $`S_{total}=1024,K=40,H=128,L=40`$、K/V 两份、BF16。求单序列 KV bytes、GB、GiB。
-31. **【手算】**MHA 参数 26.0308992 GB，每序列 KV 0.8388608 GB，$`B=64`$，带宽 3.35 TB/s。求总 memory、理想 decode-step latency 下界、decode token-steps/s。为什么最后一个单位不是完整 requests/s？
-32. **【手算】**GQA 改 $`K=8`$，参数 22.675456 GB、每序列 KV 0.16777216 GB，$`B=64`$。求同三项，并继续使用 decode token-steps/s。
-33. **【判断+复算】**比较第31、32题。源码称 GQA 的 latency “Worse”是否符合它自己的 `memory/bandwidth` 模型？
-34. **【手算】**把 0.8388608 GB 换成 GiB；写出用到的 byte 定义。
-35. **【手算】**一张卡每秒处理 100 requests，复制到 4 张独立卡且流量充分，理想总吞吐多少？每请求是否必须跨卡通信？
-36. **【填表】**模型按 2 卡 sharding。列出“参数每卡”“单请求计算”“通信”“单请求 latency 风险”相对单卡的变化。
-37. **【画时间线】**batch 容量3。A在轮1到达需2枚，B轮1到达需4枚，C轮2到达需2枚，D轮3到达需1枚。按 continuous batching 列四轮活跃集合。
-38. **【手算】**MHA $`K=40`$ 改 MQA $`K=1`$。只看 KV cache，缩小多少倍？若原来单序列 0.8388608 GB，新的多少 GB？
-39. **【手算】**简化 MLA：普通每 token 每层 K/V 各 $`H=128`$、40 heads、BF16；latent 维 320，另存 RoPE key 64 维。求一层普通 bytes 与 MLA bytes、压缩倍数。
-40. **【手算】**40 层原本各自存一份每层 1000 bytes 的 KV。CLA 每 4 层共享一份。共有几组？总 bytes 与缩小倍数？
-41. **【手算】**调用后总长度 $`S_{total}=8`$ 的 causal full attention 有多少允许边？用 $`1+2+\cdots+8`$ 算。若每个 query 最多看自己和前2枚，逐行数边并求总边数。
-42. **【手算】**8层 attention 中2层 full、6层每 query 平均看128个 key，$`S_{total}=1024`$。用“每层每 query 边数”的教学近似，求总边数并与8层 full比较倍数。
+21. **【手算】** H100 教学峰值 989 TFLOP/s、带宽 3.35 TB/s。求 ridge point。
+22. **【判断+手算】** 若 kernel 强度 100 FLOP/byte，带宽 roof 是多少 TFLOP/s？与 989 比，教学 Roofline 判为哪边受限？
+23. **【手算】** SwiGLU MLP 取 $`B=2,T=3,D=4,F=6`$。求 $`6BTDF`$ FLOPs，并分别求：课程单边账 $`4BTD+4BTF+6DF`$、完全融合账 $`4BTD+6DF`$、U/G 落 HBM 再读账 $`4BTD+8BTF+6DF`$。
+24. **【手算】** 用第 23 题结果求三种强度；再算近似 $`BT`$。为什么三种精确值不同，却能在什么条件下趋近同一个 $`BT`$？
+25. **【手算】** attention 取 $`B=2,S_{old}=2,T=3`$，故 $`S_{total}=5`$，$`D=4`$。求 $`4BTS_{total}D`$ FLOPs、$`4BS_{total}D+4BTD`$ bytes 和强度。
+26. **【手算】** prompt 长 $`P=8`$ 时，prefill 的 $`S_{old},T,S_{total}`$ 和强度各是什么？某次 decode 调用前 $`S_{old}=7`$ 时，append 后 $`S_{total}`$ 和强度是什么？
+27. **【填表】** 给出课程参数公式 $`2VD+3DFL+2DNHL+2DKHL`$；把四组项分别对应到模型模块。
+28. **【手算】** Llama 2 13B 教学配置 $`V=32000,D=5120,F=13824,L=40,N=K=40,H=128`$。分别算 embedding、MLP、Q/O、K/V 参数，再相加。
+29. **【手算】** 第 28 题参数用 BF16 存储，求十进制 GB。
+30. **【手算】** 调用完成后 $`S_{total}=1024,K=40,H=128,L=40`$、K/V 两份、BF16。求单序列 KV bytes、GB、GiB。
+31. **【手算】** MHA 参数 26.0308992 GB，每序列 KV 0.8388608 GB，$`B=64`$，带宽 3.35 TB/s。求总 memory、理想 decode-step latency 下界、decode token-steps/s。为什么最后一个单位不是完整 requests/s？
+32. **【手算】** GQA 改 $`K=8`$，参数 22.675456 GB、每序列 KV 0.16777216 GB，$`B=64`$。求同三项，并继续使用 decode token-steps/s。
+33. **【判断+复算】** 比较第31、32题。源码称 GQA 的 latency “Worse”是否符合它自己的 `memory/bandwidth` 模型？
+34. **【手算】** 把 0.8388608 GB 换成 GiB；写出用到的 byte 定义。
+35. **【手算】** 一张卡每秒处理 100 requests，复制到 4 张独立卡且流量充分，理想总吞吐多少？每请求是否必须跨卡通信？
+36. **【填表】** 模型按 2 卡 sharding。列出“参数每卡”“单请求计算”“通信”“单请求 latency 风险”相对单卡的变化。
+37. **【画时间线】** batch 容量3。A在轮1到达需2枚，B轮1到达需4枚，C轮2到达需2枚，D轮3到达需1枚。按 continuous batching 列四轮活跃集合。
+38. **【手算】** MHA $`K=40`$ 改 MQA $`K=1`$。只看 KV cache，缩小多少倍？若原来单序列 0.8388608 GB，新的多少 GB？
+39. **【手算】** 简化 MLA：普通每 token 每层 K/V 各 $`H=128`$、40 heads、BF16；latent 维 320，另存 RoPE key 64 维。求一层普通 bytes 与 MLA bytes、压缩倍数。
+40. **【手算】** 40 层原本各自存一份每层 1000 bytes 的 KV。CLA 每 4 层共享一份。共有几组？总 bytes 与缩小倍数？
+41. **【手算】** 调用后总长度 $`S_{total}=8`$ 的 causal full attention 有多少允许边？用 $`1+2+\cdots+8`$ 算。若每个 query 最多看自己和前2枚，逐行数边并求总边数。
+42. **【手算】** 8层 attention 中2层 full、6层每 query 平均看128个 key，$`S_{total}=1024`$。用“每层每 query 边数”的教学近似，求总边数并与8层 full比较倍数。
 43. **【手算】**$`x=5.2342,s=0.1,z=4`$，用 $`q=\mathrm{round}(x/s)+z`$ 与 $`\hat x=s(q-z)`$ 量化/反量化，求误差。
-44. **【手算】**INT8 范围 $`[-128,127]`$。若未 clamp 的 q=140，存什么？若 q=-150 呢？
-45. **【填表】**symmetric 与 asymmetric quantization 的 zero point 通常怎样；各适合什么范围？
-46. **【手算】**两输出通道权重最大绝对值分别 1 和 10。若都映射到 symmetric INT8 的 127，per-channel scales 各是多少？per-tensor scale 由全局最大值决定时是多少？
-47. **【判断】**课件写 FP8 约 ±240，NVIDIA TE 文档写 E4M3 ±448。是否能说“一个必错”？应该怎样记录？
-48. **【填步骤】**给 pruning 流程 importance→remove→repair→verify，每步写输入/动作/输出。
-49. **【判断+解释】**100万个权重里把50%变成零，普通 dense GEMM 仍读算全部位置。能否只因“零很多”宣称2倍加速？
-50. **【画数据流】**写 teacher logits、student logits、ground-truth 三者怎样进入 distillation loss；说明 inference 时留下谁。
+44. **【手算】** INT8 范围 $`[-128,127]`$。若未 clamp 的 q=140，存什么？若 q=-150 呢？
+45. **【填表】** symmetric 与 asymmetric quantization 的 zero point 通常怎样；各适合什么范围？
+46. **【手算】** 两输出通道权重最大绝对值分别 1 和 10。若都映射到 symmetric INT8 的 127，per-channel scales 各是多少？per-tensor scale 由全局最大值决定时是多少？
+47. **【判断】** 课件写 FP8 约 ±240，NVIDIA TE 文档写 E4M3 ±448。是否能说“一个必错”？应该怎样记录？
+48. **【填步骤】** 给 pruning 流程 importance→remove→repair→verify，每步写输入/动作/输出。
+49. **【判断+解释】** 100万个权重里把50%变成零，普通 dense GEMM 仍读算全部位置。能否只因“零很多”宣称2倍加速？
+50. **【画数据流】** 写 teacher logits、student logits、ground-truth 三者怎样进入 distillation loss；说明 inference 时留下谁。
 51. **【手算】**$`p=[0.7,0.3],q=[0.4,0.6]`$。画 A/B 的 proposal、接受、拒绝残差事件树，证明最终为 q。
 52. **【手算】**$`p=[0.5,0.3,0.2],q=[0.2,0.5,0.3]`$。算直接接受质量、拒绝总量、normalized residual 和最终分布。
 53. **【手算】**$`K=4,a=0.8`$，求 $`E[A]`$ 与 $`E[Y]`$。
 54. **【手算】**$`K=4,a=0.3`$，求 $`E[Y]`$；若 speculative 成本1.72、普通每 token 成本1，是否划算？
 55. **【手算】**$`K=4,c_d=0.08,c_q(K)=1.4,a=0.8`$。求 break-even 两边与理想加速比。
-56. **【填表】**列三种让 speculative 不再保证 exact 的实现错误，并写修法。
-57. **【填表】**按第37题的请求，分别写静态 batch（A/B全结束后才收C/D）与 continuous batch 中 C 第一次运行的轮次。
-58. **【画 shape】**三个请求有效 token 为3、9、5，模型 hidden width $`D=512`$（不是 head width $`H`$）。写各 activation shape、拼接后的 non-attention shape，以及 attention 额外需要的元数据。
-59. **【判断+解释】**把 decode batch 从16增到64，总 tokens/s 上升，但 p95 ITL 超过SLO。goodput一定上升吗？下一步应测什么？
-60. **【手算】**预留16槽只用6槽，求内部碎片槽数与比例。
-61. **【手算】**空洞为3槽和4槽，请求要连续5槽。总空闲够不够？传统连续分配能否满足？这是哪类碎片？
-62. **【手算】**block size4，序列长10。需几块？最后一块用几槽、浪费几槽？
-63. **【手算】**block table `[7,1,5]`，block size4。token index9 落在哪个 logical block、块内 offset、physical block？
-64. **【手算】**两请求共享8-token prefix，block size4，每物理KV块100 bytes。不共享需多少 bytes？共享需多少？省多少？忽略块表。
-65. **【填表】**A/B共享physical block8，引用计数2；A要写。列 COW 前后 A table、B table、block8/new block引用计数。
-66. **【解释+数字】**block size从16降为4时，一条18-token序列内部浪费从多少槽变多少槽？为什么仍不能断言4一定更好？
-67. **【手算】**生成 $`T=4`$，无cache累计 $`1^2+2^2+3^2+4^2`$，有cache累计 $`1+2+3+4`$。求比值；说明大T的量级分别为何。
-68. **【手算】**公式中 K/V 参数为 $`2LDHK=2LDK H`$。固定 $`L=40,D=5120,H=128`$，K从40降到8，分别求 K/V 参数与减少量。
-69. **【填表】**一个请求 prompt=1024、共生成128枚输出。写 prefill 的 $`S_{old},T,S_{total}`$；解释第一枚已由 prefill 采样；再写为了采样第2枚的首个后续 decode，以及为了采样第128枚的最后一个后续 decode 的 $`S_{old},T,S_{total}`$。各阶段主要并行轴是什么？
-70. **【手算】**1000 requests 中900完成，800满足TTFT SLO，750同时满足TTFT与ITL SLO。以“两个SLO都满足”为达标，completion rate与goodput fraction各多少？
-71. **【手算】**已知 q=56、s=0.1、z=4，反量化；若原值5.24求误差。再说明 z=4 对应哪个实数值。
-72. **【手算+判断】**1B参数由BF16 2GB量化到INT8 1GB，权重bytes减多少倍？若硬件只能先解量化回BF16且kernel更慢，能否推出端到端2倍？
-73. **【填流程】**从 dense checkpoint 到“剪枝+蒸馏”的五步实验流程，至少包含 calibration、quality baseline、hardware benchmark。
-74. **【手算】**二词 speculative 例中，如果错误地“拒绝后从q重抽”，求最终 A 概率，说明为何不等0.4。
-75. **【手算】**block size8，block table `[4,9,2]`。token17读哪个logical block、offset和physical block？若physical block起始byte地址10000、每token KV占256 bytes，求地址。
+56. **【填表】** 列三种让 speculative 不再保证 exact 的实现错误，并写修法。
+57. **【填表】** 按第37题的请求，分别写静态 batch（A/B全结束后才收C/D）与 continuous batch 中 C 第一次运行的轮次。
+58. **【画 shape】** 三个请求有效 token 为3、9、5，模型 hidden width $`D=512`$（不是 head width $`H`$）。写各 activation shape、拼接后的 non-attention shape，以及 attention 额外需要的元数据。
+59. **【判断+解释】** 把 decode batch 从16增到64，总 tokens/s 上升，但 p95 ITL 超过SLO。goodput一定上升吗？下一步应测什么？
+60. **【手算】** 预留16槽只用6槽，求内部碎片槽数与比例。
+61. **【手算】** 空洞为3槽和4槽，请求要连续5槽。总空闲够不够？传统连续分配能否满足？这是哪类碎片？
+62. **【手算】** block size4，序列长10。需几块？最后一块用几槽、浪费几槽？
+63. **【手算】** block table `[7,1,5]`，block size4。token index9 落在哪个 logical block、块内 offset、physical block？
+64. **【手算】** 两请求共享8-token prefix，block size4，每物理KV块100 bytes。不共享需多少 bytes？共享需多少？省多少？忽略块表。
+65. **【填表】** A/B共享physical block8，引用计数2；A要写。列 COW 前后 A table、B table、block8/new block引用计数。
+66. **【解释+数字】** block size从16降为4时，一条18-token序列内部浪费从多少槽变多少槽？为什么仍不能断言4一定更好？
+67. **【手算】** 生成 $`T=4`$，无cache累计 $`1^2+2^2+3^2+4^2`$，有cache累计 $`1+2+3+4`$。求比值；说明大T的量级分别为何。
+68. **【手算】** 公式中 K/V 参数为 $`2LDHK=2LDK H`$。固定 $`L=40,D=5120,H=128`$，K从40降到8，分别求 K/V 参数与减少量。
+69. **【填表】** 一个请求 prompt=1024、共生成128枚输出。写 prefill 的 $`S_{old},T,S_{total}`$；解释第一枚已由 prefill 采样；再写为了采样第2枚的首个后续 decode，以及为了采样第128枚的最后一个后续 decode 的 $`S_{old},T,S_{total}`$。各阶段主要并行轴是什么？
+70. **【手算】** 1000 requests 中900完成，800满足TTFT SLO，750同时满足TTFT与ITL SLO。以“两个SLO都满足”为达标，completion rate与goodput fraction各多少？
+71. **【手算】** 已知 q=56、s=0.1、z=4，反量化；若原值5.24求误差。再说明 z=4 对应哪个实数值。
+72. **【手算+判断】** 1B参数由BF16 2GB量化到INT8 1GB，权重bytes减多少倍？若硬件只能先解量化回BF16且kernel更慢，能否推出端到端2倍？
+73. **【填流程】** 从 dense checkpoint 到“剪枝+蒸馏”的五步实验流程，至少包含 calibration、quality baseline、hardware benchmark。
+74. **【手算】** 二词 speculative 例中，如果错误地“拒绝后从q重抽”，求最终 A 概率，说明为何不等0.4。
+75. **【手算】** block size8，block table `[4,9,2]`。token17读哪个logical block、offset和physical block？若physical block起始byte地址10000、每token KV占256 bytes，求地址。
 
 ### 21.3 综合判断（76–80）
 
@@ -2065,4 +2065,4 @@ reference count: block3=2, block8=2
 - 画 continuous batching 请求表和 PagedAttention block table/COW。
 - 面对新优化先问：省的是 FLOPs、bytes、cache、碎片还是排队？质量和SLO付了什么代价？
 
-> **最后一句：**Transformer 的训练形状适合大矩阵并行，逐 token inference 却常是薄矩阵、频繁搬权重和不断增长的 KV。整讲所有技术，都在重新安排“算多少、搬多少、存多少、等多久”。
+> **最后一句：** Transformer 的训练形状适合大矩阵并行，逐 token inference 却常是薄矩阵、频繁搬权重和不断增长的 KV。整讲所有技术，都在重新安排“算多少、搬多少、存多少、等多久”。

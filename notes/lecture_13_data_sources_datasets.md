@@ -5,7 +5,7 @@
 > 官方可执行讲义：[lecture_13.py 固定版本](https://github.com/stanford-cs336/lectures/blob/8b59b50730766695c2ffedd1a79c50cd09b9eb91/lecture_13.py)。  
 > 本笔记结合 622 行官方源码、完整人工英文字幕、全部讲义图片与一手论文/官方法律资料，目标是让零基础读者不用看视频也能学懂。
 
-> **法律边界：**本讲涉及美国版权法与正在变化的诉讼，只用于课程学习，**不是法律意见**。版权期限、许可、合同和 fair use（合理使用）会因作品、日期、事实与法域而不同。真实项目必须让具备相关法域资格的律师审查。
+> **法律边界：** 本讲涉及美国版权法与正在变化的诉讼，只用于课程学习，**不是法律意见**。版权期限、许可、合同和 fair use（合理使用）会因作品、日期、事实与法域而不同。真实项目必须让具备相关法域资格的律师审查。
 
 > **第一次阅读：**
 >
@@ -147,7 +147,7 @@ Lecture 13/14 改问：
 | mid-training | 再集中读高质量或目标能力材料 | 高质量网页、数学、长上下文、合成数据 | 加强特定能力 |
 | post-training | 学会按用户意图回答和行动 | 指令、偏好、RL 环境、chat transcript | 形成 instruct/chat behavior |
 
-**Base model（基础模型）**通常指 pre+mid 后、post 前的模型；**instruct/chat model（指令/聊天模型）**通常指 post-training 后的模型。视频 [03:13](https://www.youtube.com/watch?v=-qm0ln33G24&t=193s) 提醒这些边界越来越模糊，部分大模型只发布 instruct checkpoint。
+**Base model（基础模型）** 通常指 pre+mid 后、post 前的模型；**instruct/chat model（指令/聊天模型）** 通常指 post-training 后的模型。视频 [03:13](https://www.youtube.com/watch?v=-qm0ln33G24&t=193s) 提醒这些边界越来越模糊，部分大模型只发布 instruct checkpoint。
 
 【补充解释】“数据量越来越少、质量越来越高”只是常见趋势：
 
@@ -199,7 +199,7 @@ Lecture 13/14 改问：
 
 ### 3.2 Live server 不能直接当静态训练文件
 
-**Live service（在线服务）**是会随请求、账户、时间和交互改变的服务器。视频 [05:16](https://www.youtube.com/watch?v=-qm0ln33G24&t=316s) 解释：pre-training 通常先做 snapshot，训练程序不会在每一步现场访问所有网站。
+**Live service（在线服务）** 是会随请求、账户、时间和交互改变的服务器。视频 [05:16](https://www.youtube.com/watch?v=-qm0ln33G24&t=316s) 解释：pre-training 通常先做 snapshot，训练程序不会在每一步现场访问所有网站。
 
 最小流水线：
 
@@ -231,7 +231,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 4.1 四步最小 crawler
 
-**Crawler（网络爬虫）**是自动发现并下载网页的程序。视频 [05:36](https://www.youtube.com/watch?v=-qm0ln33G24&t=336s) 给出核心：
+**Crawler（网络爬虫）** 是自动发现并下载网页的程序。视频 [05:36](https://www.youtube.com/watch?v=-qm0ln33G24&t=336s) 给出核心：
 
 1. **Seed set（种子集合）**：起始 URL，如 A、B。
 2. **Frontier（待抓取队列）**：尚未访问的 URL 集。
@@ -297,7 +297,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 4.6 Shadow libraries 只讲风险
 
-**Shadow library（影子图书馆）**聚合大量未经权利人授权的书或论文，并可能绕过付费墙。课程列 LibGen、Z-Library、Anna's Archive、Sci-Hub。
+**Shadow library（影子图书馆）** 聚合大量未经权利人授权的书或论文，并可能绕过付费墙。课程列 LibGen、Z-Library、Anna's Archive、Sci-Hub。
 
 本笔记不提供访问或绕过操作。风险拆开：
 
@@ -364,7 +364,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 5.4 Creative Commons 不是一个单一“随便用”按钮
 
-**Creative Commons, CC（知识共享许可）**是一族标准许可：
+**Creative Commons, CC（知识共享许可）** 是一族标准许可：
 
 - BY：要求署名；
 - SA：衍生作品按相同许可；
@@ -376,7 +376,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 5.5 Fair use 四因素
 
-【美国法，[17 U.S.C. §107 官方条文](https://uscode.house.gov/view.xhtml?req=%28title%3A17+section%3A107+edition%3Aprelim%29)；视频 [21:21](https://www.youtube.com/watch?v=-qm0ln33G24&t=1281s)】**Fair use（合理使用）**允许某些未经许可的使用，但要综合具体事实；美国版权局 [Fair Use Index](https://www.copyright.gov/fair-use/) 也强调具体案件事实：
+【美国法，[17 U.S.C. §107 官方条文](https://uscode.house.gov/view.xhtml?req=%28title%3A17+section%3A107+edition%3Aprelim%29)；视频 [21:21](https://www.youtube.com/watch?v=-qm0ln33G24&t=1281s)】**Fair use（合理使用）** 允许某些未经许可的使用，但要综合具体事实；美国版权局 [Fair Use Index](https://www.copyright.gov/fair-use/) 也强调具体案件事实：
 
 1. use 的 purpose and character，包括商业性、教育性与 transformative 性；
 2. 原作品 nature，事实性还是高度创作性；
@@ -390,7 +390,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 | 教师展示短引文评论 | 教育/评论较有利 | 视作品而定 | 少量较有利 | 替代市场弱 | 仍需综合 |
 | 商业服务复制整本小说 | 商业但可能主张转化 | 创作性强 | 全部 | 市场证据关键 | 不能只靠“AI” |
 
-**Transformative（转化性）**是用途或意义是否不同，不是“用神经网络处理过”就自动满足。
+**Transformative（转化性）** 是用途或意义是否不同，不是“用神经网络处理过”就自动满足。
 
 ### 5.6 ToS 是独立层
 
@@ -411,7 +411,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 6.1 Summary judgment 是什么
 
-**Summary judgment（简易判决）**是法院认为对某请求不存在需要陪审团审理的重大事实争议，依现有记录依法裁判。它不是：
+**Summary judgment（简易判决）** 是法院认为对某请求不存在需要陪审团审理的重大事实争议，依现有记录依法裁判。它不是：
 
 - 最高法院对所有 AI 训练立下全国统一规则；
 - 对案件里所有行为都判同一结果；
@@ -443,7 +443,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 ### 6.4 The New York Times v. Microsoft/OpenAI
 
-课程把它列为 2023 年提起、涉及训练与输出文章的 allegation（指控）。**Complaint 是原告主张，不是已判事实。**截至课程讲述，不能把 pending allegation 写成法院已认定侵权或已认定 fair use。
+课程把它列为 2023 年提起、涉及训练与输出文章的 allegation（指控）。**Complaint 是原告主张，不是已判事实。** 截至课程讲述，不能把 pending allegation 写成法院已认定侵权或已认定 fair use。
 
 ### 6.5 课堂结论怎样改写得准确
 
@@ -474,7 +474,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 
 例：frontier 有 100 个 URL，其中 10 个失败、20 个 URL 返回相同模板页。则成功 fetch 是 $`100-10=90`$，但 unique document 最多 $`90-20+1=71`$。为什么加 1？20 个相同副本会留下 1 个代表，不是全删掉。
 
-视频 [33:32](https://www.youtube.com/watch?v=-qm0ln33G24&t=2012s) 提到某次 crawl 为数百 TB。**TB（terabyte）**在十进制口径是 $`10^{12}`$ bytes；若论文写 TiB，则 $`1\text{ TiB}=2^{40}`$ bytes。看到数字先查单位，不能把 TB 与 token 数相加。
+视频 [33:32](https://www.youtube.com/watch?v=-qm0ln33G24&t=2012s) 提到某次 crawl 为数百 TB。**TB（terabyte）** 在十进制口径是 $`10^{12}`$ bytes；若论文写 TiB，则 $`1\text{ TiB}=2^{40}`$ bytes。看到数字先查单位，不能把 TB 与 token 数相加。
 
 ### 7.2 WARC、WAT、WET 分别保留什么
 
@@ -486,7 +486,7 @@ Discord、Facebook、X、LinkedIn、付费新闻站都说明“存在于 web”�
 | WAT | Web Archive Transformation | 从 WARC 计算的 metadata，如 headers、links | 通常不含完整正文 |
 | WET | WARC Encapsulated Text | 已抽取的 plaintext 和少量 WARC metadata | HTML 结构、图片、脚本和部分正文线索丢失 |
 
-**HTTP response（HTTP 响应）**是服务器回给 crawler 的状态、headers（头信息）和内容。视频 [35:00](https://www.youtube.com/watch?v=-qm0ln33G24&t=2100s) 开始对比格式，[35:29](https://www.youtube.com/watch?v=-qm0ln33G24&t=2129s) 强调 WET 的转换是 lossy（有损）：丢掉的信息以后不能从 WET 唯一还原。
+**HTTP response（HTTP 响应）** 是服务器回给 crawler 的状态、headers（头信息）和内容。视频 [35:00](https://www.youtube.com/watch?v=-qm0ln33G24&t=2100s) 开始对比格式，[35:29](https://www.youtube.com/watch?v=-qm0ln33G24&t=2129s) 强调 WET 的转换是 lossy（有损）：丢掉的信息以后不能从 WET 唯一还原。
 
 官方说明可回查：[Common Crawl Get Started](https://commoncrawl.org/get-started) 与 [Web Archiving File Formats Explained](https://commoncrawl.org/blog/web-archiving-file-formats-explained)。
 
@@ -541,7 +541,7 @@ WARC 常被叫 raw，但它至少已经经过：seed、URL priority、robots/pol
 
 ### 8.1 为什么优先 bulk dump，而不是爬网页界面
 
-【课程内容，源码 274–327；视频 [36:30](https://www.youtube.com/watch?v=-qm0ln33G24&t=2190s)】**Bulk dump（批量转储）**是来源方专门发布的大批数据文件。相比爬 UI，它通常：
+【课程内容，源码 274–327；视频 [36:30](https://www.youtube.com/watch?v=-qm0ln33G24&t=2190s)】**Bulk dump（批量转储）** 是来源方专门发布的大批数据文件。相比爬 UI，它通常：
 
 - 版本和时间更清楚；
 - 对服务器负担更小；
@@ -566,7 +566,7 @@ WARC 常被叫 raw，但它至少已经经过：seed、URL priority、robots/pol
 
 ### 8.3 Poisoning 的时间窗
 
-【课程内容；视频 [39:28](https://www.youtube.com/watch?v=-qm0ln33G24&t=2368s)】**Data poisoning（数据投毒）**是攻击者让恶意或误导数据进入训练流程，以改变模型行为。这里只讲 threat model（威胁模型）和防守，不提供如何实施攻击。
+【课程内容；视频 [39:28](https://www.youtube.com/watch?v=-qm0ln33G24&t=2368s)】**Data poisoning（数据投毒）** 是攻击者让恶意或误导数据进入训练流程，以改变模型行为。这里只讲 threat model（威胁模型）和防守，不提供如何实施攻击。
 
 最小时间线：
 
@@ -626,7 +626,7 @@ GitHub 官方说明：公开仓库允许平台用户查看和 fork；若没有 l
 
 【课程内容，源码 330–350；视频 [45:29](https://www.youtube.com/watch?v=-qm0ln33G24&t=2729s)】BERT 使用 English Wikipedia 与 BooksCorpus。课程强调“sequence 是连续 document 片段，而不是互不相关的句子”，因为上下文结构影响预训练任务。
 
-BooksCorpus 来自 Smashwords 上免费自出版书，论文报告约 7000 本、985M words。**M（million）**是 $`10^6`$，所以 985M words 是 $`985\times10^6=985{,}000{,}000`$ words。免费价格不等于 public domain；后续下架与 ToS 争议说明必须记录取得方式和授权口径。
+BooksCorpus 来自 Smashwords 上免费自出版书，论文报告约 7000 本、985M words。**M（million）** 是 $`10^6`$，所以 985M words 是 $`985\times10^6=985{,}000{,}000`$ words。免费价格不等于 public domain；后续下架与 ToS 争议说明必须记录取得方式和授权口径。
 
 视频 [46:02](https://www.youtube.com/watch?v=-qm0ln33G24&t=2762s) 的口述容易让人误听成“free 就 legally allowed”。正确拆法是：价格、访问权、copyright、license、ToS 分别判断。
 
@@ -650,13 +650,13 @@ Reddit 用户群体
 
 【课程内容，源码 364–376；视频 [48:32](https://www.youtube.com/watch?v=-qm0ln33G24&t=2912s)】CCNet 主要步骤：
 
-**Classifier（分类器）**是读入一条 document，再输出类别或分数的模型；例如输出“English 0.95”或“像 Wikipedia 0.72”。分数代表它在训练定义下的判断，不自动等于事实、价值或合法性的概率。
+**Classifier（分类器）** 是读入一条 document，再输出类别或分数的模型；例如输出“English 0.95”或“像 Wikipedia 0.72”。分数代表它在训练定义下的判断，不自动等于事实、价值或合法性的概率。
 
 1. 轻量规范化后 paragraph dedup；
 2. fastText language ID；
 3. 用 KenLM 5-gram 模型按“像 Wikipedia 的程度”分质量桶。
 
-**Language identification（语言识别）**是预测文本属于哪种语言。若 English 阈值是 0.9：分数 0.95 留下，0.85 删除。阈值提高通常减少误留非英语，也会增加误删混合语言、方言或短文本。
+**Language identification（语言识别）** 是预测文本属于哪种语言。若 English 阈值是 0.9：分数 0.95 留下，0.85 删除。阈值提高通常减少误留非英语，也会增加误删混合语言、方言或短文本。
 
 **KenLM 5-gram** 用前 4 个 token 预测下一个 token。它评分“统计风格像不像参考语料”，不直接判断事实真伪、原创性或社会价值。
 
@@ -694,7 +694,7 @@ GPT-3 实际训练消费 300B token positions，并按 mixture weights 重采样
 
 Common Crawl quality classifier 的 positives 来自 WebText、Wikipedia、books，negatives 来自未过滤 crawl。它学习的是“像这些已选 positives 吗”，不是宇宙中的客观质量函数。
 
-例：raw pool 90% web、10% books；训练 mixture 设 web 60%、books 40%。抽 1000 token 时期望 web 600、books 400。books 虽只占 pool 的 10%，训练权重却放大为 40%。这就是 **data mixture（数据混合）**改变学习分布。
+例：raw pool 90% web、10% books；训练 mixture 设 web 60%、books 40%。抽 1000 token 时期望 web 600、books 400。books 虽只占 pool 的 10%，训练权重却放大为 40%。这就是 **data mixture（数据混合）** 改变学习分布。
 
 ### 9.6 五个数据集不能只按大小排
 
@@ -723,7 +723,7 @@ Common Crawl quality classifier 的 positives 来自 WebText、Wikipedia、books
 
 即约 886 个十进制 GB，不能写成 825GB。其价值不只是大，而是把 component（组成部分）明确列出，让研究者能审计和重混。
 
-**Domain（领域/来源域）**在这里是具有相似来源或体裁的数据分区，如 arXiv、Stack Exchange、Pile-CC，不等于互联网域名。
+**Domain（领域/来源域）** 在这里是具有相似来源或体裁的数据分区，如 arXiv、Stack Exchange、Pile-CC，不等于互联网域名。
 
 ### 10.2 Pile-CC、PubMed Central、arXiv、Enron
 
@@ -806,7 +806,7 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 删除率约 $`37.3\%`$。但不能说 37.3% 全是重复，因为版本、过滤和单位口径也可能影响数字。
 
-**Replication（复现）**是根据公开 recipe 独立构造近似数据；URL 的内容会变、crawl snapshot 不同、私有 books 不可得、工具版本不同，所以它通常不可能与原数据逐 byte 相同。
+**Replication（复现）** 是根据公开 recipe 独立构造近似数据；URL 的内容会变、crawl snapshot 不同、私有 books 不可得、工具版本不同，所以它通常不可能与原数据逐 byte 相同。
 
 ### 11.4 三张 provenance 卡
 
@@ -900,7 +900,7 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 
 ### 13.3 Selection bias：目标标签本身不是宇宙真值
 
-**Selection bias（选择偏差）**是进入训练/评估样本的机制与目标总体不同。这里 positives 偏：
+**Selection bias（选择偏差）** 是进入训练/评估样本的机制与目标总体不同。这里 positives 偏：
 
 - instruction/answer 风格；
 - curiosity questions；
@@ -938,7 +938,7 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 \text{recall}=35/(35+5)=87.5\%.
 ```
 
-**Precision（精确率）**问“所有留下的文档里，多少真的有用”；**recall（召回率）**问“所有真的有用的文档里，多少被留下”。这里 false positive 是误留坏文档，false negative 是误删好文档。对低资源语言，少量 FN 就可能删掉很大比例的可用语料。
+**Precision（精确率）** 问“所有留下的文档里，多少真的有用”；**recall（召回率）** 问“所有真的有用的文档里，多少被留下”。这里 false positive 是误留坏文档，false negative 是误删好文档。对低资源语言，少量 FN 就可能删掉很大比例的可用语料。
 
 ### 13.5 “下游成绩更好”能说明什么
 
@@ -964,11 +964,11 @@ MassiveWeb 处理包括 English filtering、dedup、train-test overlap removal�
 10\text{T}\times0.10=1\text{T tokens}.
 ```
 
-若目标训练 6T、又不想重复 6 epochs，就需要更多可用 token，或接受重采样/合成的代价。**Epoch（轮）**是“把所定义的训练集平均看一遍”的口径；1T-token 数据抽 6T token positions，粗略就是 6 epochs，但加权 mixture 下各 component 的遍数会不同。
+若目标训练 6T、又不想重复 6 epochs，就需要更多可用 token，或接受重采样/合成的代价。**Epoch（轮）** 是“把所定义的训练集平均看一遍”的口径；1T-token 数据抽 6T token positions，粗略就是 6 epochs，但加权 mixture 下各 component 的遍数会不同。
 
 ### 14.2 Classifier ensemble
 
-**Ensemble（集成）**是组合多个模型/规则的判断。课程介绍两类信号：
+**Ensemble（集成）** 是组合多个模型/规则的判断。课程介绍两类信号：
 
 Nemotron-CC 最终 raw web input 是 **99 个 Common Crawl snapshots**，不是把 FineWeb 全部文档直接当最终原料。FineWeb documents 的角色是帮助构造 educational-quality labels/classifier recipe：
 
@@ -1056,7 +1056,7 @@ go-license-detector 或 GitHub Licensee 会把 LICENSE 文本匹配已知模板�
 - source code 与 LLVM intermediate representation（IR）配对；
 - code contests、StackOverflow、arXiv、Wikipedia 等既有数据。
 
-**LLVM IR（中间表示）**是很多语言编译时都会变成的低层共同表示。视频 [72:59](https://www.youtube.com/watch?v=-qm0ln33G24&t=4379s) 的直觉是：低资源语言可借共同 IR 对齐结构；这不是保证所有语义都保留。
+**LLVM IR（中间表示）** 是很多语言编译时都会变成的低层共同表示。视频 [72:59](https://www.youtube.com/watch?v=-qm0ln33G24&t=4379s) 的直觉是：低资源语言可借共同 IR 对齐结构；这不是保证所有语义都保留。
 
 ### 15.4 PR linearization 小例
 
@@ -1175,7 +1175,7 @@ J(A,B)=\frac{|A\cap B|}{|A\cup B|}=\frac35=0.6.
 
 ### 17.4 MinHash 的直觉
 
-**Hash（哈希）**是把输入按稳定规则映射到一个数字或桶位置的函数：同一输入、同一算法与 seed 应得到同一输出；不同输入仍可能得到同一输出，这叫 **collision（碰撞）**。它是短指纹/索引，不是“唯一身份证”。
+**Hash（哈希）** 是把输入按稳定规则映射到一个数字或桶位置的函数：同一输入、同一算法与 seed 应得到同一输出；不同输入仍可能得到同一输出，这叫 **collision（碰撞）**。它是短指纹/索引，不是“唯一身份证”。
 
 直接比较 10 亿文档两两 Jaccard 需要约 $`10^{18}`$ 对，做不起。**MinHash** 用多个随机 hash 排序，每个排序只保存集合中最小 hash 的元素，形成短 signature（签名）。两个集合的 signature 相等比例估计 Jaccard。
 
@@ -1194,11 +1194,11 @@ A=\{a,b,c\},\qquad B=\{b,c,d\}.
 
 2 个位置中 1 个相同，估计 Jaccard 为 $`1/2=0.5`$。真实 Jaccard 是交集 $`\{b,c\}`$ 两个、并集四个，也是 $`2/4=0.5`$；这里只是碰巧精确。signature 越短，随机误差越大。
 
-**LSH（Locality-Sensitive Hashing，局部敏感哈希）**把相似 signatures 更可能放进同一候选桶，减少需要精确比较的 pairs。它可能漏掉 near duplicate，也可能产生候选误报。
+**LSH（Locality-Sensitive Hashing，局部敏感哈希）** 把相似 signatures 更可能放进同一候选桶，减少需要精确比较的 pairs。它可能漏掉 near duplicate，也可能产生候选误报。
 
 ### 17.5 Bloom filter 的直觉与误报
 
-**Bit（比特）**是只能装 0 或 1 的一个格。**Bloom filter（布隆过滤器）**是省内存的 membership test（成员查询）结构。加入元素时把多个 hash 指向的 bits 置 1；查询时若任一 bit 为 0，肯定没见过；若全为 1，只能说“可能见过”。
+**Bit（比特）** 是只能装 0 或 1 的一个格。**Bloom filter（布隆过滤器）** 是省内存的 membership test（成员查询）结构。加入元素时把多个 hash 指向的 bits 置 1；查询时若任一 bit 为 0，肯定没见过；若全为 1，只能说“可能见过”。
 
 8-bit tiny example，2 个 hash：
 
@@ -1233,9 +1233,9 @@ C 其实没加入，这是 **false positive（假阳性）**。标准 Bloom filt
 
 ### 18.1 PII 从零定义
 
-**PII（Personally Identifiable Information，个人可识别信息）**是能单独或与其他信息组合识别个人的数据，如姓名+地址、email、电话、政府证件号。各法域定义和义务不同。
+**PII（Personally Identifiable Information，个人可识别信息）** 是能单独或与其他信息组合识别个人的数据，如姓名+地址、email、电话、政府证件号。各法域定义和义务不同。
 
-公开网页出现 email 不等于当事人同意把它永久收入训练集。**Consent（同意）**还要问：谁同意、同意什么用途、能否撤回、告知是否充分。
+公开网页出现 email 不等于当事人同意把它永久收入训练集。**Consent（同意）** 还要问：谁同意、同意什么用途、能否撤回、告知是否充分。
 
 ### 18.2 Redaction 小例及错误
 
@@ -1276,7 +1276,7 @@ C 其实没加入，这是 **false positive（假阳性）**。标准 Bloom filt
 
 即使原数据同量，过滤后变成 980:700，方言少 280 篇。分类器不是只提高“质量”，还重写 population distribution。
 
-**Toxicity（毒性）**标签也依上下文：引用辱骂进行批评、少数群体自称、医学/安全讨论可能被 word list 误删。应按语言和群体分层测 precision/recall，并人工审计边界案例。
+**Toxicity（毒性）** 标签也依上下文：引用辱骂进行批评、少数群体自称、医学/安全讨论可能被 word list 误删。应按语言和群体分层测 precision/recall，并人工审计边界案例。
 
 同一个“无毒的安全文本被删除”的物理错误，落在哪一格取决于任务怎样定义正类：
 
@@ -1589,7 +1589,7 @@ J(A,B)=\frac{|A\cap B|}{|A\cup B|}.
 
 ### 23.5 Mixture 与 epoch
 
-**Epoch（轮）**是每个被定义为训练集的样本平均看一遍的口径。若 dataset 100B tokens、训练抽 300B token positions，粗略是 3 epochs；但有加权重采样时，某些 component 可能 10 epochs、另一些不到 1 epoch。
+**Epoch（轮）** 是每个被定义为训练集的样本平均看一遍的口径。若 dataset 100B tokens、训练抽 300B token positions，粗略是 3 epochs；但有加权重采样时，某些 component 可能 10 epochs、另一些不到 1 epoch。
 
 component (i) 的期望 token 数：
 

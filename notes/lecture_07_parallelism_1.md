@@ -5,11 +5,11 @@
 > 视频：[Lecture 7](https://www.youtube.com/watch?v=SzpOcwdIL0Y)（约 80:57）  
 > 官方可执行讲义：[lecture_07.py](https://github.com/stanford-cs336/lectures/blob/main/lecture_07.py)
 
-这里的 **GPU（Graphics Processing Unit，图形处理器）**指训练模型用的并行加速器；“多 GPU”就是让多个加速器协作完成一次训练。
+这里的 **GPU（Graphics Processing Unit，图形处理器）** 指训练模型用的并行加速器；“多 GPU”就是让多个加速器协作完成一次训练。
 
-> **资料版本核验：**本讲没有 PDF。2026-08-28 核验的 GitHub 当前页面与仓库提交中，`lecture_07.py` 都是 **619 个物理行**；最近一次修改该文件的提交是 `0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012`（2026-04-20，`update lecture 7`），检查时仓库 `HEAD` 为 `8b59b50730766695c2ffedd1a79c50cd09b9eb91`。抓取工具曾返回 **556 行旧 raw 缓存**，它不是本笔记的覆盖基准；本笔记以当前 619 行版本为准。
+> **资料版本核验：** 本讲没有 PDF。2026-08-28 核验的 GitHub 当前页面与仓库提交中，`lecture_07.py` 都是 **619 个物理行**；最近一次修改该文件的提交是 `0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012`（2026-04-20，`update lecture 7`），检查时仓库 `HEAD` 为 `8b59b50730766695c2ffedd1a79c50cd09b9eb91`。抓取工具曾返回 **556 行旧 raw 缓存**，它不是本笔记的覆盖基准；本笔记以当前 619 行版本为准。
 
-> **字幕核验：**YouTube 同时提供自动轨 `English (auto-generated)` 与人工轨 `English (United States)`。本笔记完整抓取并使用后者：语言代码 `en-US`、`kind` 为空（即非自动生成），共 **1312 个字幕片段**；末段从 **80:54** 开始，约在 **80:57** 结束，文字为 `on more parallelism techniques.`。自动轨只用来确认轨道存在，没有作为主字幕。
+> **字幕核验：** YouTube 同时提供自动轨 `English (auto-generated)` 与人工轨 `English (United States)`。本笔记完整抓取并使用后者：语言代码 `en-US`、`kind` 为空（即非自动生成），共 **1312 个字幕片段**；末段从 **80:54** 开始，约在 **80:57** 结束，文字为 `on more parallelism techniques.`。自动轨只用来确认轨道存在，没有作为主字幕。
 
 本讲使用四种来源标签：
 
@@ -23,7 +23,7 @@
 
 讲义一共调用 `image(...)` 7 次，其中 `gpu-node-overview.png` 重复出现两次，因此是 **6 个不同的被引用图像资产：5 个本地图 + 1 个外链图**。所有本地图按原始分辨率打开；外链 Springer 图片直链当时拒绝新下载，但同一官方仓库提交保存了讲义运行时的原始缓存，因此从 Git 对象中恢复后按原始分辨率检查。不是只根据文件名或图注猜内容。
 
-为读懂下表先知道：**CPU（Central Processing Unit，中央处理器）**负责主机侧通用计算与程序控制；**RAM（Random Access Memory，随机存取内存）**是 CPU 一侧的主存；**SM（Streaming Multiprocessor，流式多处理器）**是 GPU 上执行并行计算的硬件单元；**register（寄存器）**是 SM 内很小、很快的线程私有存储；**L1/L2（Level-1/Level-2 cache，一/二级缓存）**是靠近计算单元、容量较小的高速缓存；**shared memory（共享内存）**是同一 GPU thread block（线程块，即一组协作线程）可共用的片上存储；**HBM（High Bandwidth Memory，高带宽内存）**是 GPU 的大容量显存；**NVLink** 是 NVIDIA 的 GPU 高速互连；**NVSwitch** 是把多条 NVLink 接起来、为多 GPU 转发数据的交换芯片；**PCIe（Peripheral Component Interconnect Express，高速外设互连）**是 CPU、GPU、网卡等设备常用的总线；**InfiniBand** 是数据中心常用的高性能网络；**Ethernet（以太网）**是更通用的网络技术。**Rank** 暂时只理解成参与进程的编号，§2 会从头解释。
+为读懂下表先知道：**CPU（Central Processing Unit，中央处理器）** 负责主机侧通用计算与程序控制；**RAM（Random Access Memory，随机存取内存）** 是 CPU 一侧的主存；**SM（Streaming Multiprocessor，流式多处理器）** 是 GPU 上执行并行计算的硬件单元；**register（寄存器）** 是 SM 内很小、很快的线程私有存储；**L1/L2（Level-1/Level-2 cache，一/二级缓存）** 是靠近计算单元、容量较小的高速缓存；**shared memory（共享内存）** 是同一 GPU thread block（线程块，即一组协作线程）可共用的片上存储；**HBM（High Bandwidth Memory，高带宽内存）** 是 GPU 的大容量显存；**NVLink** 是 NVIDIA 的 GPU 高速互连；**NVSwitch** 是把多条 NVLink 接起来、为多 GPU 转发数据的交换芯片；**PCIe（Peripheral Component Interconnect Express，高速外设互连）** 是 CPU、GPU、网卡等设备常用的总线；**InfiniBand** 是数据中心常用的高性能网络；**Ethernet（以太网）** 是更通用的网络技术。**Rank** 暂时只理解成参与进程的编号，§2 会从头解释。
 
 | 图像资产 | 像素 | 实际视觉检查到的内容 | 笔记去向 |
 |---|---:|---|---|
@@ -38,7 +38,7 @@
 
 ### 官方 619 行源码连续覆盖索引
 
-这张表的区间从 1 到 619 首尾相接，没有遗漏或重叠。阶段 1 尚未展开的后半内容先标出最终去向；“被索引”不等于“已经逐行讲完”。索引中会提前出现后文术语，第一次学习可跳过；**collective operation（集体通信操作）**先理解成“多个参与者共同完成的一种通信模板”，§3 再正式拆解。
+这张表的区间从 1 到 619 首尾相接，没有遗漏或重叠。阶段 1 尚未展开的后半内容先标出最终去向；“被索引”不等于“已经逐行讲完”。索引中会提前出现后文术语，第一次学习可跳过；**collective operation（集体通信操作）** 先理解成“多个参与者共同完成的一种通信模板”，§3 再正式拆解。
 
 | 官方行段 | 代码内容 | 对应笔记 |
 |---:|---|---|
@@ -67,13 +67,13 @@
 
 ## 0. 五分钟复习卡、全讲地图与第一次阅读方法
 
-> **第一次阅读请先跳过复习卡。**先读 §1 的“小模型显存账”，再把 §3–5 每一张输入/输出表亲手抄一遍；第二遍复习再回来背关键词。
+> **第一次阅读请先跳过复习卡。** 先读 §1 的“小模型显存账”，再把 §3–5 每一张输入/输出表亲手抄一遍；第二遍复习再回来背关键词。
 
 ### 0.1 一句话主线
 
 **单个 GPU 装不下或算得太慢时，我们把模型状态、数据或计算分给多个进程；但分开之后必须搬数据，所以真正的问题不是“GPU 越多越快”，而是“怎样用正确的 collective（集体通信）完成必要的数据交换，并让通信成本小于新增计算能力带来的收益”。**
 
-**【课程代码｜行 19–39】【视频补充｜[00:15](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=15s)】**上一讲研究单个 GPU 内的 kernels；本讲把画面拉远到多个 GPU。老师在 [01:45](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=105s) 给出共同主题：计算单元离数据很远，优化就是减少或隐藏数据搬运。
+**【课程代码｜行 19–39】【视频补充｜[00:15](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=15s)】** 上一讲研究单个 GPU 内的 kernels；本讲把画面拉远到多个 GPU。老师在 [01:45](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=105s) 给出共同主题：计算单元离数据很远，优化就是减少或隐藏数据搬运。
 
 ### 0.2 全讲因果链
 
@@ -99,16 +99,16 @@ tensor parallelism（张量并行：切 layer 内 width）、
 pipeline parallelism（流水线并行：切 layers/depth）
 ```
 
-**【视频补充｜[02:04](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=124s)】**老师把存储/通信画成层级：同一 GPU 内的 L1/shared memory 最快，然后是 HBM，再到同节点 NVLink/NVSwitch，最后才是跨节点 InfiniBand/Ethernet。这里的“快慢”是课程的概念排序，不代表所有机器都只有一种固定带宽。
+**【视频补充｜[02:04](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=124s)】** 老师把存储/通信画成层级：同一 GPU 内的 L1/shared memory 最快，然后是 HBM，再到同节点 NVLink/NVSwitch，最后才是跨节点 InfiniBand/Ethernet。这里的“快慢”是课程的概念排序，不代表所有机器都只有一种固定带宽。
 
 ### 0.3 五分钟复习卡
 
-1. 多 GPU 有两个不同目标：**装得下（capacity）**与**算得快（speed）**；前者成功不保证后者成功。
+1. 多 GPU 有两个不同目标：**装得下（capacity）** 与**算得快（speed）**；前者成功不保证后者成功。
 2. `world_size=4` 表示一个 process group 中有 4 个参与者；rank 是组内编号 `0,1,2,3`。
 3. `broadcast`：一个 root 复制给所有人；`scatter`：root 拆开分发；`gather`：各片段收回 root；`reduce`：各值先按 SUM/MAX 等合并，再把结果给 root。
 4. `all-gather`：每人最后都有完整拼接；`reduce-scatter`：先逐位置合并，再让每人只留一片；`all-reduce`：每人最后都有完整合并结果。
 5. 对四个向量 `[0,1,2,3]`、`[1,2,3,4]`、`[2,3,4,5]`、`[3,4,5,6]` 做 SUM，逐列是 `[6,10,14,18]`。
-6. 逻辑上 `all-reduce = reduce-scatter + all-gather`；**API（Application Programming Interface，应用编程接口）**是程序调用软件功能的约定入口。物理实现不保证永远按这两次 API 调用，也不保证永远是 ring。
+6. 逻辑上 `all-reduce = reduce-scatter + all-gather`；**API（Application Programming Interface，应用编程接口）** 是程序调用软件功能的约定入口。物理实现不保证永远按这两次 API 调用，也不保证永远是 ring。
 7. `all-to-all` 的平衡例子像把 4×4 矩阵转置；不平衡路由仍能做，但最忙的目标 rank 会拖慢大家。
 8. 粗略通信时间：
 
@@ -138,7 +138,7 @@ pipeline parallelism（流水线并行：切 layers/depth）
 | §14–15 | 三种切法怎样比较、怎样组成 device mesh？ |
 | 后续收尾 | 常见误区、自测、视频导航与来源边界 |
 
-**【课程代码｜行 45–64】【视频补充｜[04:56](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=296s)】**视频把本讲分成两部分：先学通信积木、硬件和 PyTorch 接口，再用 MLP（Multilayer Perceptron，多层感知机）演示 data、tensor、pipeline 三种并行；MLP 用来保留核心矩阵计算，避免完整 Transformer 的额外记账遮住主线。
+**【课程代码｜行 45–64】【视频补充｜[04:56](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=296s)】** 视频把本讲分成两部分：先学通信积木、硬件和 PyTorch 接口，再用 MLP（Multilayer Perceptron，多层感知机）演示 data、tensor、pipeline 三种并行；MLP 用来保留核心矩阵计算，避免完整 Transformer 的额外记账遮住主线。
 
 ### 0.5 最少前置知识
 
@@ -149,7 +149,7 @@ pipeline parallelism（流水线并行：切 layers/depth）
 3. 把向量看成一排数字，例如 `[2,3,4]` 的长度是 3；
 4. 知道 1 byte 是存储单位，8 bits（位）等于 1 byte。
 
-复习卡中的 **latency（延迟）**先理解成“每轮通信开始前的固定等待”，**bandwidth（带宽）**先理解成“每秒最多搬多少 bytes”。§6 会把单位和算式从头展开。
+复习卡中的 **latency（延迟）** 先理解成“每轮通信开始前的固定等待”，**bandwidth（带宽）** 先理解成“每秒最多搬多少 bytes”。§6 会把单位和算式从头展开。
 
 ---
 
@@ -164,13 +164,13 @@ pipeline parallelism（流水线并行：切 layers/depth）
 - **gradient（梯度）**：loss（损失，越小越好的“坏程度”）对每个参数的局部变化率；优化器根据它决定参数往哪边改；
 - **optimizer state（优化器状态）**：优化方法为了记住历史而额外保存的数字。Adam 是常见优化方法，通常为每个参数保存一阶、二阶两个 moment（可理解为两份历史统计数组）。
 
-这些数字通常存在 **tensor（张量，多维数字数组）**中。每个元素的数字存储格式叫 **dtype（data type，数据类型）**。例如 FP32（32-bit floating point，32 位浮点数）每个元素占 4 bytes（字节）。
+这些数字通常存在 **tensor（张量，多维数字数组）** 中。每个元素的数字存储格式叫 **dtype（data type，数据类型）**。例如 FP32（32-bit floating point，32 位浮点数）每个元素占 4 bytes（字节）。
 
-**【课程代码｜行 37–39】【视频补充｜[03:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=208s)】**老师把扩展到多 GPU 的第一个原因说成：参数、activation、gradient 和 optimizer state 放不进一张 GPU 的 HBM。第二个原因是即使放得下，也想调用更多计算单元更快完成训练。
+**【课程代码｜行 37–39】【视频补充｜[03:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=208s)】** 老师把扩展到多 GPU 的第一个原因说成：参数、activation、gradient 和 optimizer state 放不进一张 GPU 的 HBM。第二个原因是即使放得下，也想调用更多计算单元更快完成训练。
 
 ### 1.2 一个只用乘法和加法的显存账
 
-**【补充例子】**假设小模型恰好有 $`1,048,576=2^{20}`$ 个参数，所有持久状态都用 FP32；先忽略通信 buffer（缓冲区）和框架开销。
+**【补充例子】** 假设小模型恰好有 $`1,048,576=2^{20}`$ 个参数，所有持久状态都用 FP32；先忽略通信 buffer（缓冲区）和框架开销。
 
 先定义容量单位：
 
@@ -245,11 +245,11 @@ pipeline parallelism（流水线并行：切 layers/depth）
 加 GPU  → 峰值计算更多，也增加同步与传输问题
 ```
 
-**【视频补充｜[03:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=226s)】**老师明确提醒：即使模型放得下，把它铺到更多 GPU 也要付通信带宽；是否更快必须计算，不能从 GPU 数量直接得出。
+**【视频补充｜[03:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=226s)】** 老师明确提醒：即使模型放得下，把它铺到更多 GPU 也要付通信带宽；是否更快必须计算，不能从 GPU 数量直接得出。
 
 ### 1.4 “更快”中的 FLOP、FLOPs 与 FLOP/s
 
-- 一个 **FLOP（floating-point operation，浮点运算）**是一次浮点加法或乘法；
+- 一个 **FLOP（floating-point operation，浮点运算）** 是一次浮点加法或乘法；
 - **FLOPs** 在“需要多少 FLOPs”中指总工作量，不是秒；
 - **FLOP/s** 是每秒完成多少浮点运算，才是吞吐率。
 
@@ -276,7 +276,7 @@ pipeline parallelism（流水线并行：切 layers/depth）
 
 ### 2.2 Rank 与 world size
 
-**Rank（秩/编号）**是一个 process 在某个通信组里的整数编号。**World size（世界大小）**是该组共有多少个参与者。
+**Rank（秩/编号）** 是一个 process 在某个通信组里的整数编号。**World size（世界大小）** 是该组共有多少个参与者。
 
 当 `world_size=4`：
 
@@ -295,11 +295,11 @@ process P3 ── controls GPU 3 ── rank 3
 world_size = 4
 ```
 
-**【课程代码｜行 81–89】【视频补充｜[06:55](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=415s)】**课程图就是四个并列 rank。老师在课堂问答 [42:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2528s) 限定“在本课里 rank 对应 GPU”；工程上仍应记住，rank 首先是 process/group 的编号。
+**【课程代码｜行 81–89】【视频补充｜[06:55](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=415s)】** 课程图就是四个并列 rank。老师在课堂问答 [42:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2528s) 限定“在本课里 rank 对应 GPU”；工程上仍应记住，rank 首先是 process/group 的编号。
 
 ### 2.3 Process group
 
-**Process group（进程组）**是一组会共同参加 collective 的 processes。默认全体组常称 world group；也可以创建子组。
+**Process group（进程组）** 是一组会共同参加 collective 的 processes。默认全体组常称 world group；也可以创建子组。
 
 例如 8 个全局 ranks 可分成：
 
@@ -331,7 +331,7 @@ world_size = 4
 
 ### 2.5 Backend 是“同一接口背后的实现”
 
-**Backend（后端）**是 `torch.distributed` 接口背后真正执行通信的软件实现。课程代码在有 CUDA GPU 时用 NCCL，没有时用 Gloo：
+**Backend（后端）** 是 `torch.distributed` 接口背后真正执行通信的软件实现。课程代码在有 CUDA GPU 时用 NCCL，没有时用 Gloo：
 
 ```python
 # 【课程代码的关键分支；不是本节要读者直接运行的完整程序】
@@ -341,17 +341,17 @@ else:
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
 ```
 
-- **CUDA（Compute Unified Device Architecture）**是 NVIDIA GPU 的编程平台；
-- **NCCL（NVIDIA Collective Communications Library）**是 NVIDIA 面向 GPU collective 的通信库，通常读作 “nickel”；
+- **CUDA（Compute Unified Device Architecture）** 是 NVIDIA GPU 的编程平台；
+- **NCCL（NVIDIA Collective Communications Library）** 是 NVIDIA 面向 GPU collective 的通信库，通常读作 “nickel”；
 - **Gloo** 是 PyTorch 支持的另一通信后端，课程在 CPU/laptop 路径使用它。
 
-**【视频补充｜[36:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2173s)】**PyTorch 给出统一 collective 接口；[36:34](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2194s) 说明 GPU 常用 NCCL backend，CPU 示例可用 Gloo。相同 `all_reduce` 语义可由不同 backend 完成。
+**【视频补充｜[36:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2173s)】** PyTorch 给出统一 collective 接口；[36:34](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2194s) 说明 GPU 常用 NCCL backend，CPU 示例可用 Gloo。相同 `all_reduce` 语义可由不同 backend 完成。
 
 ### 2.6 Setup、metadata 与 barrier
 
-**Metadata（元数据）**是描述“谁参加、怎样协调、地址在哪里”的小量控制信息，不是模型的大 tensor 本身。课程的 `MASTER_ADDR` 和 `MASTER_PORT` 用于建立/协调 process group；视频强调实际 GPU payload（有效载荷，即真正要搬的大数组）不会因此全走这个地址。
+**Metadata（元数据）** 是描述“谁参加、怎样协调、地址在哪里”的小量控制信息，不是模型的大 tensor 本身。课程的 `MASTER_ADDR` 和 `MASTER_PORT` 用于建立/协调 process group；视频强调实际 GPU payload（有效载荷，即真正要搬的大数组）不会因此全走这个地址。
 
-**Barrier（屏障）**是一种同步点：先到的 process 等，直到组内所有 process 都到达，大家才继续。
+**Barrier（屏障）** 是一种同步点：先到的 process 等，直到组内所有 process 都到达，大家才继续。
 
 ```text
 时间向右 →
@@ -361,7 +361,7 @@ rank 2: 做事 ─────到 barrier──等待────继续
 rank 3: 做事更久────────────到 barrier──继续
 ```
 
-**【视频补充｜[38:33](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2313s)】**master address/port 主要负责协调；[39:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2353s) 逐步解释 barrier。Barrier 过多会让快的 rank 无谓等待，因此它不是“越多越安全越快”。
+**【视频补充｜[38:33](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2313s)】** master address/port 主要负责协调；[39:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2353s) 逐步解释 barrier。Barrier 过多会让快的 rank 无谓等待，因此它不是“越多越安全越快”。
 
 ---
 
@@ -369,9 +369,9 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 3.1 先定义共同语言
 
-**Collective operation（集体通信操作）**是让一个 group 中许多参与者共同遵守某种数据交换模板。它描述逻辑输入/输出，不要求使用者手写每一对 rank 的 point-to-point（点对点）发送。
+**Collective operation（集体通信操作）** 是让一个 group 中许多参与者共同遵守某种数据交换模板。它描述逻辑输入/输出，不要求使用者手写每一对 rank 的 point-to-point（点对点）发送。
 
-**【课程代码｜行 75–89】【视频补充｜[05:50](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=350s)】**这些通信原语早于大语言模型；`collective` 的意思是一次声明多设备间的整体通信模式。老师在 [06:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=378s) 强调，它让系统有机会替使用者安排更合适的实现。
+**【课程代码｜行 75–89】【视频补充｜[05:50](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=350s)】** 这些通信原语早于大语言模型；`collective` 的意思是一次声明多设备间的整体通信模式。老师在 [06:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=378s) 强调，它让系统有机会替使用者安排更合适的实现。
 
 本节还要区分三个词：
 
@@ -384,9 +384,9 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 3.2 Broadcast：一个完整值复制给所有 rank
 
-**Broadcast（广播）**的逻辑是：root 有完整输入，结束后所有 rank 都有它的副本。
+**Broadcast（广播）** 的逻辑是：root 有完整输入，结束后所有 rank 都有它的副本。
 
-**【课程代码｜行 91–101】【视频补充｜[08:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=496s)】**令 root 为 rank 0：
+**【课程代码｜行 91–101】【视频补充｜[08:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=496s)】** 令 root 为 rank 0：
 
 | rank | 操作前逻辑有效载荷 | shape | 操作后 | shape |
 |---:|---|---:|---|---:|
@@ -397,15 +397,15 @@ rank 3: 做事更久────────────到 barrier──继续
 
 这里“无有效源数据”不代表实际 API 可以不给 buffer；许多接口要求非 root 也准备匹配 shape/dtype 的接收 tensor。表只描述逻辑内容。
 
-常见一次性用途：rank 0 从 **checkpoint（检查点，即保存在磁盘上的模型/训练状态快照）**读取初始权重，再广播给所有 rank。视频在 [08:57](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=537s) 给出这个例子。
+常见一次性用途：rank 0 从 **checkpoint（检查点，即保存在磁盘上的模型/训练状态快照）** 读取初始权重，再广播给所有 rank。视频在 [08:57](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=537s) 给出这个例子。
 
-> **不要和 NumPy broadcasting 混淆。**课堂问答 [12:06](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=726s) 说两者都有“一份扩到多份”的直觉，但 NumPy broadcasting 是单进程里的 shape 运算规则；这里是跨 ranks 的数据通信。
+> **不要和 NumPy broadcasting 混淆。** 课堂问答 [12:06](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=726s) 说两者都有“一份扩到多份”的直觉，但 NumPy broadcasting 是单进程里的 shape 运算规则；这里是跨 ranks 的数据通信。
 
 ### 3.3 Scatter：root 的完整向量被切成片段分发
 
 **Scatter（散发）**：root 先有完整输入，把它按约定切成 $`p`$ 片；$`p`$ 是参与 rank 数，每个 rank 收一片。
 
-**【课程代码｜行 103–113】【视频补充｜[09:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=550s)】**输入长度 4，world size 4，因此每片长度：
+**【课程代码｜行 103–113】【视频补充｜[09:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=550s)】** 输入长度 4，world size 4，因此每片长度：
 
 ```math
 \frac{4\ \text{elements}}{4\ \text{ranks}}=1\ \text{element/rank}.
@@ -422,7 +422,7 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 3.4 Gather：把各 rank 的片段收回 root
 
-**Gather（收集）**与 scatter 方向相反：每个 rank 有一片，root 按 rank 顺序把它们拼起来。
+**Gather（收集）** 与 scatter 方向相反：每个 rank 有一片，root 按 rank 顺序把它们拼起来。
 
 **【课程代码｜行 115–125】【视频补充｜[09:50](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=590s)】**
 
@@ -437,11 +437,11 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 3.5 Reduce：先合并数值，再把结果交给 root
 
-**Reduce（归约）**不是拼接。它用 SUM（求和）、MAX（最大值）、MIN（最小值）等运算，把各 rank 对应位置的值合并。
+**Reduce（归约）** 不是拼接。它用 SUM（求和）、MAX（最大值）、MIN（最小值）等运算，把各 rank 对应位置的值合并。
 
-**Scalar（标量）**就是单个数。严格说，shape `[1]` 是“含 1 个标量元素的一维 tensor”，不是 0-D 标量；真正 0-D scalar tensor 的 shape 是 `[]`。
+**Scalar（标量）** 就是单个数。严格说，shape `[1]` 是“含 1 个标量元素的一维 tensor”，不是 0-D 标量；真正 0-D scalar tensor 的 shape 是 `[]`。
 
-**【课程代码｜行 127–137】【视频补充｜[10:45](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=645s)】**每个 rank 各有一个 shape `[1]` 的一维 tensor，其中装 1 个标量：
+**【课程代码｜行 127–137】【视频补充｜[10:45](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=645s)】** 每个 rank 各有一个 shape `[1]` 的一维 tensor，其中装 1 个标量：
 
 | rank | 操作前 | SUM 的中间算式 | 操作后逻辑有效结果 |
 |---:|---:|---|---:|
@@ -475,7 +475,7 @@ rank 3: 做事更久────────────到 barrier──继续
 
 ### 4.1 All-gather：每个 rank 最后都有完整拼接
 
-**All-gather（全收集）**可以拆词记：
+**All-gather（全收集）** 可以拆词记：
 
 - `gather`：把各 rank 的片段按顺序拼接；
 - `all`：不是只给 root，而是让**所有 rank**都得到完整拼接。
@@ -497,16 +497,16 @@ rank 3: 做事更久────────────到 barrier──继续
 
 这 16 个物理副本来自 4 个不同输入元素的复制，不代表数学上产生了 16 个不同值。
 
-**【视频补充｜[13:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=796s)】**用途预告：若每个 rank 只保存参数的一片，前向计算某层前可 all-gather 得到临时完整参数。
+**【视频补充｜[13:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=796s)】** 用途预告：若每个 rank 只保存参数的一片，前向计算某层前可 all-gather 得到临时完整参数。
 
 ### 4.2 Reduce-scatter：逐位置 reduce，再把结果切开
 
-**Reduce-scatter（归约散发）**做两件逻辑工作：
+**Reduce-scatter（归约散发）** 做两件逻辑工作：
 
 1. 对所有 rank 的输入逐位置 reduce；
 2. 把归约后的完整向量按位置散发，每个 rank 留一片。
 
-**【课程代码｜行 154–167】【视频补充｜[13:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=823s)】**四个输入都为 shape `[4]`：
+**【课程代码｜行 154–167】【视频补充｜[13:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=823s)】** 四个输入都为 shape `[4]`：
 
 | rank | 输入向量 |
 |---:|---|
@@ -549,11 +549,11 @@ r_3 &= 3+4+5+6=18.
 
 检查：每个输入有 4 个元素，输出每 rank 只有 1 个元素。Reduce-scatter 既完成跨 rank 求和，也让结果存储保持切分。
 
-**【视频补充｜[14:27](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=867s)】**训练用途预告：不同数据分片产生不同局部 gradients；reduce-scatter 可先把它们逐元素求和，再让每个 rank 只保存一片最终 gradient。
+**【视频补充｜[14:27](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=867s)】** 训练用途预告：不同数据分片产生不同局部 gradients；reduce-scatter 可先把它们逐元素求和，再让每个 rank 只保存一片最终 gradient。
 
 ### 4.3 All-reduce：每个 rank 都得到完整归约结果
 
-**All-reduce（全归约）**的逻辑输出是：先把所有输入逐位置 reduce，再让所有 rank 都得到完整结果。
+**All-reduce（全归约）** 的逻辑输出是：先把所有输入逐位置 reduce，再让所有 rank 都得到完整结果。
 
 同一组输入的 SUM 结果为：
 
@@ -564,7 +564,7 @@ r_3 &= 3+4+5+6=18.
 | 2 | `[2,3,4,5]` | `[6,10,14,18]` | `[4]` |
 | 3 | `[3,4,5,6]` | `[6,10,14,18]` | `[4]` |
 
-**【课程代码｜行 169–183】【视频补充｜[15:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=918s)】**用刚才两步严格验证：
+**【课程代码｜行 169–183】【视频补充｜[15:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=918s)】** 用刚才两步严格验证：
 
 ```text
 阶段 A：reduce-scatter
@@ -582,7 +582,7 @@ rank 0:[6]   rank 1:[10]   rank 2:[14]   rank 3:[18]
 =\text{reduce-scatter}+\text{all-gather}.
 ```
 
-视频在 [16:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=982s) 说明：基础 data parallel 常直接 all-reduce 完整 gradients；FSDP/ZeRO 等方法会把这两个阶段拆开，以便在中间维持 sharded storage。这里的 **FSDP（Fully Sharded Data Parallel，全切分数据并行）**和 **ZeRO（Zero Redundancy Optimizer，零冗余优化器）**只作后续预告。
+视频在 [16:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=982s) 说明：基础 data parallel 常直接 all-reduce 完整 gradients；FSDP/ZeRO 等方法会把这两个阶段拆开，以便在中间维持 sharded storage。这里的 **FSDP（Fully Sharded Data Parallel，全切分数据并行）** 和 **ZeRO（Zero Redundancy Optimizer，零冗余优化器）** 只作后续预告。
 
 ### 4.4 SUM 与 AVG 不同
 
@@ -614,7 +614,7 @@ Collective 还要指定 reduce operation（归约运算）。对 4 个输入：
 
 因此不能说“物理上 all-reduce 永远就是先调用一次 reduce-scatter API，再调用一次 all-gather API”。NCCL 看到的是逻辑 collective，然后选择具体 schedule（调度顺序）。
 
-**【视频补充｜[30:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1803s)】**老师把 NCCL 描述为：读取硬件 topology，选择 GPU 间路径，并启动通信 kernels。这里的 **kernel（核函数）**是 GPU 上执行的底层程序。
+**【视频补充｜[30:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1803s)】** 老师把 NCCL 描述为：读取硬件 topology，选择 GPU 间路径，并启动通信 kernels。这里的 **kernel（核函数）** 是 GPU 上执行的底层程序。
 
 ### 4.6 In-place 与 out-of-place 的课程代码证据
 
@@ -645,7 +645,7 @@ dist.reduce_scatter_tensor(
 
 输入 shape `[4]`，输出预分配 shape `[1]`。视频 [42:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2542s) 展开这个例子，强调输入不改、结果写到另一 tensor。
 
-**CUDA stream（CUDA 流）**可以先理解为 GPU 上的一条**有序命令队列**：放进同一 stream 的 kernels/通信按提交先后建立顺序；不同 streams 之间默认不能凭提交先后猜依赖。**Work handle（工作句柄）**是 `async_op=True` 返回的“这项异步工作仍可被查询/等待”的凭证。
+**CUDA stream（CUDA 流）** 可以先理解为 GPU 上的一条**有序命令队列**：放进同一 stream 的 kernels/通信按提交先后建立顺序；不同 streams 之间默认不能凭提交先后猜依赖。**Work handle（工作句柄）** 是 `async_op=True` 返回的“这项异步工作仍可被查询/等待”的凭证。
 
 `async_op=False` 表示调用者不会拿到这个 Work handle；它不是“Python 返回时 GPU 所有物理工作已经完成”的简单承诺。若设为异步，程序可以先做不依赖结果的 host 或 GPU 工作；何时可安全使用结果还要看 `work.wait()`、CUDA stream 依赖和显式同步，§8.6 会完整拆开。课堂问答 [43:51](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2631s) 用“先发通信，再加载下一步数据”解释 communication/computation overlap（通信与计算重叠）。
 
@@ -657,9 +657,9 @@ dist.reduce_scatter_tensor(
 
 ### 5.1 平衡 all-to-all 的 4×4 路由表
 
-**All-to-all（全互换）**让每个 source rank（发送方）都为每个 destination rank（目标方）准备一片。平衡且每片一个元素时，可把输入看成一个矩阵：行是发送者，列是接收者。
+**All-to-all（全互换）** 让每个 source rank（发送方）都为每个 destination rank（目标方）准备一片。平衡且每片一个元素时，可把输入看成一个矩阵：行是发送者，列是接收者。
 
-**【课程代码｜行 185–201】【视频补充｜[16:48](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1008s)】**输入：
+**【课程代码｜行 185–201】【视频补充｜[16:48](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1008s)】** 输入：
 
 | source \ destination | rank 0 | rank 1 | rank 2 | rank 3 |
 |---:|---:|---:|---:|---:|
@@ -688,7 +688,7 @@ dist.reduce_scatter_tensor(
 
 ### 5.2 为什么 MoE 需要它
 
-**MoE（Mixture of Experts，混合专家模型）**包含多个 expert（专家子网络）。Router（路由器）会根据 token 的 activation 动态选择 expert；expert 又可能分布在不同 ranks。
+**MoE（Mixture of Experts，混合专家模型）** 包含多个 expert（专家子网络）。Router（路由器）会根据 token 的 activation 动态选择 expert；expert 又可能分布在不同 ranks。
 
 假设：
 
@@ -696,11 +696,11 @@ dist.reduce_scatter_tensor(
 - rank 0 放 expert 0，rank 1 放 expert 1，依此类推；
 - 一个 token 被路由到 expert 2，就必须把它的 activation 发往 rank 2。
 
-于是每个 source rank 都可能给每个 expert rank 发不同数量的 tokens，正好是 all-to-all 模式。**【视频补充｜[18:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1096s)】**老师把它概括为“每个 rank 同时拿一片数据和一部分 experts，必须按数据动态路由 activations”。
+于是每个 source rank 都可能给每个 expert rank 发不同数量的 tokens，正好是 all-to-all 模式。**【视频补充｜[18:16](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1096s)】** 老师把它概括为“每个 rank 同时拿一片数据和一部分 experts，必须按数据动态路由 activations”。
 
 ### 5.3 不平衡 split：形状不再是整齐转置
 
-**Split size（分片大小）**是 source 发给某个 destination 的元素/token 数。平衡例里每格都是 1；实际 MoE 可能如下：
+**Split size（分片大小）** 是 source 发给某个 destination 的元素/token 数。平衡例里每格都是 1；实际 MoE 可能如下：
 
 | source \ destination | rank 0 | rank 1 | rank 2 | rank 3 | source 总发送 |
 |---:|---:|---:|---:|---:|---:|
@@ -722,7 +722,7 @@ dist.reduce_scatter_tensor(
 
 总发送 $`4+4+4+4=16`$，总接收 $`3+4+4+5=16`$，数据没有丢；但 rank 3 收 5 个，rank 0 只收 3 个。若所有 rank 进入下一同步点前都要完成 expert 计算，rank 3 可能成为 straggler（拖慢全组的慢参与者）。
 
-**【视频补充｜[18:49](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1129s)】**平衡 split 可看成转置；[19:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1148s) 明确说一般 all-to-all 能处理不同 byte 数，但仍希望尽量均衡。处理 variable splits（可变分片）时，通信双方还要知道每个 split 的大小；这组大小属于 metadata。
+**【视频补充｜[18:49](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1129s)】** 平衡 split 可看成转置；[19:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1148s) 明确说一般 all-to-all 能处理不同 byte 数，但仍希望尽量均衡。处理 variable splits（可变分片）时，通信双方还要知道每个 split 的大小；这组大小属于 metadata。
 
 ### 5.4 一张记忆表
 
@@ -734,7 +734,7 @@ dist.reduce_scatter_tensor(
 | all- | 最终目的地是所有 ranks，而不只是 root |
 | all-to-all | 每个 rank 都可为每个目标 rank 准备一片 |
 
-**【视频补充｜[19:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1184s)】**这是老师在讲完所有 collective 后给出的口头记忆法。
+**【视频补充｜[19:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1184s)】** 这是老师在讲完所有 collective 后给出的口头记忆法。
 
 ---
 
@@ -758,13 +758,13 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 跨 node：GPU ─PCIe→ HCA/NIC ─InfiniBand 或 Ethernet→ 远端
 ```
 
-**【课程代码｜行 19–35】【视频补充｜[21:53](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1313s)】**老师先从传统服务器拓扑讲起；[22:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1330s) 的旧式外链图就是两台服务器经 Ethernet 相连、每台 GPU 经 PCIe 接 CPU。它是“典型概念图”，不是所有服务器必须有 2 CPU 和 10 GPU。
+**【课程代码｜行 19–35】【视频补充｜[21:53](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1313s)】** 老师先从传统服务器拓扑讲起；[22:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1330s) 的旧式外链图就是两台服务器经 Ethernet 相连、每台 GPU 经 PCIe 接 CPU。它是“典型概念图”，不是所有服务器必须有 2 CPU 和 10 GPU。
 
 ### 6.2 九个硬件/网络词逐个说成人话
 
 #### HBM
 
-**HBM（High Bandwidth Memory，高带宽内存）**是 GPU 本地的大容量显存，存参数、activations 等。它比 SM 附近的小存储容量大，但从运算单元看更远。
+**HBM（High Bandwidth Memory，高带宽内存）** 是 GPU 本地的大容量显存，存参数、activations 等。它比 SM 附近的小存储容量大，但从运算单元看更远。
 
 #### NVLink
 
@@ -776,11 +776,11 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 
 #### PCIe
 
-**PCIe（Peripheral Component Interconnect Express，高速外设互连）**把 GPU、CPU、HCA/NIC 等设备连在服务器内部。跨节点数据常先从 GPU 经 PCIe 到网络适配器；PCIe 不是专门的“互联网线”。
+**PCIe（Peripheral Component Interconnect Express，高速外设互连）** 把 GPU、CPU、HCA/NIC 等设备连在服务器内部。跨节点数据常先从 GPU 经 PCIe 到网络适配器；PCIe 不是专门的“互联网线”。
 
 #### HCA 与 NIC
 
-**NIC（Network Interface Card，网络接口卡）**是让服务器接入网络的设备。**HCA（Host Channel Adapter，主机通道适配器）**是 InfiniBand 体系常用的网络适配器称呼；它把主机/GPU 一侧接到 InfiniBand fabric（交换网络）。
+**NIC（Network Interface Card，网络接口卡）** 是让服务器接入网络的设备。**HCA（Host Channel Adapter，主机通道适配器）** 是 InfiniBand 体系常用的网络适配器称呼；它把主机/GPU 一侧接到 InfiniBand fabric（交换网络）。
 
 #### InfiniBand
 
@@ -788,23 +788,23 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 
 #### Ethernet
 
-**Ethernet（以太网）**是广泛使用的通用网络技术，从家庭/办公到数据中心都有。不能把视频旧图中的 `~200 MB/s` 当成所有 Ethernet 的上限；现代数据中心 Ethernet 可高得多。
+**Ethernet（以太网）** 是广泛使用的通用网络技术，从家庭/办公到数据中心都有。不能把视频旧图中的 `~200 MB/s` 当成所有 Ethernet 的上限；现代数据中心 Ethernet 可高得多。
 
 #### RDMA
 
-**RDMA（Remote Direct Memory Access，远程直接内存访问）**是一种能力：一个设备可直接读写远端设备内存，让 CPU 不必在 payload 的数据路径中做多次拷贝。CPU 仍可能负责初始化、控制与错误处理；“绕过 CPU 数据拷贝”不等于“CPU 完全不存在”。
+**RDMA（Remote Direct Memory Access，远程直接内存访问）** 是一种能力：一个设备可直接读写远端设备内存，让 CPU 不必在 payload 的数据路径中做多次拷贝。CPU 仍可能负责初始化、控制与错误处理；“绕过 CPU 数据拷贝”不等于“CPU 完全不存在”。
 
-**【视频补充｜[26:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1578s)】**传统 socket 路径会经过 CPU kernel buffer、网络包和 NIC buffer；[27:05](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1625s) 定义 RDMA。这里的 CPU **kernel** 指操作系统核心，不是 GPU kernel。
+**【视频补充｜[26:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1578s)】** 传统 socket 路径会经过 CPU kernel buffer、网络包和 NIC buffer；[27:05](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1625s) 定义 RDMA。这里的 CPU **kernel** 指操作系统核心，不是 GPU kernel。
 
 #### RoCE
 
-**RoCE（RDMA over Converged Ethernet，在融合以太网上运行 RDMA）**让具备相应网卡和网络配置的 Ethernet fabric 提供 RDMA。课程说“standard Ethernet 不支持 RDMA”，准确理解应是：普通 Ethernet/TCP 路径本身不是 RDMA；RoCE 是在 Ethernet 体系上加入 RDMA 能力，并非随便一块以太网卡自动拥有。
+**RoCE（RDMA over Converged Ethernet，在融合以太网上运行 RDMA）** 让具备相应网卡和网络配置的 Ethernet fabric 提供 RDMA。课程说“standard Ethernet 不支持 RDMA”，准确理解应是：普通 Ethernet/TCP 路径本身不是 RDMA；RoCE 是在 Ethernet 体系上加入 RDMA 能力，并非随便一块以太网卡自动拥有。
 
-**【视频补充｜[28:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1726s)】**老师用 RoCE 说明 Ethernet 也在演进。课堂问答 [32:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1942s) 又区分：RDMA 是想实现的“直接访问能力”，NVLink、InfiniBand、RoCE 是提供这种能力的不同硬件/协议路径。
+**【视频补充｜[28:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1726s)】** 老师用 RoCE 说明 Ethernet 也在演进。课堂问答 [32:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1942s) 又区分：RDMA 是想实现的“直接访问能力”，NVLink、InfiniBand、RoCE 是提供这种能力的不同硬件/协议路径。
 
 ### 6.3 层级为什么重要：慢链路会成为共同等待点
 
-**【视频补充｜[23:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1401s)】**课程现代图以常见 8-GPU node 为例；[25:14](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1514s) 解释跨更多 nodes 时需要离开 NVLink domain，走 PCIe 与 InfiniBand，速度通常低一个层级。
+**【视频补充｜[23:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1401s)】** 课程现代图以常见 8-GPU node 为例；[25:14](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1514s) 解释跨更多 nodes 时需要离开 NVLink domain，走 PCIe 与 InfiniBand，速度通常低一个层级。
 
 如果一个 all-reduce 同时覆盖 8 个 node，每个 node 内部链路再快，也可能被节点间最慢/最拥塞的路径限制。通信库常用分层算法：
 
@@ -818,7 +818,7 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 
 先定义单位：小写 `b` 是 bit（位），大写 `B` 是 byte（字节），$`8\ \text{bits}=1\ \text{byte}`$。厂商网络/显存表常用十进制：$`1\ \text{GB}=10^9`$ bytes，$`1\ \text{TB}=10^{12}`$ bytes。若写 `GiB`，才是 $`2^{30}`$ bytes。
 
-**【课程时点快照｜代码行 209–230】【视频补充｜[23:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1415s)】**课程给出 B200 的 NVLink 5 约 1.8 TB/s、HBM 约 8 TB/s；[24:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1443s) 用 $`8/1.8\approx4.44`$ 说明跨 GPU 仍比本地 HBM 慢约 4 倍。这个比值只作数量级直觉：两项的方向、聚合与实际可达口径必须一致才适合严谨比较。
+**【课程时点快照｜代码行 209–230】【视频补充｜[23:35](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1415s)】** 课程给出 B200 的 NVLink 5 约 1.8 TB/s、HBM 约 8 TB/s；[24:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1443s) 用 $`8/1.8\approx4.44`$ 说明跨 GPU 仍比本地 HBM 慢约 4 倍。这个比值只作数量级直觉：两项的方向、聚合与实际可达口径必须一致才适合严谨比较。
 
 下面把课程型号放进一张**课程时点 + 官方产品规格边界表**。不同 form factor（外形/封装）可能有不同规格。**SXM** 是 NVIDIA 数据中心 GPU 使用的一类高带宽模块/封装形态，不等于同型号的 PCIe 插卡版；**HBM2e、HBM3、HBM3e** 是不同代际/版本的 HBM：
 
@@ -843,7 +843,7 @@ GPU 内：SM ↔ L1/shared memory ↔ L2 ↔ HBM
 
 ### 6.5 NCCL 怎样把逻辑 collective 映射到硬件
 
-**【课程代码｜行 232–243】【视频补充｜[29:47](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1787s)】**NCCL 做三类工作：
+**【课程代码｜行 232–243】【视频补充｜[29:47](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1787s)】** NCCL 做三类工作：
 
 1. 探测 topology，例如哪些 GPU 同一 NVSwitch、哪些路径要过 PCIe/HCA；
 2. 选择数据经过哪些 peers（通信伙伴）以及采用哪种 collective algorithm；
@@ -925,7 +925,7 @@ T\approx0.04\ \text{ms}+10\ \text{ms}=10.04\ \text{ms}.
 - **per-rank bytes**：某个 rank 在具体算法中发/收多少；
 - **aggregate network traffic**：所有 ranks 的发送量相加，或全网络链路上的总流量；必须说明是否把 receive 再算一次。
 
-**【补充例子：ring all-reduce 的一种理想化算法账】**令 payload $`S=16`$ MiB，$`p=4`$ ranks。Ring 的 reduce-scatter 阶段，每 rank 发送：
+**【补充例子：ring all-reduce 的一种理想化算法账】** 令 payload $`S=16`$ MiB，$`p=4`$ ranks。Ring 的 reduce-scatter 阶段，每 rank 发送：
 
 ```math
 \frac{p-1}{p}S
@@ -958,9 +958,9 @@ All-gather 再发送 12 MiB，所以每 rank 总**发送**：
 
 ### 6.8 Benchmark 只能验证具体机器，不能把模型变成定律
 
-**Benchmark（基准测试）**是在明确输入与环境下测时间/吞吐。课程代码对 $`100\times1024^2`$ 个元素做 all-reduce、reduce-scatter，并在计时前 warmup（预热）。它的结构意图是用 CUDA synchronize 等本 rank GPU，再用 barrier 等齐 processes；但当前 setup 未绑定 current device，所以无参 synchronize 可能等错 device，详见 §7.3 与 §9.3。
+**Benchmark（基准测试）** 是在明确输入与环境下测时间/吞吐。课程代码对 $`100\times1024^2`$ 个元素做 all-reduce、reduce-scatter，并在计时前 warmup（预热）。它的结构意图是用 CUDA synchronize 等本 rank GPU，再用 barrier 等齐 processes；但当前 setup 未绑定 current device，所以无参 synchronize 可能等错 device，详见 §7.3 与 §9.3。
 
-**【视频补充｜[46:38](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2798s)】**老师进入通信 benchmark；[47:23](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2843s) 解释 warmup 和两层异步：GPU kernels 可能尚未完成，各 processes 也可能进度不同。若不等齐，CPU 计时可能只量到“发出命令”。
+**【视频补充｜[46:38](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2798s)】** 老师进入通信 benchmark；[47:23](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2843s) 解释 warmup 和两层异步：GPU kernels 可能尚未完成，各 processes 也可能进度不同。若不等齐，CPU 计时可能只量到“发出命令”。
 
 有效带宽的一般单位检查：
 
@@ -997,12 +997,12 @@ all-gather/reduce-scatter/all-reduce/all-to-all
 
 ### 7.1 先分清三层，不要把名字混成一团
 
-**【课程内容｜源码 209–249】【视频补充｜[30:05](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1805s)】**前面已经知道“all-reduce 要把各 rank 的值加起来”。现在要回答：代码究竟交给谁执行？
+**【课程内容｜源码 209–249】【视频补充｜[30:05](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1805s)】** 前面已经知道“all-reduce 要把各 rank 的值加起来”。现在要回答：代码究竟交给谁执行？
 
 从上到下看三层：
 
 1. **PyTorch `torch.distributed`**：给 Python 程序统一的分布式 API（应用程序接口）。它提供 `broadcast`、`all_reduce`、`barrier` 等函数。
-2. **process group（进程组）**：告诉 API “本次有哪些 ranks 参加、每个 rank 是谁、用哪个 backend”。**Backend（后端）**是实际承接通信工作的实现。
+2. **process group（进程组）**：告诉 API “本次有哪些 ranks 参加、每个 rank 是谁、用哪个 backend”。**Backend（后端）** 是实际承接通信工作的实现。
 3. **NCCL**：NVIDIA Collective Communications Library，即 **NVIDIA 集合通信库**。当 tensor 在 NVIDIA GPU 上时，NCCL 可以选择 topology-aware（感知连接拓扑）的路径和算法，并启动 GPU 通信 kernel。
 
 这里的 **kernel** 是“在 GPU 上执行的底层程序”，不是操作系统 kernel。NCCL 不负责定义你的模型，也不替你决定“梯度什么时候该 all-reduce”；它接到 collective 请求后，负责更底层的传输编排。
@@ -1019,11 +1019,11 @@ NCCL：根据可见的 GPU / NVLink / PCIe / 网络拓扑选通信路径和算�
 各 GPU tensor 得到 collective 的逻辑结果
 ```
 
-**Topology（拓扑）**就是“设备和链路怎样连接”的地图。**Path（路径）**是数据实际经过哪些链路。NCCL 可能依据拓扑选择 ring、tree 或分层方案；所以“API 叫 all-reduce”不等于“物理上永远沿一个 ring 走”。视频 [30:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1822s) 开始说明 NCCL，[30:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1843s) 强调它会把 collective 变成对当前硬件更合适的实现。
+**Topology（拓扑）** 就是“设备和链路怎样连接”的地图。**Path（路径）** 是数据实际经过哪些链路。NCCL 可能依据拓扑选择 ring、tree 或分层方案；所以“API 叫 all-reduce”不等于“物理上永远沿一个 ring 走”。视频 [30:22](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1822s) 开始说明 NCCL，[30:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1843s) 强调它会把 collective 变成对当前硬件更合适的实现。
 
 ### 7.2 Gloo 和 NCCL：本讲最小选择规则
 
-**【课程内容｜源码 540–548】**课程的 `setup` 用：
+**【课程内容｜源码 540–548】** 课程的 `setup` 用：
 
 ```python
 if torch.cuda.is_available():
@@ -1041,7 +1041,7 @@ else:
 
 **Gloo** 是 PyTorch 可用的 collective 通信后端之一，本讲把它当 CPU 情形的首选；**NCCL** 是 CUDA GPU 情形的首选。这是 PyTorch 当前文档给出的常用规则，不是“Gloo 永远不能碰 GPU”或“NCCL 可通信任意 CPU tensor”的反向定律。
 
-**【课程基础设施｜源码 16–17】**无 CUDA 时，讲义还执行：
+**【课程基础设施｜源码 16–17】** 无 CUDA 时，讲义还执行：
 
 ```python
 torch.cuda.synchronize = lambda: None
@@ -1049,11 +1049,11 @@ torch.cuda.synchronize = lambda: None
 
 也就是把 `torch.cuda.synchronize()` 临时替成什么都不做的 **no-op**。目的只是让同一份教学代码在 CPU/Gloo 路径走到 benchmark，不因调用 CUDA API 报错；副作用是这条 CPU 路径根本没有测 CUDA device completion，所得时间不能冒充 GPU/NCCL benchmark。这个 lambda 也只接受无参数调用，因此若采用后文“显式传 device”的安全改法，CPU 分支应使用单独 helper 或条件判断，不能直接照抄。
 
-**版本边界：**本节于 2026-08-28 复核 [PyTorch stable distributed 文档](https://docs.pytorch.org/docs/stable/distributed.html) 与 [NCCL 2.31.2 collective 文档](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html)。库的 API、可用 backend 和同步细节可能随版本变化；这里把课程代码和该时点官方文档的语义分开说明。
+**版本边界：** 本节于 2026-08-28 复核 [PyTorch stable distributed 文档](https://docs.pytorch.org/docs/stable/distributed.html) 与 [NCCL 2.31.2 collective 文档](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html)。库的 API、可用 backend 和同步细节可能随版本变化；这里把课程代码和该时点官方文档的语义分开说明。
 
 ### 7.3 `MASTER_ADDR` 与 `MASTER_PORT`：先让陌生 processes 找到彼此
 
-**【课程代码｜源码 538–549】【视频补充｜[30:56](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1856s)】**课程 setup 的完整骨架是：
+**【课程代码｜源码 538–549】【视频补充｜[30:56](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=1856s)】** 课程 setup 的完整骨架是：
 
 ```python
 def setup(rank: int, world_size: int):
@@ -1071,7 +1071,7 @@ def setup(rank: int, world_size: int):
 
 **关键事实：当前 619 行源码没有调用 `torch.cuda.set_device(rank)`。**`cuda_if_available(rank)` 只为新 tensor 返回类似 `torch.device("cuda:1")` 的显式 device；它**不会**改变该 process 的 current CUDA device（当前默认 CUDA 设备）。然而 benchmark 使用无参数 `torch.cuda.synchronize()`，它同步 current device。若 rank 1–3 的 current device 仍是默认 `cuda:0`，就可能等待错设备，正式计时可能在本 rank 通信尚未完成时继续。这是课程代码的真实风险，不是推荐模式。
 
-**【安全改良写法，不是课程原码】**单机一 process 一 GPU 时，可在初始化早期绑定当前设备：
+**【安全改良写法，不是课程原码】** 单机一 process 一 GPU 时，可在初始化早期绑定当前设备：
 
 ```python
 if torch.cuda.is_available():
@@ -1137,7 +1137,7 @@ fn(3, 4, message)
 
 ### 7.6 为什么讲义 trace 时故意“不真的分布式”
 
-**【课程基础设施｜源码 557–593】**本讲义既要能真实运行，也要能生成课堂网页 trace。调试器/trace 工具通常不适合在四个 child processes 中同时抓取展示。因此课程写了 `DisableDistributed` context manager（上下文管理器）：进入时暂时把若干 `torch.distributed` 函数换成 no-op（不做事的函数），退出时再恢复。
+**【课程基础设施｜源码 557–593】** 本讲义既要能真实运行，也要能生成课堂网页 trace。调试器/trace 工具通常不适合在四个 child processes 中同时抓取展示。因此课程写了 `DisableDistributed` context manager（上下文管理器）：进入时暂时把若干 `torch.distributed` 函数换成 no-op（不做事的函数），退出时再恢复。
 
 源码逻辑是：
 
@@ -1160,7 +1160,7 @@ fn(3, 4, message)
 
 ### 7.7 NCCL 在 API 下面可能做什么
 
-**【视频补充｜[36:20](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2180s)–[38:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2301s)】**课堂从硬件层回到 `torch.distributed`：程序提交一个 collective 后，NCCL 的工作包括但不限于：
+**【视频补充｜[36:20](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2180s)–[38:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2301s)】** 课堂从硬件层回到 `torch.distributed`：程序提交一个 collective 后，NCCL 的工作包括但不限于：
 
 - 探测或接收 GPU、NVLink、PCIe、NIC 等 topology 信息；
 - 选择 ring、tree、分层或其他可用算法/协议；
@@ -1168,7 +1168,7 @@ fn(3, 4, message)
 - 选择可行的 peer-to-peer path；
 - 启动通信 kernels，并与 CUDA stream 的顺序规则协作。
 
-**Profiler（性能分析器）**是记录 kernels、通信、CPU gaps 和时间线的分析工具。这里只能从官方语义和 profiler/NCCL 日志证据判断某次运行采用了什么，不能从 Python 函数名反推“必然是一条环”。
+**Profiler（性能分析器）** 是记录 kernels、通信、CPU gaps 和时间线的分析工具。这里只能从官方语义和 profiler/NCCL 日志证据判断某次运行采用了什么，不能从 Python 函数名反推“必然是一条环”。
 
 ---
 
@@ -1176,7 +1176,7 @@ fn(3, 4, message)
 
 ### 8.1 函数骨架与最初的 barrier
 
-**【课程代码｜源码 249–284】【视频补充｜[39:52](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2392s)】**函数入口：
+**【课程代码｜源码 249–284】【视频补充｜[39:52](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2392s)】** 函数入口：
 
 ```python
 def collective_operations_main(rank: int, world_size: int):
@@ -1191,7 +1191,7 @@ def collective_operations_main(rank: int, world_size: int):
 逐行：
 
 1. `setup(rank, world_size)`：只让这个 process 加入默认 process group；它没有绑定 CUDA current device。
-2. `dist.barrier()`：**barrier（屏障）**要求 group 里的所有 ranks 都到达这里，才允许大家继续。这次 barrier 在 all-reduce 示例开始前把进度对齐。
+2. `dist.barrier()`：**barrier（屏障）** 要求 group 里的所有 ranks 都到达这里，才允许大家继续。这次 barrier 在 all-reduce 示例开始前把进度对齐。
 3. 下一行 tensor 构造中的 `device=cuda_if_available(rank)` 才选择存放 device：有 CUDA 时返回该 rank 的 GPU，否则返回 CPU。它只决定这个新 tensor 放在哪里，仍不会改变 current device。
 4. 基础浮点 tensor 是 `[0.,1,2,3]`；`+ rank` 对四个元素都加同一个 rank。小数点表明课程原码在这里使用浮点值。
 
@@ -1212,7 +1212,7 @@ def collective_operations_main(rank: int, world_size: int):
 dist.all_reduce(tensor=data, op=dist.ReduceOp.SUM, async_op=False)
 ```
 
-- `data`：输入 tensor，也是输出落回的 tensor；这叫 **in-place（原地）**修改。
+- `data`：输入 tensor，也是输出落回的 tensor；这叫 **in-place（原地）** 修改。
 - `op=SUM`：逐位置相加，不是拼接。
 - `async_op=False`：调用没有返回供用户稍后等待的异步 `Work` handle；同步边界还要结合 backend 和 CUDA stream 语义理解，见 §8.6。
 
@@ -1244,7 +1244,7 @@ dist.all_reduce(tensor=data, op=dist.ReduceOp.SUM, async_op=False)
 
 ### 8.3 `reduce_scatter_tensor`：输入 4 个位置，输出 1 个位置
 
-**【课程代码｜源码 262–270】【视频补充｜[41:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2468s)】**课程接着重新建 tensor：
+**【课程代码｜源码 262–270】【视频补充｜[41:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2468s)】** 课程接着重新建 tensor：
 
 ```python
 dist.barrier()
@@ -1264,7 +1264,7 @@ dist.reduce_scatter_tensor(
 
 上面是**当前 619 行课程原码**的关键参数及关键字参数。`input` 显式指定 `dtype=torch.float32`；在本讲文件没有修改默认 dtype 的前提下，`torch.empty(1, ...)` 也是 FP32，所以当前这段课程代码的 input/output dtype 一致。
 
-**【通用防御性写法，不是课程原码，也不是在修当前课程 bug】**如果代码在其他文件中更改了默认 dtype，可显式继承 input dtype：
+**【通用防御性写法，不是课程原码，也不是在修当前课程 bug】** 如果代码在其他文件中更改了默认 dtype，可显式继承 input dtype：
 
 ```python
 output = torch.empty(1, device=cuda_if_available(rank), dtype=input.dtype)
@@ -1342,15 +1342,15 @@ reduce-scatter → all-gather
 
 ### 8.5 函数末尾为什么 cleanup
 
-**【课程代码｜源码 282–284】**最后一次打印后调用 `cleanup()`。这表示：三个示例全完成后，当前 rank 才销毁默认 process group。不能让 rank 0 在 all-gather 前 cleanup，而 rank 1 还准备进入 all-gather。
+**【课程代码｜源码 282–284】** 最后一次打印后调用 `cleanup()`。这表示：三个示例全完成后，当前 rank 才销毁默认 process group。不能让 rank 0 在 all-gather 前 cleanup，而 rank 1 还准备进入 all-gather。
 
 ### 8.6 `async_op=False` 究竟保证到哪一步
 
 这里最容易说得过头，所以分三层。回忆：CUDA stream 是 GPU 有序命令队列；Work handle 是异步 collective 的可等待凭证。
 
-1. **Python API 层：**对 NCCL/CUDA，`async_op=False` 会等到 collective 已成功排入 CUDA stream，再返回且不提供 Work handle；GPU 物理执行未必结束。
-2. **CUDA stream 层：**随后在同一 stream 排入的依赖操作，会因该 stream 的顺序而排在 collective 后。换到另一个 stream 时，没有这条天然顺序，必须显式建立依赖。
-3. **CPU wall-clock 测量层：**若要让 CPU 计时器确认指定设备此前提交的 CUDA 工作完成，要同步正确 device；课程无参 `torch.cuda.synchronize()` 有 §7.3 所述 current-device 风险。
+1. **Python API 层：** 对 NCCL/CUDA，`async_op=False` 会等到 collective 已成功排入 CUDA stream，再返回且不提供 Work handle；GPU 物理执行未必结束。
+2. **CUDA stream 层：** 随后在同一 stream 排入的依赖操作，会因该 stream 的顺序而排在 collective 后。换到另一个 stream 时，没有这条天然顺序，必须显式建立依赖。
+3. **CPU wall-clock 测量层：** 若要让 CPU 计时器确认指定设备此前提交的 CUDA 工作完成，要同步正确 device；课程无参 `torch.cuda.synchronize()` 有 §7.3 所述 current-device 风险。
 
 三条最小时间线：
 
@@ -1392,7 +1392,7 @@ different stream: collective ─┐
 
 ### 8.8 Collective 顺序不一致会怎样：最小 deadlock 例
 
-**Deadlock（死锁）**是参与者互相等待，程序无法向前。下面是**故意错误、不要运行**的伪代码：
+**Deadlock（死锁）** 是参与者互相等待，程序无法向前。下面是**故意错误、不要运行**的伪代码：
 
 ```python
 # 错误伪代码：不同 rank 进入了不匹配的 collective 次序
@@ -1412,7 +1412,7 @@ NCCL 官方文档要求 collective 中所有 ranks 使用匹配的 count 与 dat
 
 ### 9.1 先定义六个常被混用的量
 
-**【课程内容｜源码 287–374】【视频补充｜[46:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2804s)】**Benchmark 是对一个明确输入、环境和计时边界做测量。读打印值之前，先问它的分子与分母。
+**【课程内容｜源码 287–374】【视频补充｜[46:44](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2804s)】** Benchmark 是对一个明确输入、环境和计时边界做测量。读打印值之前，先问它的分子与分母。
 
 1. **Latency（延迟）**：完成一次操作花多少时间，单位常为 s、ms、µs。$`1\text{ ms}=0.001\text{ s}`$。
 2. **Algorithm bandwidth，记作 `algbw`（算法带宽）**：逻辑数据大小除以操作时间。它回答“应用眼中的 payload 以多快速度完成”。
@@ -1439,7 +1439,7 @@ NCCL 官方文档要求 collective 中所有 ranks 使用匹配的 count 与 dat
 
 ### 9.2 课程消息为什么恰好是 400 MiB
 
-**【课程代码｜源码 289–295】**主程序调用：
+**【课程代码｜源码 289–295】** 主程序调用：
 
 ```python
 spawn(all_reduce, world_size=4, num_elements=100 * 1024**2)
@@ -1458,7 +1458,7 @@ spawn(reduce_scatter, world_size=4, num_elements=100 * 1024**2)
 100\times1{,}048{,}576=104{,}857{,}600\ \text{elements}.
 ```
 
-课程 `torch.randn` 默认生成 FP32；**FP32（32-bit floating point，32 位浮点）**每元素 32 bits，即：
+课程 `torch.randn` 默认生成 FP32；**FP32（32-bit floating point，32 位浮点）** 每元素 32 bits，即：
 
 ```math
 32\div8=4\ \text{bytes/element}.
@@ -1481,7 +1481,7 @@ spawn(reduce_scatter, world_size=4, num_elements=100 * 1024**2)
 
 ### 9.3 All-reduce 的 warmup 与测量区间逐行
 
-**【课程代码｜源码 301–321】【视频补充｜[46:55](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2815s)】**课程骨架：
+**【课程代码｜源码 301–321】【视频补充｜[46:55](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2815s)】** 课程骨架：
 
 ```python
 setup(rank, world_size)
@@ -1509,7 +1509,7 @@ duration = end_time - start_time
 - 第一次 `all_reduce` 是 **warmup（预热）**。它让 lazy initialization（第一次才发生的初始化）、连接建立、kernel/module 加载等冷启动成本不全部塞进正式样本。
 - 第一个 `torch.cuda.synchronize()`：课程意图是等当前 rank 的 GPU 工作完成；但原码无参数且未 `set_device`，实际只等 current device，rank 1–3 可能等错，见 §7.3。
 - 第一个 `dist.barrier()`：等所有 ranks 结束 warmup、到达同一起跑线。
-- `start_time = time.time()`：CPU 读取墙上时钟；**wall-clock time（墙钟时间）**就是用户从现实钟表看到经过多久。
+- `start_time = time.time()`：CPU 读取墙上时钟；**wall-clock time（墙钟时间）** 就是用户从现实钟表看到经过多久。
 - 第二次 `all_reduce`：正式测量的 collective。
 - 第二个 `cuda.synchronize()`：课程的设计意图是让 CPU 等本 rank GPU 干完；但因 setup 未 `set_device`、此调用又没有 device 参数，它实际可能同步错 current device。
 - 第二个 `barrier()`：让先完成的 rank 等最慢 rank 到齐。
@@ -1517,7 +1517,7 @@ duration = end_time - start_time
 
 因此这段区间的**设计意图**是“collective + 正确 device completion + 末 barrier”，但当前源码缺少 device binding，不能无条件声称实际测量已经实现这个意图。推荐在 CUDA 分支初始化时设 local device，或对 synchronize 显式传本 rank device 后再测。
 
-**Straggler（拖后腿者）**是这一轮完成得最慢的 rank。若 rank 0 的 GPU 先完成，但 rank 3 晚 2 ms 才到 barrier，rank 0 的计时包含这 2 ms 等待。
+**Straggler（拖后腿者）** 是这一轮完成得最慢的 rank。若 rank 0 的 GPU 先完成，但 rank 3 晚 2 ms 才到 barrier，rank 0 的计时包含这 2 ms 等待。
 
 视频 [47:17](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2837s) 说明先预热，[47:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2848s) 到 [48:01](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2881s) 逐项解释 CUDA synchronize 与 barrier。
 
@@ -1542,7 +1542,7 @@ duration = end_time - start_time
 
 ### 9.5 一次 warmup、一次样本为什么还不够稳健
 
-**【补充理解】**课程代码适合说明原理，但正式性能报告通常还要：
+**【补充理解】** 课程代码适合说明原理，但正式性能报告通常还要：
 
 1. 多次 warmup，直到连接与缓存状态稳定；
 2. 重复测很多次，不只取一个样本；
@@ -1551,7 +1551,7 @@ duration = end_time - start_time
 5. 确认没有其他作业抢占链路或制造 contention；
 6. 分开报告每个 rank，或明确用最大 duration 代表全局完成时间。
 
-**Median（中位数）**是把测量从小到大排后位于中间的值。**p95** 是约 95% 样本不超过的值，可暴露偶发慢尾。平均数容易被少数极慢样本拉高；中位数又可能隐藏尾部，所以最好一起报。
+**Median（中位数）** 是把测量从小到大排后位于中间的值。**p95** 是约 95% 样本不超过的值，可暴露偶发慢尾。平均数容易被少数极慢样本拉高；中位数又可能隐藏尾部，所以最好一起报。
 
 ### 9.6 Reduce-scatter 使用相同时间骨架，但输入 shape 不同
 
@@ -1585,7 +1585,7 @@ dist.barrier()
 
 ### 10.1 All-reduce：先定义符号与 ring 假设
 
-**【课程公式 + 补充分解｜源码 323–333】【视频补充｜[49:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2964s)】**令：
+**【课程公式 + 补充分解｜源码 323–333】【视频补充｜[49:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2964s)】** 令：
 
 - $`p=4`$：rank 数；
 - $`S=400`$ MiB：每 rank 的完整 all-reduce payload；
@@ -1723,7 +1723,7 @@ print(f"[all_reduce] Rank {rank}: all_reduce measured bandwidth = {round(bandwid
 =\text{algbw}\times\frac{2(p-1)}p.
 ```
 
-**关键纠错：**变量名 `total_duration = world_size * duration` 不表示“真实操作先后跑了 4 次，所以墙钟用了 40 ms”。四 ranks 是并发的，真实这次测量仍约 10 ms。$`p\times t`$ 是为了把 aggregate numerator 归一到 per-rank 平均口径而写出的 **rank-seconds** 分母。
+**关键纠错：** 变量名 `total_duration = world_size * duration` 不表示“真实操作先后跑了 4 次，所以墙钟用了 40 ms”。四 ranks 是并发的，真实这次测量仍约 10 ms。$`p\times t`$ 是为了把 aggregate numerator 归一到 per-rank 平均口径而写出的 **rank-seconds** 分母。
 
 视频 [49:29](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=2969s) 开始数两阶段发送，[50:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3003s) 展开 world-size 校正，[50:30](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3030s) 对照打印结果。
 
@@ -1744,7 +1744,7 @@ print(f"[all_reduce] Rank {rank}: all_reduce measured bandwidth = {round(bandwid
 
 ### 10.5 Reduce-scatter：先从 output chunk $`C`$ 开始
 
-**【课程公式 + 补充分解｜源码 338–370】【视频补充｜[52:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3128s)】**令：
+**【课程公式 + 补充分解｜源码 338–370】【视频补充｜[52:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3128s)】** 令：
 
 - $`p=4`$；
 - 每 rank output chunk $`C=400`$ MiB；
@@ -1896,7 +1896,7 @@ Q_{\text{RS}}
 
 ### 10.9 课程 trace 的数字是什么、又不是什么
 
-**【课程运行快照】**讲义仓库保存的 `var/traces/lecture_07_stdout.txt` 显示，老师当时环境里：
+**【课程运行快照】** 讲义仓库保存的 `var/traces/lecture_07_stdout.txt` 显示，老师当时环境里：
 
 - all-reduce 各 rank 约 1.38–1.60 ms，源码打印约 366–426 `GB/s`；
 - reduce-scatter 各 rank 约 2.39–2.61 ms，源码打印约 450–490 `GB/s`。
@@ -1931,9 +1931,9 @@ Q_{\text{RS}}
 
 ### 11.1 一句话地图：切 batch，不切模型
 
-**Data parallelism（数据并行）**把一个 batch 的样本行切给多个 ranks；每个 rank 仍保存一份完整模型，独立做 forward/backward，最后同步 gradients。**DDP（Distributed Data Parallel，分布式数据并行）**是这种模式的常用实现。
+**Data parallelism（数据并行）** 把一个 batch 的样本行切给多个 ranks；每个 rank 仍保存一份完整模型，独立做 forward/backward，最后同步 gradients。**DDP（Distributed Data Parallel，分布式数据并行）** 是这种模式的常用实现。
 
-**【课程内容｜源码 375–389】【视频补充｜[55:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3308s)】**老师用三张图建立对照：[55:33](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3333s) 列出 data/tensor/pipeline parallel，[55:58](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3358s) 说明 data parallel 切的是数据，模型参数在各 GPU 上完整复制。
+**【课程内容｜源码 375–389】【视频补充｜[55:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3308s)】** 老师用三张图建立对照：[55:33](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3333s) 列出 data/tensor/pipeline parallel，[55:58](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3358s) 说明 data parallel 切的是数据，模型参数在各 GPU 上完整复制。
 
 ```text
 global batch [128, 1024]
@@ -1949,7 +1949,7 @@ global batch [128, 1024]
 
 ### 11.2 `128 ÷ 4 = 32` 不是结论，要把索引范围列出来
 
-**【课程代码｜源码 390–410】【视频补充｜[56:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3384s)】**样例数据：
+**【课程代码｜源码 390–410】【视频补充｜[56:24](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3384s)】** 样例数据：
 
 ```python
 batch_size = 128
@@ -2014,7 +2014,7 @@ Python 切片 `data[start:end]` 包含 `start`，不包含 `end`：
 
 ### 11.4 四层模型的参数、梯度和 Adam 状态逐项显存账
 
-**【课程代码｜源码 412–415】【视频补充｜[58:04](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3484s)】**每层参数矩阵 shape 是 `[1024,1024]`。一层元素数：
+**【课程代码｜源码 412–415】【视频补充｜[58:04](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3484s)】** 每层参数矩阵 shape 是 `[1024,1024]`。一层元素数：
 
 ```math
 1024\times1024=1{,}048{,}576.
@@ -2044,7 +2044,7 @@ FP32 一层参数 bytes：
 | Adam second moment $`v`$ | 每参数一个同 shape 二阶动量 | 16 MiB |
 | 合计 | params + grads + $`m`$ + $`v`$ | **64 MiB/rank** |
 
-**Moment（动量状态）**是 AdamW 为每个参数记住的历史梯度统计；$`m`$ 类似带衰减的梯度平均，$`v`$ 类似带衰减的梯度平方平均。课程 `torch.optim.AdamW` 的小 step counter 还会占少量空间，但相对 16 MiB tensor 可忽略。
+**Moment（动量状态）** 是 AdamW 为每个参数记住的历史梯度统计；$`m`$ 类似带衰减的梯度平均，$`v`$ 类似带衰减的梯度平方平均。课程 `torch.optim.AdamW` 的小 step counter 还会占少量空间，但相对 16 MiB tensor 可忽略。
 
 PyTorch AdamW 通常在第一次 `optimizer.step()` 时才懒分配 $`m,v`$；因此“刚构造 optimizer、尚未 step”的瞬间可能还看不到这 32 MiB，而稳定训练状态会持有它们。这里算的是**第一次更新后的训练状态**。
 
@@ -2074,7 +2074,7 @@ loss = x.square().mean()         # 所有元素平方后求平均 -> scalar
 loss.backward()                  # 填充每个 param.grad，shape [1024,1024]
 ```
 
-**Scalar（标量）**是只有一个数的量；这里 `loss.shape=[]`。Loss 是越小越好的“坏程度”。每个 rank 用不同 samples，所以 local loss 通常不同；`backward()` 沿计算图把这个 local mean loss 对每个 parameter 的 gradient 算出来。
+**Scalar（标量）** 是只有一个数的量；这里 `loss.shape=[]`。Loss 是越小越好的“坏程度”。每个 rank 用不同 samples，所以 local loss 通常不同；`backward()` 沿计算图把这个 local mean loss 对每个 parameter 的 gradient 算出来。
 
 视频 [58:57](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3537s) 进入 backward，[59:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3543s) 指出不同数据产生不同本地 gradients。
 
@@ -2176,13 +2176,13 @@ PyTorch `DistributedDataParallel` 包装模型后，会利用 autograd hooks（�
 - 让后面 layers 继续 backward 时，前面已完成的 buckets 开始通信，以 overlap computation/communication；
 - 处理 unused parameters 等工程语义与一致性检查。
 
-**【课程口头边界｜[60:36](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3636s)】**老师称核心数学只比单卡训练多 gradient all-reduce；这说明原理很精炼，不表示生产 DDP 的实现只有一行。课堂还说明 batch 通常至少不小于 world size，[60:52](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3652s)；整除会更简单，[61:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3673s)。
+**【课程口头边界｜[60:36](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3636s)】** 老师称核心数学只比单卡训练多 gradient all-reduce；这说明原理很精炼，不表示生产 DDP 的实现只有一行。课堂还说明 batch 通常至少不小于 world size，[60:52](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3652s)；整除会更简单，[61:13](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3673s)。
 
 ### 11.10 三个不看 helper 就发现不了的源码边界
 
 #### 边界 A：每次 `get_init_params` 都重新设同一个 seed
 
-**Seed（随机种子）**是伪随机数生成器的起点；相同算法、shape、device 条件下，相同 seed 会生成可复现序列。Helper 是：
+**Seed（随机种子）** 是伪随机数生成器的起点；相同算法、shape、device 条件下，相同 seed 会生成可复现序列。Helper 是：
 
 ```python
 def get_init_params(num_inputs, num_outputs, rank):
@@ -2227,9 +2227,9 @@ optimizer.zero_grad(set_to_none=True)
 
 ### 12.1 Column tensor parallel 切的是 $`W`$ 的 columns
 
-**Tensor parallelism（张量并行，TP）**把一个 layer 内部的大 tensor/矩阵运算拆到多个 ranks。课程只演示 **column parallel（列并行）**：按 weight matrix 的输出列切分。
+**Tensor parallelism（张量并行，TP）** 把一个 layer 内部的大 tensor/矩阵运算拆到多个 ranks。课程只演示 **column parallel（列并行）**：按 weight matrix 的输出列切分。
 
-**【课程内容｜源码 439–459】【视频补充｜[62:59](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3779s)】**数据不切，每个 rank 都先有：
+**【课程内容｜源码 439–459】【视频补充｜[62:59](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3779s)】** 数据不切，每个 rank 都先有：
 
 ```math
 x:\ [128,1024].
@@ -2263,7 +2263,7 @@ W=[W_0\mid W_1\mid W_2\mid W_3].
 
 ### 12.2 每层 forward 的 shape 从 `[128,1024]` 缩到 `[128,256]` 再拼回
 
-**【课程代码｜源码 461–475】【视频补充｜[64:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3883s)】**每个 rank：
+**【课程代码｜源码 461–475】【视频补充｜[64:43](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=3883s)】** 每个 rank：
 
 ```math
 [128,1024]\ @\ [1024,256]
@@ -2362,7 +2362,7 @@ FP32 bytes：
 
 ### 12.5 用真实小矩阵验证“列切 + concat = 完整 matmul”
 
-**【补充例子】**设两 ranks，输入：
+**【补充例子】** 设两 ranks，输入：
 
 ```math
 x=
@@ -2493,7 +2493,7 @@ xW_1=
 
 ### 12.6 源码初始化没有真的把一个完整 $`W`$ 切成四块
 
-**【关键源码边界｜源码 459、594–597】**课程每 rank 调用：
+**【关键源码边界｜源码 459、594–597】** 课程每 rank 调用：
 
 ```python
 get_init_params(1024, 256, rank)
@@ -2544,7 +2544,7 @@ local_W = full_W[:, rank * 256 : (rank + 1) * 256]
 
 ### 12.7 Backward 在源码中明确省略
 
-**【课程边界｜源码 479】【视频补充｜[67:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4038s)】**源码只写 `# Backward pass: homework exercise`。因此本讲运行示例只证明 forward shape 与通信路径，不证明完整训练正确。
+**【课程边界｜源码 479】【视频补充｜[67:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4038s)】** 源码只写 `# Backward pass: homework exercise`。因此本讲运行示例只证明 forward shape 与通信路径，不证明完整训练正确。
 
 对真实 tensor parallel：
 
@@ -2553,7 +2553,7 @@ local_W = full_W[:, rank * 256 : (rank + 1) * 256]
 - row-parallel 与 column-parallel layers 常成对安排，以避免每层都完整 gather；
 - 具体是 all-reduce、reduce-scatter 还是其他 collective，取决于前后 sharding layout。
 
-**【视频补充｜[68:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4088s)】**课堂问答提到 forward all-gather 与 backward reduce-scatter 的对偶；[68:36](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4116s) 说明裸 `.backward()` 不会凭空知道你设计的跨 rank 分片语义。生产框架可以封装这些规则，但这份从零代码选择显式展示而未实现。
+**【视频补充｜[68:08](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4088s)】** 课堂问答提到 forward all-gather 与 backward reduce-scatter 的对偶；[68:36](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4116s) 说明裸 `.backward()` 不会凭空知道你设计的跨 rank 分片语义。生产框架可以封装这些规则，但这份从零代码选择显式展示而未实现。
 
 ### 12.8 TP 为什么通常偏爱高速节点内互连
 
@@ -2567,9 +2567,9 @@ local_W = full_W[:, rank * 256 : (rank + 1) * 256]
 
 ### 13.1 一句话地图：切 layers，不切单层 width
 
-**Pipeline parallelism（流水线并行，PP）**把连续 layers 分给不同 stages。**Stage（流水线阶段）**是持有一段模型并执行这段计算的 rank 或 rank 组。前一个 stage 把 boundary activation（分段边界处的激活）发给下一个 stage。
+**Pipeline parallelism（流水线并行，PP）** 把连续 layers 分给不同 stages。**Stage（流水线阶段）** 是持有一段模型并执行这段计算的 rank 或 rank 组。前一个 stage 把 boundary activation（分段边界处的激活）发给下一个 stage。
 
-**【课程内容｜源码 484–505】【视频补充｜[69:38](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4178s)】**课程配置：
+**【课程内容｜源码 484–505】【视频补充｜[69:38](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4178s)】** 课程配置：
 
 - `num_layers=4`；
 - `world_size=2`；
@@ -2612,11 +2612,11 @@ final activation
 
 仍不含 activations、allocator、通信 buffers 等。
 
-**源码初始化边界：**PP 也调用同一个 `get_init_params(1024,1024,rank)`。因为 helper 每次内部重置 `manual_seed(0)` 且各层 shape 相同，rank 0 的两层彼此同值，rank 1 的两层也彼此同值；相同生成条件下，两 stages 的这些层还会重复同一初值矩阵。它演示的是“每 stage 持有两张完整 shape 的矩阵”，不是一个正常四层模型中四组不同参数的逐值切分。
+**源码初始化边界：** PP 也调用同一个 `get_init_params(1024,1024,rank)`。因为 helper 每次内部重置 `manual_seed(0)` 且各层 shape 相同，rank 0 的两层彼此同值，rank 1 的两层也彼此同值；相同生成条件下，两 stages 的这些层还会重复同一初值矩阵。它演示的是“每 stage 持有两张完整 shape 的矩阵”，不是一个正常四层模型中四组不同参数的逐值切分。
 
 ### 13.3 Batch 128 切 4 个 microbatches，每个 32 行
 
-**Microbatch（微批次）**是从一个训练 batch 再切出来、依次送进 pipeline 的小批。课程：
+**Microbatch（微批次）** 是从一个训练 batch 再切出来、依次送进 pipeline 的小批。课程：
 
 ```math
 \text{micro\_batch\_size}
@@ -2682,7 +2682,7 @@ Rank 1：
 2. 做本地 layer 2、3。
 3. `rank+1=2` 不小于 world size 2，它是最后 stage，不再 send。
 
-**Point-to-point communication（点对点通信）**指定一个 sender 和一个 receiver；这里 `send(dst=1)` 与 `recv(src=0)` 必须匹配。它不同于所有 group 成员共同参加的 collective。视频 [71:51](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4311s) 展开 `recv`/`send` 的两端。
+**Point-to-point communication（点对点通信）** 指定一个 sender 和一个 receiver；这里 `send(dst=1)` 与 `recv(src=0)` 必须匹配。它不同于所有 group 成员共同参加的 collective。视频 [71:51](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4311s) 展开 `recv`/`send` 的两端。
 
 ### 13.6 Blocking send/recv 与最小 deadlock
 
@@ -2747,7 +2747,7 @@ Idle slots 是 $`10-8=2`$，所以 bubble fraction：
 \frac2{10}=0.2=20\%.
 ```
 
-**Pipeline bubble（流水线气泡）**是 stage 因数据尚未到达或 pipeline 正在排空而 idle 的时间槽。视频 [72:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4348s) 说明为什么需要 microbatches，[73:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4383s) 命名 bubbles，[73:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4398s) 解释更多小批能减少气泡比例。
+**Pipeline bubble（流水线气泡）** 是 stage 因数据尚未到达或 pipeline 正在排空而 idle 的时间槽。视频 [72:28](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4348s) 说明为什么需要 microbatches，[73:03](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4383s) 命名 bubbles，[73:18](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4398s) 解释更多小批能减少气泡比例。
 
 ### 13.8 一般 forward utilization 公式从哪里来
 
@@ -2775,11 +2775,11 @@ U=\frac4{4+2-1}=\frac45=80\%.
 
 ### 13.9 课程 pipeline 实现缺了什么
 
-**【课程边界｜源码 532–534】【视频补充｜[73:32](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4412s)】**源码明确未处理 communication/computation overlap，并把 backward 留作作业。具体缺项：
+**【课程边界｜源码 532–534】【视频补充｜[73:32](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4412s)】** 源码明确未处理 communication/computation overlap，并把 backward 留作作业。具体缺项：
 
 - 没有 loss 与 backward；
 - 没有 activation/gradient 的反向传输；
-- 没有 **1F1B（one-forward-one-backward，一次前向接一次反向）**等训练 schedule；
+- 没有 **1F1B（one-forward-one-backward，一次前向接一次反向）** 等训练 schedule；
 - 使用 blocking send/recv，没有显式 `isend`/`irecv` overlap；
 - 没有 optimizer、gradient accumulation 或 parameter update；
 - 没有处理 stage 不均衡与跨节点 topology；
@@ -2826,13 +2826,13 @@ U=\frac4{4+2-1}=\frac45=80\%.
 
 TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency 很敏感，所以常把一个 TP group 放在同一 NVLink/NVSwitch domain。PP 主要在 stage boundary 传 microbatch activations，若计算块足够大，通信占比可更小，对较慢跨节点链接可能更宽容。DP/FSDP 的梯度/参数通信也很大，但可通过 buckets 与 backward overlap，且不一定每一层 forward 都立刻需要 full activation gather。
 
-**【视频补充｜[76:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4570s)】**老师明确说选择强依赖硬件；[76:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4581s) 指出 TP 每层 communication 多，[76:31](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4591s) 建议通常放在 node 内高速 NVLink 域；[76:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4606s) 对比 PP 可容忍更慢 interconnect。
+**【视频补充｜[76:10](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4570s)】** 老师明确说选择强依赖硬件；[76:21](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4581s) 指出 TP 每层 communication 多，[76:31](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4591s) 建议通常放在 node 内高速 NVLink 域；[76:46](https://www.youtube.com/watch?v=SzpOcwdIL0Y&t=4606s) 对比 PP 可容忍更慢 interconnect。
 
 这些是常见系统设计倾向，不是“TP 绝不跨节点”或“PP 在慢网一定快”的定律。消息大小、计算粒度、network contention 和软件实现仍要 benchmark。
 
 ### 14.5 一个具体选型例：16 GPUs、每卡 64 GiB
 
-**【补充例子】**假设：
+**【补充例子】** 假设：
 
 - 共 16 GPUs，2 nodes，每 node 8 GPUs；
 - node 内 NVLink 快，node 间网络慢一些；
@@ -2841,12 +2841,12 @@ TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency
 
 逐步判断：
 
-1. **纯 DDP 能否 fit？**每 rank 要复制 160 GiB，$`160>64`$，不能 fit。
-2. **先用 TP=4？**理想均分模型状态约 $`160/4=40`$ GiB/rank，留下约 $`64-40=24`$ GiB 给 activations/buffers；从容量看可能可行。
-3. **TP group 放哪里？**每组 4 GPUs，优先放同一 node 的 NVLink 域，因为 TP 每层频繁通信。
-4. **16/4=4 个 TP replicas 怎么利用？**可令这 4 个 TP groups 处理不同 data，形成 DP degree=4；跨 replicas 同步相应 parameter-shard gradients。
-5. **若 24 GiB activation 仍不够？**先考虑 activation checkpoint/recompute；也可再引入 sequence parallel/FSDP。若模型按 layers 易平衡且必须跨慢链接，可考虑 PP，但要为 bubbles 和更复杂 schedule 付代价。
-6. **最后依据什么决定？**对候选 mesh 做真实 memory peak、collective profile 与 step-time benchmark，不能只看 $`160/4`$。
+1. **纯 DDP 能否 fit？** 每 rank 要复制 160 GiB，$`160>64`$，不能 fit。
+2. **先用 TP=4？** 理想均分模型状态约 $`160/4=40`$ GiB/rank，留下约 $`64-40=24`$ GiB 给 activations/buffers；从容量看可能可行。
+3. **TP group 放哪里？** 每组 4 GPUs，优先放同一 node 的 NVLink 域，因为 TP 每层频繁通信。
+4. **16/4=4 个 TP replicas 怎么利用？** 可令这 4 个 TP groups 处理不同 data，形成 DP degree=4；跨 replicas 同步相应 parameter-shard gradients。
+5. **若 24 GiB activation 仍不够？** 先考虑 activation checkpoint/recompute；也可再引入 sequence parallel/FSDP。若模型按 layers 易平衡且必须跨慢链接，可考虑 PP，但要为 bubbles 和更复杂 schedule 付代价。
+6. **最后依据什么决定？** 对候选 mesh 做真实 memory peak、collective profile 与 step-time benchmark，不能只看 $`160/4`$。
 
 这个例子不是唯一答案；它展示的是约束顺序：先 fit，再看通信域，再看利用率与优化复杂度。
 
@@ -2863,7 +2863,7 @@ TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency
 
 ### 15.1 Device mesh 是带坐标的设备网格
 
-**Device mesh（设备网格）**给每个 GPU/rank 一个多维坐标；每一维代表一种 parallelism。例：
+**Device mesh（设备网格）** 给每个 GPU/rank 一个多维坐标；每一维代表一种 parallelism。例：
 
 ```math
 \text{DP degree}=2,
@@ -2973,7 +2973,7 @@ TP 往往每 layer 都要交换 activations/partials，对 bandwidth 和 latency
 
 ### 15.5 本讲代码仍缺哪些生产关键项
 
-**【课程边界 + 补充整理】**到 §15 为止，必须诚实保留：
+**【课程边界 + 补充整理】** 到 §15 为止，必须诚实保留：
 
 - 模型只是方形 MLP，没有 attention、embedding、normalization、residual、vocabulary loss；
 - manual DP 没有 buckets/overlap，且只有一步、未 `zero_grad`；
@@ -3036,11 +3036,11 @@ M_{\text{peak}}
           └─ sequence parallel / TP / PP 分摊相关 activation
 ```
 
-证据包括：框架的 peak allocated/reserved memory、**OOM（Out Of Memory，显存不足而分配失败）**时最后一个 tensor shape、optimizer step 前后峰值、profiler memory timeline。只看 parameter 文件大小会漏掉 gradients、Adam 状态和 activations。
+证据包括：框架的 peak allocated/reserved memory、**OOM（Out Of Memory，显存不足而分配失败）** 时最后一个 tensor shape、optimizer step 前后峰值、profiler memory timeline。只看 parameter 文件大小会漏掉 gradients、Adam 状态和 activations。
 
 ### 16.2 能 fit 之后，目标才是 throughput
 
-**Throughput（吞吐）**可以写成 tokens/s 或 samples/s；必须说明是每 GPU、每 node 还是全 job。若已经 fit：
+**Throughput（吞吐）** 可以写成 tokens/s 或 samples/s；必须说明是每 GPU、每 node 还是全 job。若已经 fit：
 
 ```text
 GPU compute 长时间忙？
@@ -3079,7 +3079,7 @@ PP 很慢？
 
 ### 16.4 Batch、width、depth 三个可切轴的拒绝条件
 
-**GEMM（General Matrix Multiply，通用稠密矩阵乘）**是形如 `[m,k]@[k,n]` 的矩阵乘；TP shard 太细会让每个 GEMM 变小，GPU 可能更难充分利用计算单元。
+**GEMM（General Matrix Multiply，通用稠密矩阵乘）** 是形如 `[m,k]@[k,n]` 的矩阵乘；TP shard 太细会让每个 GEMM 变小，GPU 可能更难充分利用计算单元。
 
 | 候选轴 | 先检查 | 拒绝/警告证据 |
 |---|---|---|
@@ -3130,224 +3130,224 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 ### 17.1 Collective 语义与算法
 
 1. **错误：**“`all_reduce` 这个名字已经规定物理网络必须走 ring。”  
-   **原因：**API 只规定逻辑输入/输出；backend 可按 topology 和消息大小选 ring、tree 或分层算法。  
-   **正确：**用 profiler/NCCL 日志确认某次运行的算法，不能从 API 名猜。
+   **原因：** API 只规定逻辑输入/输出；backend 可按 topology 和消息大小选 ring、tree 或分层算法。  
+   **正确：** 用 profiler/NCCL 日志确认某次运行的算法，不能从 API 名猜。
 
 2. **错误：**“All-reduce 物理上永远就是先调用 reduce-scatter API，再调用 all-gather API。”  
-   **原因：**两者在逻辑结果上等价；库可融合、分块流水或采用另一 schedule。  
-   **正确：**把分解用于理解和设计，不当作永恒实现轨迹。
+   **原因：** 两者在逻辑结果上等价；库可融合、分块流水或采用另一 schedule。  
+   **正确：** 把分解用于理解和设计，不当作永恒实现轨迹。
 
 3. **错误：**“SUM 与 AVG 只差函数名，结果相同。”  
-   **原因：**AVG 还除以 rank 数；四 rank SUM `[6,10,14,18]`，AVG 是 `[1.5,2.5,3.5,4.5]`。  
-   **正确：**先确认 loss reduction 与期望全局缩放，再选 op。
+   **原因：** AVG 还除以 rank 数；四 rank SUM `[6,10,14,18]`，AVG 是 `[1.5,2.5,3.5,4.5]`。  
+   **正确：** 先确认 loss reduction 与期望全局缩放，再选 op。
 
 4. **错误：**“Reduce-scatter 后每 rank 都有完整 reduce 结果。”  
-   **原因：**它只给每 rank 一块；本例分别是 `[6]`,`[10]`,`[14]`,`[18]`。  
-   **正确：**要完整结果还需 all-gather，或直接使用 all-reduce。
+   **原因：** 它只给每 rank 一块；本例分别是 `[6]`,`[10]`,`[14]`,`[18]`。  
+   **正确：** 要完整结果还需 all-gather，或直接使用 all-reduce。
 
 5. **错误：**“All-gather 会把数值相加。”  
-   **原因：**Gather 是拼接/收集，不做 SUM。  
+   **原因：** Gather 是拼接/收集，不做 SUM。  
    **正确：**`[6]`,`[10]`,`[14]`,`[18]` gather 为 `[6,10,14,18]`。
 
 6. **错误：**“All-to-all 总是把一个方阵转置。”  
-   **原因：**4×4 转置只是均匀一元素分块的可视化；真实 split 可为多元素或不均匀。  
-   **正确：**逐 sender→receiver chunk 表描述；MoE 还会有不等 token counts。
+   **原因：** 4×4 转置只是均匀一元素分块的可视化；真实 split 可为多元素或不均匀。  
+   **正确：** 逐 sender→receiver chunk 表描述；MoE 还会有不等 token counts。
 
 7. **错误：**“所有 collective 都有 root。”  
-   **原因：**Broadcast/scatter/gather/reduce 有 root；all-gather/all-reduce/all-to-all 的结果域不同，不需要单一 root。  
-   **正确：**按每个 collective 的输出位置判断。
+   **原因：** Broadcast/scatter/gather/reduce 有 root；all-gather/all-reduce/all-to-all 的结果域不同，不需要单一 root。  
+   **正确：** 按每个 collective 的输出位置判断。
 
 8. **错误：**“`all_reduce` 默认会新建输出 tensor。”  
-   **原因：**课程 `dist.all_reduce(data,...)` 原地覆盖 `data`。  
-   **正确：**查 API 的 in-place/out-of-place 约定，别把输入值留存假设写错。
+   **原因：** 课程 `dist.all_reduce(data,...)` 原地覆盖 `data`。  
+   **正确：** 查 API 的 in-place/out-of-place 约定，别把输入值留存假设写错。
 
 ### 17.2 Rank、同步与 deadlock
 
 9. **错误：**“Rank 就是一张 GPU。”  
-   **原因：**Rank 是 process group 内的编号；课程恰好一 process 对一 GPU。  
-   **正确：**显式区分 global rank、local rank、process 与 device mapping。
+   **原因：** Rank 是 process group 内的编号；课程恰好一 process 对一 GPU。  
+   **正确：** 显式区分 global rank、local rank、process 与 device mapping。
 
 10. **错误：**“`world_size=8` 就表示 8 台机器。”  
-    **原因：**它表示 group 中 8 个 processes/ranks，可能全在一台 8-GPU node。  
-    **正确：**node count、process count、device count 分开记录。
+    **原因：** 它表示 group 中 8 个 processes/ranks，可能全在一台 8-GPU node。  
+    **正确：** node count、process count、device count 分开记录。
 
 11. **错误：**“Global rank 13 就应该 `set_device(13)`。”  
-    **原因：**多机本地可能只有 GPU 0–7。  
-    **正确：**用 local rank 选本机 GPU；课程 `rank→device` 只适合单机示例。
+    **原因：** 多机本地可能只有 GPU 0–7。  
+    **正确：** 用 local rank 选本机 GPU；课程 `rank→device` 只适合单机示例。
 
 12. **错误：**“Barrier 等价于 `torch.cuda.synchronize()`。”  
-    **原因：**Barrier 主要等其他 ranks 到达；CUDA synchronize 等本 device 已提交 kernels。  
-    **正确：**按要等的是 process 还是 device 选择；benchmark 可能两者都需要。课程还未 `set_device`，无参 synchronize 可能等错 current device，不能只看函数名宣布计时正确。
+    **原因：** Barrier 主要等其他 ranks 到达；CUDA synchronize 等本 device 已提交 kernels。  
+    **正确：** 按要等的是 process 还是 device 选择；benchmark 可能两者都需要。课程还未 `set_device`，无参 synchronize 可能等错 current device，不能只看函数名宣布计时正确。
 
 13. **错误：**“`async_op=False` 返回时，所有 GPU、所有 streams、所有 ranks 都物理完成。”  
-    **原因：**API 没有异步 Work handle，但 CUDA 仍有 stream 语义；跨 stream/CPU 计时要按文档同步。  
-    **正确：**区分 API completion、same-stream ordering、device completion、rank rendezvous。
+    **原因：** API 没有异步 Work handle，但 CUDA 仍有 stream 语义；跨 stream/CPU 计时要按文档同步。  
+    **正确：** 区分 API completion、same-stream ordering、device completion、rank rendezvous。
 
 14. **错误：**“`async_op=True` 一定让通信与计算重叠并加速。”  
-    **原因：**依赖关系、stream、资源竞争或太早 `wait()` 都可消灭 overlap。  
-    **正确：**用 timeline 证明确有重叠，并验证结果使用前的同步。
+    **原因：** 依赖关系、stream、资源竞争或太早 `wait()` 都可消灭 overlap。  
+    **正确：** 用 timeline 证明确有重叠，并验证结果使用前的同步。
 
 15. **错误：**“Collective 次序不一致最多结果不一样，不会卡住。”  
-    **原因：**rank 0 等 all-reduce，rank 1 等 barrier 可互相等待。  
-    **正确：**所有 ranks 以匹配顺序、count、dtype 参加；为错误路径设超时与诊断。
+    **原因：** rank 0 等 all-reduce，rank 1 等 barrier 可互相等待。  
+    **正确：** 所有 ranks 以匹配顺序、count、dtype 参加；为错误路径设超时与诊断。
 
 16. **错误：**“Blocking send/recv 随便写顺序都安全。”  
-    **原因：**双方先 blocking send 可能都在等对方 recv。  
-    **正确：**设计可证明匹配的 send/recv 次序，或正确管理 nonblocking requests。
+    **原因：** 双方先 blocking send 可能都在等对方 recv。  
+    **正确：** 设计可证明匹配的 send/recv 次序，或正确管理 nonblocking requests。
 
 ### 17.3 Cost model 与带宽
 
 17. **错误：**“带宽高，小消息一定快。”  
     **原因：**$`T\approx sL+Q/B`$ 中，小 $`Q`$ 时固定 latency/launch 可能主导。  
-    **正确：**同时报告消息大小、latency、bandwidth 与 steps。
+    **正确：** 同时报告消息大小、latency、bandwidth 与 steps。
 
 18. **错误：**“Payload、per-rank sends、aggregate sends 是一个数。”  
-    **原因：**400 MiB all-reduce 在四-rank ring 中分别可对应 payload 400、per-rank send 600、aggregate send 2400 MiB。  
-    **正确：**每个数字先写口径。
+    **原因：** 400 MiB all-reduce 在四-rank ring 中分别可对应 payload 400、per-rank send 600、aggregate send 2400 MiB。  
+    **正确：** 每个数字先写口径。
 
 19. **错误：**“Aggregate sends 已经把 receive 再算一次。”  
-    **原因：**本讲定义 aggregate sends 只加发送端；send+receive 是另一口径。  
-    **正确：**四-rank 400 MiB ring all-reduce 是 2400 MiB aggregate sends，4800 MiB endpoint send+receive。
+    **原因：** 本讲定义 aggregate sends 只加发送端；send+receive 是另一口径。  
+    **正确：** 四-rank 400 MiB ring all-reduce 是 2400 MiB aggregate sends，4800 MiB endpoint send+receive。
 
 20. **错误：**“GB 和 GiB 可以交换标签。”  
     **原因：**$`1\text{GB}=10^9`$ bytes，$`1\text{GiB}=2^{30}`$ bytes。  
-    **正确：**源码除 `1024**3` 得 GiB/s；打印 `GB/s` 是标签不严谨。
+    **正确：** 源码除 `1024**3` 得 GiB/s；打印 `GB/s` 是标签不严谨。
 
 21. **错误：**“源码 `total_duration=p*duration` 表示四 ranks 串行跑了四倍墙钟。”  
-    **原因：**ranks 并发；$`p\times t`$ 是 aggregate numerator 的 rank-seconds 归一化。  
-    **正确：**本例 operation wall time 仍约 10 ms。
+    **原因：** ranks 并发；$`p\times t`$ 是 aggregate numerator 的 rank-seconds 归一化。  
+    **正确：** 本例 operation wall time 仍约 10 ms。
 
 22. **错误：**“NCCL-tests busbw 就是一根网线的物理吞吐。”  
-    **原因：**它是 collective-specific normalized metric；分层算法可能经过多类链路。  
-    **正确：**物理链路量需 topology、profiler 和硬件 counters。
+    **原因：** 它是 collective-specific normalized metric；分层算法可能经过多类链路。  
+    **正确：** 物理链路量需 topology、profiler 和硬件 counters。
 
 23. **错误：**“Ring 公式对所有 NCCL 算法都是实际 bytes 真值。”  
-    **原因：**Tree、hierarchical/offload 路径不同。  
-    **正确：**把 $`2(p-1)S/p`$ 标成理想 ring 或标准归一化因子；factor 2 是 reduce-scatter+all-gather 两阶段，不是 endpoint send+receive。固定同一完整输入 $`S`$ 时 AR 是 RS 流量 2 倍；课程实际 AR input 400 MiB、RS input 1600 MiB，所以实际 per-rank sends 却是 600 与 1200 MiB。
+    **原因：** Tree、hierarchical/offload 路径不同。  
+    **正确：** 把 $`2(p-1)S/p`$ 标成理想 ring 或标准归一化因子；factor 2 是 reduce-scatter+all-gather 两阶段，不是 endpoint send+receive。固定同一完整输入 $`S`$ 时 AR 是 RS 流量 2 倍；课程实际 AR input 400 MiB、RS input 1600 MiB，所以实际 per-rank sends 却是 600 与 1200 MiB。
 
 24. **错误：**“一次 warmup、一次测量就足够发表性能结论。”  
-    **原因：**冷启动、抖动、contention、straggler 会改变单样本。  
-    **正确：**多次 warmup/repeat，报 median/p95，并记录软硬件与 topology。
+    **原因：** 冷启动、抖动、contention、straggler 会改变单样本。  
+    **正确：** 多次 warmup/repeat，报 median/p95，并记录软硬件与 topology。
 
 ### 17.4 网络名词与课程快照
 
 25. **错误：**“RDMA 意味着 CPU 完全不参与任何事情。”  
-    **原因：**数据路径可绕过远端 CPU 拷贝/协议处理，但连接建立、控制、队列管理仍有 CPU/软件参与。  
-    **正确：**说清是 data movement path 的优化，不是 CPU 从系统消失。
+    **原因：** 数据路径可绕过远端 CPU 拷贝/协议处理，但连接建立、控制、队列管理仍有 CPU/软件参与。  
+    **正确：** 说清是 data movement path 的优化，不是 CPU 从系统消失。
 
 26. **错误：**“RoCE 是换了名字的 InfiniBand，行为必然完全一样。”  
-    **原因：**RoCE 在 Ethernet 上承载 RDMA，需要相应网络配置；拥塞与运维边界不同。  
-    **正确：**共同点是 RDMA 语义，底层网络和部署条件要分开。
+    **原因：** RoCE 在 Ethernet 上承载 RDMA，需要相应网络配置；拥塞与运维边界不同。  
+    **正确：** 共同点是 RDMA 语义，底层网络和部署条件要分开。
 
 27. **错误：**“A100/H100/B200/GB200 表中的数字永远适用于同名所有卡。”  
-    **原因：**产品形态、SXM/PCIe、容量、规格口径与课程时点不同。  
-    **正确：**把硬件表标为 2026 课程快照，并回查具体官方 SKU。
+    **原因：** 产品形态、SXM/PCIe、容量、规格口径与课程时点不同。  
+    **正确：** 把硬件表标为 2026 课程快照，并回查具体官方 SKU。
 
 ### 17.5 Data parallel
 
 28. **错误：**“DDP 自动把 parameters、Adam state 都除以 world size。”  
-    **原因：**朴素 DDP 每 rank 完整复制模型状态，只切 data。  
-    **正确：**分片状态需 FSDP/ZeRO 等方法。
+    **原因：** 朴素 DDP 每 rank 完整复制模型状态，只切 data。  
+    **正确：** 分片状态需 FSDP/ZeRO 等方法。
 
 29. **错误：**“课程每 rank 从磁盘只加载自己的 32 行。”  
-    **原因：**源码先把完整 `[128,1024]` data 交给 children，再在函数里 slice。  
-    **正确：**生产 dataloader/sampler 应直接读取 local shard。
+    **原因：** 源码先把完整 `[128,1024]` data 交给 children，再在函数里 slice。  
+    **正确：** 生产 dataloader/sampler 应直接读取 local shard。
 
 30. **错误：**“不等 local batch 时，把 local mean gradients 等权 AVG 仍是 global mean。”  
-    **原因：**1 样本 rank 与 3 样本 rank 被错误赋予相同权重；示例得到 6 而不是 8。  
-    **正确：**按有效样本/token counts 加权。
+    **原因：** 1 样本 rank 与 3 样本 rank 被错误赋予相同权重；示例得到 6 而不是 8。  
+    **正确：** 按有效样本/token counts 加权。
 
 31. **错误：**“`optimizer.step()` 会自动清 gradient。”  
-    **原因：**PyTorch `.grad` 默认累加；课程 `num_steps=1` 才未暴露。  
-    **正确：**正常每步显式 `zero_grad`，或有意设计 accumulation 周期。
+    **原因：** PyTorch `.grad` 默认累加；课程 `num_steps=1` 才未暴露。  
+    **正确：** 正常每步显式 `zero_grad`，或有意设计 accumulation 周期。
 
 32. **错误：**“课程四层随机初始化彼此不同。”  
     **原因：**`get_init_params` 每次内部 `manual_seed(0)`，同 shape 各层重放同一序列。  
-    **正确：**这保证 ranks 对齐却也让同 shape layers 同值；DP 四层、TP local 四层、PP 两 stages 的同 shape layers 都受影响，是教学 bug/简化。
+    **正确：** 这保证 ranks 对齐却也让同 shape layers 同值；DP 四层、TP local 四层、PP 两 stages 的同 shape layers 都受影响，是教学 bug/简化。
 
 33. **错误：**“Manual DDP 的四次 Python all-reduce 等同生产 PyTorch DDP 的全部实现。”  
-    **原因：**生产 DDP 还有 autograd hooks、buckets、overlap 与一致性处理。  
-    **正确：**课程只保留数学核心。
+    **原因：** 生产 DDP 还有 autograd hooks、buckets、overlap 与一致性处理。  
+    **正确：** 课程只保留数学核心。
 
 34. **错误：**“只要 gradients 一样，parameters 必然一直一样。”  
-    **原因：**旧 parameters 或 optimizer state 若不同，相同 gradient 也可能更新到不同值。  
-    **正确：**初值、gradient、optimizer state/规则都要一致。
+    **原因：** 旧 parameters 或 optimizer state 若不同，相同 gradient 也可能更新到不同值。  
+    **正确：** 初值、gradient、optimizer state/规则都要一致。
 
 ### 17.6 Tensor parallel
 
 35. **错误：**“TP 的 all-gather 不占额外 activation memory。”  
-    **原因：**课程每 rank 有 4×128 KiB receive buffers，cat 还新建 512 KiB full output。  
-    **正确：**通信分片、gather buffers 与峰值生命周期都要计。
+    **原因：** 课程每 rank 有 4×128 KiB receive buffers，cat 还新建 512 KiB full output。  
+    **正确：** 通信分片、gather buffers 与峰值生命周期都要计。
 
 36. **错误：**“课程四个 `[1024,256]` blocks 是完整随机 $`W`$ 的不同 columns。”  
-    **原因：**各 rank 同 shape、同 seed，实际 blocks 相同；local helper 还除 $`\sqrt{256}`$，而 full helper 会除 $`\sqrt{1024}`$，元素尺度相差 2 倍。  
-    **正确：**真实验证需从一个 global $`W`$ 切不重叠 columns，或按 global indices 做缩放一致的分布式初始化。
+    **原因：** 各 rank 同 shape、同 seed，实际 blocks 相同；local helper 还除 $`\sqrt{256}`$，而 full helper 会除 $`\sqrt{1024}`$，元素尺度相差 2 倍。  
+    **正确：** 真实验证需从一个 global $`W`$ 切不重叠 columns，或按 global indices 做缩放一致的分布式初始化。
 
 37. **错误：**“源码写 `.backward()` 就会自动产生正确 TP 通信。”  
-    **原因：**TP 源码根本未写 backward；裸 autograd 不知道自定义分片语义。  
-    **正确：**实现相应 input/parameter gradients 与 collectives，或用已验证 TP 框架。
+    **原因：** TP 源码根本未写 backward；裸 autograd 不知道自定义分片语义。  
+    **正确：** 实现相应 input/parameter gradients 与 collectives，或用已验证 TP 框架。
 
 38. **错误：**“逐元素 GeLU 必须 gather 后才能算。”  
-    **原因：**GeLU 不混合 columns，可对每个 local partial 独立作用。  
-    **正确：**跨维度归约/normalization 才需额外分析。
+    **原因：** GeLU 不混合 columns，可对每个 local partial 独立作用。  
+    **正确：** 跨维度归约/normalization 才需额外分析。
 
 39. **错误：**“TP degree 越大越快。”  
-    **原因：**shard 后 GEMM 变小、collective 更多，慢链路会主导。  
-    **正确：**在可用高速域和有效 kernel shape 内 benchmark degree。
+    **原因：** shard 后 GEMM 变小、collective 更多，慢链路会主导。  
+    **正确：** 在可用高速域和有效 kernel shape 内 benchmark degree。
 
 ### 17.7 Pipeline 与组合 mesh
 
 40. **错误：**“切成 microbatches 会自动改变 global batch 的数学定义。”  
-    **原因：**若 loss/gradient 正确累计，microbatch 只是 schedule/内存切分。  
-    **正确：**明确累加、平均、optimizer step 的边界。
+    **原因：** 若 loss/gradient 正确累计，microbatch 只是 schedule/内存切分。  
+    **正确：** 明确累加、平均、optimizer step 的边界。
 
 41. **错误：**“Microbatch 越多，pipeline 永远越快。”  
-    **原因：**bubble 比例会降，但每批变小可能降低 GEMM 效率、增加 launch/通信次数。  
-    **正确：**在 bubble 与单 microbatch 效率间调参。
+    **原因：** bubble 比例会降，但每批变小可能降低 GEMM 效率、增加 launch/通信次数。  
+    **正确：** 在 bubble 与单 microbatch 效率间调参。
 
 42. **错误：**“$`U=m/(m+p-1)`$ 是任何 pipeline 训练的精确利用率。”  
-    **原因：**它假设 forward-only、stage 等时、通信隐藏；真实 backward/1F1B/不均衡会改变。  
-    **正确：**把它当最小模型，再用 stage timeline 测量。
+    **原因：** 它假设 forward-only、stage 等时、通信隐藏；真实 backward/1F1B/不均衡会改变。  
+    **正确：** 把它当最小模型，再用 stage timeline 测量。
 
 43. **错误：**“课程代码已经实现 1F1B。”  
-    **原因：**源码只有 forward、blocking send/recv，backward 留作作业。  
-    **正确：**不能从 microbatch loop 推断完整训练 schedule。
+    **原因：** 源码只有 forward、blocking send/recv，backward 留作作业。  
+    **正确：** 不能从 microbatch loop 推断完整训练 schedule。
 
 44. **错误：**“PP 每 rank 生产运行时都需要先复制完整 input data。”  
-    **原因：**这是课程简化；通常第一 stage/input pipeline 持有输入，后续 stages 接 boundary activations。  
-    **正确：**避免把完整 data 无意义搬到后续 stages。
+    **原因：** 这是课程简化；通常第一 stage/input pipeline 持有输入，后续 stages 接 boundary activations。  
+    **正确：** 避免把完整 data 无意义搬到后续 stages。
 
 45. **错误：**“FSDP、TP、expert parallel 都是同一种 parameter 分片。”  
-    **原因：**FSDP 按生命周期分片模型状态；TP 合作算 dense layer；expert parallel 把 tokens 路由到 experts。  
-    **正确：**按数学轴、状态生命周期与通信原语分别描述。
+    **原因：** FSDP 按生命周期分片模型状态；TP 合作算 dense layer；expert parallel 把 tokens 路由到 experts。  
+    **正确：** 按数学轴、状态生命周期与通信原语分别描述。
 
 46. **错误：**“8-GPU mesh 只建一个全局 group 就够。”  
-    **原因：**TP、PP、DP 需要固定不同坐标轴的子 groups；全局 collective 会混合不该合并的 shards/stages。  
-    **正确：**为每一 mesh 轴构造明确 process groups。
+    **原因：** TP、PP、DP 需要固定不同坐标轴的子 groups；全局 collective 会混合不该合并的 shards/stages。  
+    **正确：** 为每一 mesh 轴构造明确 process groups。
 
 47. **错误：**“Rank 6 的所有通信伙伴都一样。”  
-    **原因：**在本例 mesh 中，rank 6 的 TP group 是 `{6,7}`、PP group `{4,6}`、DP group `{2,6}`。  
-    **正确：**操作前先确定它属于哪一轴的通信域。
+    **原因：** 在本例 mesh 中，rank 6 的 TP group 是 `{6,7}`、PP group `{4,6}`、DP group `{2,6}`。  
+    **正确：** 操作前先确定它属于哪一轴的通信域。
 
 48. **错误：**“选择并行策略只看峰值显存。”  
-    **原因：**能 fit 仍可能被 communication、bubble、critical batch 或小 GEMM 拖慢。  
-    **正确：**按 §16 做 correctness→fit→profile→placement→retest 的闭环。
+    **原因：** 能 fit 仍可能被 communication、bubble、critical batch 或小 GEMM 拖慢。  
+    **正确：** 按 §16 做 correctness→fit→profile→placement→retest 的闭环。
 
 49. **错误：**“当前 619 行 `setup` 已经调用 `torch.cuda.set_device(rank)`。”  
-    **原因：**原码只初始化 process group；显式 device 仅在创建 tensor 时由 `cuda_if_available(rank)` 返回。  
+    **原因：** 原码只初始化 process group；显式 device 仅在创建 tensor 时由 `cuda_if_available(rank)` 返回。  
     **正确：**`set_device(local_rank)` 是推荐修正，不是课程原行；缺它会使无参 synchronize 有等错 current device 的风险。
 
 50. **错误：**“Trace 分支把 `world_size=4` 改成 1。”  
-    **原因：**源码传 `fn(0, world_size,...)`，仍传原请求值 4，只把 distributed 函数替成 no-op。  
-    **正确：**Trace 仍按 world-size-4 shape/index 控制流执行，但不代表真实四-rank 数值通信。
+    **原因：** 源码传 `fn(0, world_size,...)`，仍传原请求值 4，只把 distributed 函数替成 no-op。  
+    **正确：** Trace 仍按 world-size-4 shape/index 控制流执行，但不代表真实四-rank 数值通信。
 
 51. **错误：**“当前课程 reduce-scatter 的 input/output dtype 不一致。”  
-    **原因：**原码明确给 `torch.arange` 写了 `dtype=torch.float32`；本文件未更改默认 dtype 时，`torch.empty(1, ...)` 也是 FP32。  
-    **正确：**当前课程代码两者都是 FP32。`dtype=input.dtype` 只是通用防御性写法，不是修复当前 bug。
+    **原因：** 原码明确给 `torch.arange` 写了 `dtype=torch.float32`；本文件未更改默认 dtype 时，`torch.empty(1, ...)` 也是 FP32。  
+    **正确：** 当前课程代码两者都是 FP32。`dtype=input.dtype` 只是通用防御性写法，不是修复当前 bug。
 
 52. **错误：**“CPU/Gloo 路径调用 `torch.cuda.synchronize()`，所以也验证了 CUDA 同步。”  
-    **原因：**无 CUDA 时源码把该函数 monkey-patch 成返回 `None` 的 no-op。  
-    **正确：**它只让教学控制流可运行，不能产生 GPU/NCCL timing 证据。
+    **原因：** 无 CUDA 时源码把该函数 monkey-patch 成返回 `None` 的 no-op。  
+    **正确：** 它只让教学控制流可运行，不能产生 GPU/NCCL timing 证据。
 
 ---
 
@@ -3361,59 +3361,59 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 3. `MASTER_ADDR`、`MASTER_PORT` 的作用是什么？为什么 payload 不必全部经过 master？
 
-4. **【填表】**单机 4 ranks，课程用 `cuda_if_available(rank)` 把新 tensor 放到 `cuda:rank`。写出 rank 0–3 的 tensor device；再说明这为什么不等于设置 current device，以及多机 global rank 13 为什么不能机械映射到 `cuda:13`。
+4. **【填表】** 单机 4 ranks，课程用 `cuda_if_available(rank)` 把新 tensor 放到 `cuda:rank`。写出 rank 0–3 的 tensor device；再说明这为什么不等于设置 current device，以及多机 global rank 13 为什么不能机械映射到 `cuda:13`。
 
-5. **【手算】**四 ranks 初始标量为 2、4、6、8。以 rank 1 为 root 做 broadcast，写出每 rank 输出。
+5. **【手算】** 四 ranks 初始标量为 2、4、6、8。以 rank 1 为 root 做 broadcast，写出每 rank 输出。
 
-6. **【填表】**Root 持有 `[10,20,30,40]`，scatter 给四 ranks，每 rank 一个数。写输出表。
+6. **【填表】** Root 持有 `[10,20,30,40]`，scatter 给四 ranks，每 rank 一个数。写输出表。
 
-7. **【填表】**四 ranks 分别持有 `[10]`,`[20]`,`[30]`,`[40]`，gather 到 root 2。写 root 2 与其他 ranks 的逻辑输出。
+7. **【填表】** 四 ranks 分别持有 `[10]`,`[20]`,`[30]`,`[40]`，gather 到 root 2。写 root 2 与其他 ranks 的逻辑输出。
 
-8. **【手算】**四 ranks 分别持有 `[0,1]`,`[2,3]`,`[4,5]`,`[6,7]`。SUM reduce 到 root 0，算结果。
+8. **【手算】** 四 ranks 分别持有 `[0,1]`,`[2,3]`,`[4,5]`,`[6,7]`。SUM reduce 到 root 0，算结果。
 
-9. **【手算】**沿用第 8 题，若 op=AVG，结果是多少？
+9. **【手算】** 沿用第 8 题，若 op=AVG，结果是多少？
 
-10. **【填表】**四 ranks 分别持有 `[0]`,`[1]`,`[2]`,`[3]`，all-gather 后每 rank 有什么？
+10. **【填表】** 四 ranks 分别持有 `[0]`,`[1]`,`[2]`,`[3]`，all-gather 后每 rank 有什么？
 
-11. **【手算/填表】**对 `[0,1,2,3]`、`[1,2,3,4]`、`[2,3,4,5]`、`[3,4,5,6]` 做 SUM reduce-scatter。先算完整 reduce，再写每 rank shard。
+11. **【手算/填表】** 对 `[0,1,2,3]`、`[1,2,3,4]`、`[2,3,4,5]`、`[3,4,5,6]` 做 SUM reduce-scatter。先算完整 reduce，再写每 rank shard。
 
-12. **【手算/填表】**沿用第 11 题，SUM all-reduce 后每 rank 输出什么？
+12. **【手算/填表】** 沿用第 11 题，SUM all-reduce 后每 rank 输出什么？
 
-13. **【手算】**用第 11 题结果验证 `reduce-scatter → all-gather` 与 all-reduce 逻辑等价。
+13. **【手算】** 用第 11 题结果验证 `reduce-scatter → all-gather` 与 all-reduce 逻辑等价。
 
-14. **【填表】**四 ranks 的 all-to-all 输入行分别为 `[a00,a01,a02,a03]` 到 `[a30,a31,a32,a33]`；每个 `aij` 表示 sender $`i`$ 发给 destination $`j`$。写 rank 0 与 rank 2 的输出。
+14. **【填表】** 四 ranks 的 all-to-all 输入行分别为 `[a00,a01,a02,a03]` 到 `[a30,a31,a32,a33]`；每个 `aij` 表示 sender $`i`$ 发给 destination $`j`$。写 rank 0 与 rank 2 的输出。
 
-15. **【手算】**不均匀 all-to-all 中，四 senders 发往 rank 0 的元素数分别为 3、0、2、5。Rank 0 共收多少？为什么这不再等于“每列恰好四个元素”的转置例？
+15. **【手算】** 不均匀 all-to-all 中，四 senders 发往 rank 0 的元素数分别为 3、0、2、5。Rank 0 共收多少？为什么这不再等于“每列恰好四个元素”的转置例？
 
-16. **【手算】**Cost model $`T\approx sL+Q/B`$。若 $`s=4`$、$`L=2\ \mu s`$、$`Q=16`$ MiB、$`B=8`$ GiB/s，估算 $`T`$（ms）。
+16. **【手算】** Cost model $`T\approx sL+Q/B`$。若 $`s=4`$、$`L=2\ \mu s`$、$`Q=16`$ MiB、$`B=8`$ GiB/s，估算 $`T`$（ms）。
 
-17. **【手算】**沿用第 16 题，把 $`Q`$ 改为 8 KiB，其余不变。算 latency 项与 bandwidth 项各多少 $`\mu s`$，谁主导？
+17. **【手算】** 沿用第 16 题，把 $`Q`$ 改为 8 KiB，其余不变。算 latency 项与 bandwidth 项各多少 $`\mu s`$，谁主导？
 
-18. **【手算】**理想 ring all-reduce，$`p=4,S=16`$ MiB。每 rank 在 reduce-scatter 与 all-gather 两阶段各发送多少？总发送多少？
+18. **【手算】** 理想 ring all-reduce，$`p=4,S=16`$ MiB。每 rank 在 reduce-scatter 与 all-gather 两阶段各发送多少？总发送多少？
 
-19. **【手算】**沿用第 18 题，aggregate sends 与 aggregate send+receive 各多少 MiB？
+19. **【手算】** 沿用第 18 题，aggregate sends 与 aggregate send+receive 各多少 MiB？
 
 20. **【手算】**`num_elements=100*1024**2`。先算元素数，再按 FP32 4 bytes/element 算 bytes 与 MiB。
 
-21. **【手算】**400 MiB all-reduce 用时 10 ms。算 `algbw`，分别用 GiB/s 和十进制 GB/s 表示。
+21. **【手算】** 400 MiB all-reduce 用时 10 ms。算 `algbw`，分别用 GiB/s 和十进制 GB/s 表示。
 
 22. **【手算】**$`p=4`$ all-reduce 的 busbw 校正因子是多少？用第 21 题算 `busbw` 的 GiB/s 与 GB/s。
 
-23. **【手算】**课程 all-reduce 源码分子 `S*2*(p-1)`、分母 `p*t`。代 $`S=400`$ MiB、$`p=4`$、$`t=0.01`$s，逐项复算为何得到 58.59375 GiB/s。
+23. **【手算】** 课程 all-reduce 源码分子 `S*2*(p-1)`、分母 `p*t`。代 $`S=400`$ MiB、$`p=4`$、$`t=0.01`$s，逐项复算为何得到 58.59375 GiB/s。
 
-24. **【概念+手算】**第 23 题中的 `p*t=0.04` 为什么不是实际 wall time？实际 wall time 是多少？
+24. **【概念+手算】** 第 23 题中的 `p*t=0.04` 为什么不是实际 wall time？实际 wall time 是多少？
 
-25. **【手算】**58.59375 GiB/s 换成 GB/s。提示：先乘 $`2^{30}`$ 得 bytes/s，再除 $`10^9`$。
+25. **【手算】** 58.59375 GiB/s 换成 GB/s。提示：先乘 $`2^{30}`$ 得 bytes/s，再除 $`10^9`$。
 
-26. **【手算】**Reduce-scatter 每 rank output chunk $`C=400`$ MiB、$`p=4`$。完整 input 是多少 MiB？
+26. **【手算】** Reduce-scatter 每 rank output chunk $`C=400`$ MiB、$`p=4`$。完整 input 是多少 MiB？
 
-27. **【手算】**理想 ring reduce-scatter 中，每 rank send、每 rank receive、aggregate sends 各多少 MiB？
+27. **【手算】** 理想 ring reduce-scatter 中，每 rank send、每 rank receive、aggregate sends 各多少 MiB？
 
-28. **【手算】**第 26 题用时 10 ms。按 NCCL-tests 口径算 reduce-scatter `algbw`（GiB/s）。
+28. **【手算】** 第 26 题用时 10 ms。按 NCCL-tests 口径算 reduce-scatter `algbw`（GiB/s）。
 
-29. **【手算】**第 28 题乘 $`(p-1)/p`$，算 `busbw`（GiB/s）。
+29. **【手算】** 第 28 题乘 $`(p-1)/p`$，算 `busbw`（GiB/s）。
 
-30. **【手算】**课程 reduce-scatter 源码分子 `input_bytes*(p-1)` 与分母 `p*t` 各是多少？复算第 29 题；再解释为什么课程实际 RS per-rank send 1200 MiB，反而是实际 AR 600 MiB 的 2 倍，而固定同一完整输入 $`S`$ 时 AR 又是 RS 的 2 倍。
+30. **【手算】** 课程 reduce-scatter 源码分子 `input_bytes*(p-1)` 与分母 `p*t` 各是多少？复算第 29 题；再解释为什么课程实际 RS per-rank send 1200 MiB，反而是实际 AR 600 MiB 的 2 倍，而固定同一完整输入 $`S`$ 时 AR 又是 RS 的 2 倍。
 
 31. 课程通信 benchmark 的正式 `duration` 包含哪三类主要时间？哪些准备工作在区间外？
 
@@ -3421,77 +3421,77 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 33. 写一个两-rank collective 次序不匹配的 deadlock 伪代码，并用一句话解释双方各等谁。
 
-34. **【填表】**课程 all-reduce 前四 ranks 的 `data` 分别是什么？调用后同一个 `data` 变量分别是什么？它是 in-place 还是 out-of-place？
+34. **【填表】** 课程 all-reduce 前四 ranks 的 `data` 分别是什么？调用后同一个 `data` 变量分别是什么？它是 in-place 还是 out-of-place？
 
-35. **【填表】**课程 reduce-scatter 的 input/output shape 各是什么？之后 all-gather 的 input/output shape 各是什么？设 world size=4。
+35. **【填表】** 课程 reduce-scatter 的 input/output shape 各是什么？之后 all-gather 的 input/output shape 各是什么？设 world size=4。
 
-36. **【手算/填表】**DP 的 global batch 128、world size 4。写每 rank 的 `[start,end)`、实际行号与 local batch size。
+36. **【手算/填表】** DP 的 global batch 128、world size 4。写每 rank 的 `[start,end)`、实际行号与 local batch size。
 
-37. **【手算】**一个 `[32,1024]` FP32 local batch 是多少 bytes 和 KiB？
+37. **【手算】** 一个 `[32,1024]` FP32 local batch 是多少 bytes 和 KiB？
 
-38. **【手算】**一个 `[1024,1024]` FP32 parameter matrix 有多少元素、bytes、MiB？
+38. **【手算】** 一个 `[1024,1024]` FP32 parameter matrix 有多少元素、bytes、MiB？
 
-39. **【手算】**四层第 38 题矩阵的 parameters 总共多少 MiB？Gradients 同 shape 又是多少？
+39. **【手算】** 四层第 38 题矩阵的 parameters 总共多少 MiB？Gradients 同 shape 又是多少？
 
-40. **【手算/填表】**每 rank 使用 FP32 AdamW，列 params、grads、$`m`$、$`v`$ 的大小并求合计；明确不含哪些至少三项。
+40. **【手算/填表】** 每 rank 使用 FP32 AdamW，列 params、grads、$`m`$、$`v`$ 的大小并求合计；明确不含哪些至少三项。
 
-41. **【填表】**DP local input `[32,1024]` 连续过四个 `[1024,1024]` 矩阵和逐元素 GeLU。写每层 matmul 前后 shape、loss shape、每个 `param.grad` shape。
+41. **【填表】** DP local input `[32,1024]` 连续过四个 `[1024,1024]` 矩阵和逐元素 GeLU。写每层 matmul 前后 shape、loss shape、每个 `param.grad` shape。
 
-42. **【手算】**两个 ranks，每 rank 两个 sample gradients：rank0 为 2、6；rank1 为 10、14。算两个 local means、AVG 后值与四样本 global mean。
+42. **【手算】** 两个 ranks，每 rank 两个 sample gradients：rank0 为 2、6；rank1 为 10、14。算两个 local means、AVG 后值与四样本 global mean。
 
-43. **【手算】**Rank0 只有 gradient 2；rank1 有 6、10、14。算 local means、错误等权 AVG、正确按样本数加权值。
+43. **【手算】** Rank0 只有 gradient 2；rank1 有 6、10、14。算 local means、错误等权 AVG、正确按样本数加权值。
 
 44. **【推理填表】**`get_init_params` 每次内部 `manual_seed(0)`，shape 都相同。填“跨 rank 同 layer”“同 rank 不同 layer”是否数值相同，并解释。
 
-45. **【手算】**若 step0 backward 得 $`g_0=3`$，未 zero_grad；step1 backward 新贡献 $`g_1=5`$。第二次 `.grad` 是多少？若每步独立训练，本来应是多少？
+45. **【手算】** 若 step0 backward 得 $`g_0=3`$，未 zero_grad；step1 backward 新贡献 $`g_1=5`$。第二次 `.grad` 是多少？若每步独立训练，本来应是多少？
 
-46. **【填表】**要保证 DDP ranks 更新后 parameters 仍相同，旧 parameters、同步后 gradients、optimizer state/规则三项各应满足什么？
+46. **【填表】** 要保证 DDP ranks 更新后 parameters 仍相同，旧 parameters、同步后 gradients、optimizer state/规则三项各应满足什么？
 
-47. **【手算/填表】**TP 中 $`x[128,1024]`$、$`W[1024,1024]`$ 按 4 ranks 列切。写 local $`W_r`$、local output、all-gather 后 full output shape。
+47. **【手算/填表】** TP 中 $`x[128,1024]`$、$`W[1024,1024]`$ 按 4 ranks 列切。写 local $`W_r`$、local output、all-gather 后 full output shape。
 
-48. **【手算】**第 47 题 local output `[128,256]` FP32 是多少 KiB？四个 receive buffers 与 full concatenated output 各多少 KiB？
+48. **【手算】** 第 47 题 local output `[128,256]` FP32 是多少 KiB？四个 receive buffers 与 full concatenated output 各多少 KiB？
 
-49. **【手算】**每 rank 每层 `[1024,256]` FP32 parameter shard 是多少 MiB？四层是多少？四 ranks 合计是多少？
+49. **【手算】** 每 rank 每层 `[1024,256]` FP32 parameter shard 是多少 MiB？四层是多少？四 ranks 合计是多少？
 
-50. **【手算】**用 §12.5 的 $`x,W`$，只计算 rank 0 的前两列输出，写出 2×2 结果。
+50. **【手算】** 用 §12.5 的 $`x,W`$，只计算 rank 0 的前两列输出，写出 2×2 结果。
 
-51. **【手算】**用同一 $`x,W`$，计算 rank 1 的后两列输出。
+51. **【手算】** 用同一 $`x,W`$，计算 rank 1 的后两列输出。
 
-52. **【手算】**把第 50、51 题沿 column concat；再直接检查完整 $`xW`$ 的第一行，验证相同。
+52. **【手算】** 把第 50、51 题沿 column concat；再直接检查完整 $`xW`$ 的第一行，验证相同。
 
-53. **【推理】**为什么课程 `get_init_params(1024,256,rank)` 不能证明四 ranks 拿到一个随机完整 $`W`$ 的不同列？给一种概念上正确的初始化/切片办法。
+53. **【推理】** 为什么课程 `get_init_params(1024,256,rank)` 不能证明四 ranks 拿到一个随机完整 $`W`$ 的不同列？给一种概念上正确的初始化/切片办法。
 
-54. **【手算】**PP 中 4 layers、2 stages。每 stage 几层？每层参数 4 MiB 时，每 stage parameters 和 FP32 Adam 训练状态下界各多少 MiB？
+54. **【手算】** PP 中 4 layers、2 stages。每 stage 几层？每层参数 4 MiB 时，每 stage parameters 和 FP32 Adam 训练状态下界各多少 MiB？
 
-55. **【手算/填表】**Batch128 切 4 microbatches。写每份行号、shape；一个 `[32,1024]` FP32 boundary activation 多大？四次 send payload 多大？
+55. **【手算/填表】** Batch128 切 4 microbatches。写每份行号、shape；一个 `[32,1024]` FP32 boundary activation 多大？四次 send payload 多大？
 
 56. **【填表】**$`m=4,p=2`$ forward-only pipeline。写 $`t_1`$ 到 $`t_5`$ 两 stages 分别处理哪个 microbatch/idle。
 
-57. **【手算】**第 56 题总 slots、有用 slots、利用率、bubble fraction 各是多少？
+57. **【手算】** 第 56 题总 slots、有用 slots、利用率、bubble fraction 各是多少？
 
-58. **【手算】**理想公式 $`U=m/(m+p-1)`$。若 $`m=8,p=4`$，算利用率和 bubble fraction（百分比保留两位）。
+58. **【手算】** 理想公式 $`U=m/(m+p-1)`$。若 $`m=8,p=4`$，算利用率和 bubble fraction（百分比保留两位）。
 
-59. **【手算】**若 $`p=4`$ 固定，希望理想 forward utilization 至少 80%，最小整数 $`m`$ 是多少？解不等式。
+59. **【手算】** 若 $`p=4`$ 固定，希望理想 forward utilization 至少 80%，最小整数 $`m`$ 是多少？解不等式。
 
-60. **【填表】**课程 pipeline 在 rank0 与 rank1 上分别执行 recv/compute/send 哪些步骤？列出它未实现的四个训练功能。
+60. **【填表】** 课程 pipeline 在 rank0 与 rank1 上分别执行 recv/compute/send 哪些步骤？列出它未实现的四个训练功能。
 
 61. 比较 DP、TP、PP：各切什么；本讲各自主要通信是什么；哪一种有 pipeline bubble？
 
 62. 解释 DDP、FSDP、ZeRO、TP 为什么不能当同义词。
 
-63. **【手算/填表】**在 §15 的 $`2\times2\times2`$ mesh 中，rank 6 的 $`(d,t,p)`$ 是多少？它的 TP、PP、DP groups 分别是什么？
+63. **【手算/填表】** 在 §15 的 $`2\times2\times2`$ mesh 中，rank 6 的 $`(d,t,p)`$ 是多少？它的 TP、PP、DP groups 分别是什么？
 
-64. **【填表】**列出 $`2\times2\times2`$ mesh 的全部四个 TP groups、四个 PP groups、四个 DP groups。
+64. **【填表】** 列出 $`2\times2\times2`$ mesh 的全部四个 TP groups、四个 PP groups、四个 DP groups。
 
-65. **【手算】**DP degree=3、TP degree=2、PP degree=4，共需多少 GPUs？一个固定 $`(t,p)`$ 的 DP group 有几个 ranks？
+65. **【手算】** DP degree=3、TP degree=2、PP degree=4，共需多少 GPUs？一个固定 $`(t,p)`$ 的 DP group 有几个 ranks？
 
-66. **【手算】**训练状态 160 GiB，单卡 64 GiB。纯 DDP 能否 fit？若理想 TP=4 均分状态，每卡状态多少 GiB、剩余多少 GiB？
+66. **【手算】** 训练状态 160 GiB，单卡 64 GiB。纯 DDP 能否 fit？若理想 TP=4 均分状态，每卡状态多少 GiB、剩余多少 GiB？
 
-67. **【手算】**Cost model 中 $`s=3,L=5\ \mu s,Q=400`$ MiB、$`B=100`$ GiB/s。算总时间（ms）。
+67. **【手算】** Cost model 中 $`s=3,L=5\ \mu s,Q=400`$ MiB、$`B=100`$ GiB/s。算总时间（ms）。
 
-68. **【手算】**两个 DP ranks 的有效 token 数为 100 与 300，local mean gradients 为 2 与 6。错误等权 AVG 与正确 token-weighted global mean 各是多少？
+68. **【手算】** 两个 DP ranks 的有效 token 数为 100 与 300，local mean gradients 为 2 与 6。错误等权 AVG 与正确 token-weighted global mean 各是多少？
 
-69. **【手算/判断】**一个 TP layer 每 rank local partial 128 KiB，world size 4。忽略算法 overhead，每 rank 需要获得其他 ranks 多少 KiB 才能拥有完整 activation？完整 activation 多大？
+69. **【手算/判断】** 一个 TP layer 每 rank local partial 128 KiB，world size 4。忽略算法 overhead，每 rank 需要获得其他 ranks 多少 KiB 才能拥有完整 activation？完整 activation 多大？
 
 70. 综合场景：单卡 OOM；TP=2 后能 fit，但 profiler 显示 TP all-gather 占 40% 且跨节点；PP 两 stages 又有 35% bubble。按 §16 写出至少四步有证据的优化顺序。
 
@@ -4006,9 +4006,9 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 - **官方课程代码讲义：**[`lecture_07.py`](https://github.com/stanford-cs336/lectures/blob/main/lecture_07.py)。
 - **官方 Stanford Online 视频：**[Lecture 7: Parallelism I](https://www.youtube.com/watch?v=SzpOcwdIL0Y)。
-- **人工字幕：**YouTube `English (United States)`，语言代码 `en-US`，`kind` 为空；1312 segments，末 cue 80:54，视频约 80:57。自动轨存在，但没有作为笔记主字幕。
-- **版本：**2026-08-28 核验 GitHub 当前页面与仓库提交，`lecture_07.py` 为 **619 个物理行**。文件最近提交 `0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012`（2026-04-20，`update lecture 7`），检查时仓库 HEAD `8b59b50730766695c2ffedd1a79c50cd09b9eb91`。
-- **旧缓存差异：**抓取工具曾返回 556 行旧 raw 视图；本笔记没有混用该版本，源码映射以 619 行当前版本为准。
+- **人工字幕：** YouTube `English (United States)`，语言代码 `en-US`，`kind` 为空；1312 segments，末 cue 80:54，视频约 80:57。自动轨存在，但没有作为笔记主字幕。
+- **版本：** 2026-08-28 核验 GitHub 当前页面与仓库提交，`lecture_07.py` 为 **619 个物理行**。文件最近提交 `0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012`（2026-04-20，`update lecture 7`），检查时仓库 HEAD `8b59b50730766695c2ffedd1a79c50cd09b9eb91`。
+- **旧缓存差异：** 抓取工具曾返回 556 行旧 raw 视图；本笔记没有混用该版本，源码映射以 619 行当前版本为准。
 
 ### 21.2 官方 619 行连续覆盖表
 
@@ -4057,11 +4057,11 @@ profile：compute、collective、pipeline idle、input、host gap 谁主导？
 
 本终稿的来源边界按以下标签理解：
 
-- **【课程】**官方 619 行讲义中直接给出的代码、公式、图与结论；
-- **【视频补充】**人工字幕中老师的口头解释、演示与课堂问答；
-- **【补充解释】**本笔记为零基础读者增加的逐步 shape、单位和代数桥梁；
-- **【补充】**本笔记自建的可手算矩阵、反例、决策树与自测；
-- **【延伸】**为说明生产边界而引用的当前官方 PyTorch/NCCL/硬件文档。延伸不冒充课程原话。
+- **【课程】** 官方 619 行讲义中直接给出的代码、公式、图与结论；
+- **【视频补充】** 人工字幕中老师的口头解释、演示与课堂问答；
+- **【补充解释】** 本笔记为零基础读者增加的逐步 shape、单位和代数桥梁；
+- **【补充】** 本笔记自建的可手算矩阵、反例、决策树与自测；
+- **【延伸】** 为说明生产边界而引用的当前官方 PyTorch/NCCL/硬件文档。延伸不冒充课程原话。
 
 - [PyTorch stable distributed 官方文档](https://docs.pytorch.org/docs/stable/distributed.html)：process group、backend、collective、barrier 与同步/异步语义。
 - [PyTorch multiprocessing 官方文档](https://docs.pytorch.org/docs/stable/multiprocessing.html#spawning-subprocesses)：`mp.spawn` 入口、参数、join 与异常传播。
@@ -4160,4 +4160,4 @@ PP：切 model depth
 
 > 多 GPU 训练不是“把同一段代码复制八遍”；它是先决定**切哪一个数学轴**，再用正确的 communication semantics 让 shards 合成同一个训练结果，最后依据 topology、memory peak 和 timeline 证据把通信与空闲成本压下去。
 
-> **状态：**Lecture 7 主编撰终稿已完成，但仍等待 Beginner Reviewer；这里未宣称审核通过。
+> **状态：** Lecture 7 主编撰终稿已完成，但仍等待 Beginner Reviewer；这里未宣称审核通过。

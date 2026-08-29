@@ -113,11 +113,11 @@ batch
 
 ### 2.2 概率、log probability 与梯度
 
-- **probability（概率）**在 0 到 1 之间。
-- **log probability（对数概率）**是 $`\log p`$，本讲 log 指自然对数 $`\ln`$。因为 $`0<p\le1`$，所以 $`\log p\le0`$。
+- **probability（概率）** 在 0 到 1 之间。
+- **log probability（对数概率）** 是 $`\log p`$，本讲 log 指自然对数 $`\ln`$。因为 $`0<p\le1`$，所以 $`\log p\le0`$。
 - $`e\approx2.71828`$，$`\log`$ 与指数互逆：$`\log(e^a)=a`$。
-- **loss（损失）**是“坏程度”，训练通常让它变小；**objective（目标）**若写成最大化，就让它变大。
-- **gradient（梯度）**是参数轻微变化时，目标变化的局部方向和速度。
+- **loss（损失）** 是“坏程度”，训练通常让它变小；**objective（目标）** 若写成最大化，就让它变大。
+- **gradient（梯度）** 是参数轻微变化时，目标变化的局部方向和速度。
 
 若当前 token 概率从 0.20 变到 0.24，概率比为 $`0.24/0.20=1.2`$。用 log 写：
 
@@ -133,13 +133,13 @@ batch
 \bar r=\frac{1}{G}\sum_{i=1}^{G}r_i.
 ```
 
-**population variance（总体方差）**把这组数据当完整总体，分母是 $`G`$：
+**population variance（总体方差）** 把这组数据当完整总体，分母是 $`G`$：
 
 ```math
 \sigma_{\mathrm{pop}}^2=\frac1G\sum_i(r_i-\bar r)^2.
 ```
 
-**sample variance（样本方差）**把这组数据当作更大总体的样本，常用分母 $`G-1`$：
+**sample variance（样本方差）** 把这组数据当作更大总体的样本，常用分母 $`G-1`$：
 
 ```math
 s^2=\frac1{G-1}\sum_i(r_i-\bar r)^2.
@@ -283,7 +283,7 @@ J_{\mathrm{new}}=0.30\times1+0.70\times0=0.30.
 
 ### 4.4 stop-gradient / detach：先画清梯度能走哪条路
 
-**stop-gradient（停止梯度）**或 **detach（脱离计算图）**的意思是：本次更新仍使用这个数值，但把它当成常数，它的导数按 0 处理。这里的“常数”只针对**当前这一次 policy update**，不是说它在下一批数据里永远不变。
+**stop-gradient（停止梯度）** 或 **detach（脱离计算图）** 的意思是：本次更新仍使用这个数值，但把它当成常数，它的导数按 0 处理。这里的“常数”只针对**当前这一次 policy update**，不是说它在下一批数据里永远不变。
 
 一次最小 policy-gradient 更新可读成下面的骨架伪代码：
 
@@ -313,9 +313,9 @@ loss.backward()                                      # 只更新 current policy
 A(x,o)=R(x,o)-b(x).
 ```
 
-**baseline（基线）**是“这题通常能得多少”。若某题平均 0.8，得 1 只比预期好 0.2；另一难题平均 0.1，得 1 比预期好 0.9。相对比较通常比裸 reward 方差更小。
+**baseline（基线）** 是“这题通常能得多少”。若某题平均 0.8，得 1 只比预期好 0.2；另一难题平均 0.1，得 1 比预期好 0.9。相对比较通常比裸 reward 方差更小。
 
-**state（状态）**是模型在选择下一个动作时已经掌握的信息；在语言模型里就是 prompt 加上已经生成的前缀。基线可以依赖 prompt/state，却不能依赖当前采样动作。严格证明放在 §11。
+**state（状态）** 是模型在选择下一个动作时已经掌握的信息；在语言模型里就是 prompt 加上已经生成的前缀。基线可以依赖 prompt/state，却不能依赖当前采样动作。严格证明放在 §11。
 
 ### 5.2 TRPO：别一步把策略推翻
 
@@ -338,7 +338,7 @@ PPO 是 **Proximal Policy Optimization（近端策略优化）**。定义 token 
 - $`\rho=1.3`$：概率变成 1.3 倍；
 - $`\rho=0.7`$：概率变成 0.7 倍。
 
-**surrogate（替代目标）**是“比原始目标更容易优化、希望近似其更新效果的公式”；它不是环境的真实 reward。PPO 的 clipped surrogate：
+**surrogate（替代目标）** 是“比原始目标更容易优化、希望近似其更新效果的公式”；它不是环境的真实 reward。PPO 的 clipped surrogate：
 
 ```math
 L^{clip}_t=\min\left(
@@ -378,7 +378,7 @@ L^{clip}_t=\min\left(
 5. old policy 给概率比分母；
 6. 反向传播更新 policy/value。
 
-这会同时占模型显存、**KV cache（键值缓存）**、**activation（激活）**和通信资源。KV cache 是为已生成前缀保存 attention 的 key/value 中间量，避免每步全部重算；activation 是前向计算产生、反向传播可能还要使用的中间 tensor。
+这会同时占模型显存、**KV cache（键值缓存）**、**activation（激活）** 和通信资源。KV cache 是为已生成前缀保存 attention 的 key/value 中间量，避免每步全部重算；activation 是前向计算产生、反向传播可能还要使用的中间 tensor。
 
 ### 6.2 value、advantage 与 GAE
 
@@ -466,7 +466,7 @@ rollout 刚由 current policy 采样并复制为 old policy 时，二者相同�
 \rho=\pi_\theta/\pi_{\mathrm{old}}=1.
 ```
 
-**minibatch（小批）**是把本轮 rollout batch 再切成若干小块逐次更新；**epoch（遍历轮）**是把同一批数据完整过一遍。第一次更新内 clip 不起作用；做多个 minibatch、多个 epoch 后 current 变化，ratio 才偏离 1。clip 仍有意义，因为它约束同一批数据上的后续复用。
+**minibatch（小批）** 是把本轮 rollout batch 再切成若干小块逐次更新；**epoch（遍历轮）** 是把同一批数据完整过一遍。第一次更新内 clip 不起作用；做多个 minibatch、多个 epoch 后 current 变化，ratio 才偏离 1。clip 仍有意义，因为它约束同一批数据上的后续复用。
 
 <a id="l16-worked-group"></a>
 
@@ -611,7 +611,7 @@ g(a)=\log\pi_\theta(a)-\log\pi_{ref}(a).
 =D_{KL}(\pi_\theta\|\pi_{ref})\ge0.
 ```
 
-**第二种：p.14 的单边 reward-shaping heuristic。** **heuristic（启发式）**是经验上可能有用、但并非由目标严格推出的规则；**reward shaping（奖励塑形）**是先修改喂给学习器的奖励信号。课程截图代码是：
+**第二种：p.14 的单边 reward-shaping heuristic。** **heuristic（启发式）** 是经验上可能有用、但并非由目标严格推出的规则；**reward shaping（奖励塑形）** 是先修改喂给学习器的奖励信号。课程截图代码是：
 
 ```python
 kl_one_sided = torch.clamp(logprobs - ref_logprobs, min=0.0)
@@ -650,7 +650,7 @@ e^{0.6931}-0.6931-1\approx2-0.6931-1=0.3069.
 \end{aligned}
 ```
 
-这里的 **Monte Carlo estimator（蒙特卡洛估计量）**是“用随机抽到的少量样本平均，近似无法逐项枚举的完整期望”。在上述共同正 support、$`a\sim\pi_\theta`$、精确 log-prob 条件下，它是 forward $`D_{KL}(current\|reference)`$ 的无偏 Monte Carlo estimator；不要只凭 $`d`$ 的书写方向把它叫“reverse KL”。off-policy 样本、近似 log-prob、截断/温度不一致都会破坏这条等式。
+这里的 **Monte Carlo estimator（蒙特卡洛估计量）** 是“用随机抽到的少量样本平均，近似无法逐项枚举的完整期望”。在上述共同正 support、$`a\sim\pi_\theta`$、精确 log-prob 条件下，它是 forward $`D_{KL}(current\|reference)`$ 的无偏 Monte Carlo estimator；不要只凭 $`d`$ 的书写方向把它叫“reverse KL”。off-policy 样本、近似 log-prob、截断/温度不一致都会破坏这条等式。
 
 两动作反例能看清 support 为什么不是小字备注。令：
 
@@ -702,7 +702,7 @@ reference 在动作 B 上还有 0.5 概率，但 current 永远采不到 B；而
 
 ### 11.2 group mean 含自身：有固定缩放
 
-先固定成立条件：给定同一 prompt，$`G`$ 条 responses 是 **IID（independent and identically distributed，独立同分布）**采样。**独立**是某条 rollout 的随机生成不查看其他 rollout 的结果；**同分布**是它们都来自同一个 policy 与同一套采样配置。本段只研究 **减 group mean**，暂时不含随机 std、PPO clip、KL 和每回答长度权重。以这 $`G`$ 个 samples 的均值为 baseline 时，第 $`i`$ 项：
+先固定成立条件：给定同一 prompt，$`G`$ 条 responses 是 **IID（independent and identically distributed，独立同分布）** 采样。**独立**是某条 rollout 的随机生成不查看其他 rollout 的结果；**同分布**是它们都来自同一个 policy 与同一套采样配置。本段只研究 **减 group mean**，暂时不含随机 std、PPO clip、KL 和每回答长度权重。以这 $`G`$ 个 samples 的均值为 baseline 时，第 $`i`$ 项：
 
 ```math
 r_i-\bar r
@@ -716,7 +716,7 @@ r_i-\bar r
 
 ### 11.3 leave-one-out baseline
 
-**leave-one-out（留一法）**对第 $`i`$ 条回答，只用另外 $`G-1`$ 条的均值：
+**leave-one-out（留一法）** 对第 $`i`$ 条回答，只用另外 $`G-1`$ 条的均值：
 
 ```math
 b_{-i}=\frac1{G-1}\sum_{j\ne i}r_j.
@@ -816,8 +816,8 @@ PDF p.23 的核心是“不各除自己的长度”。为让数值小一些，�
 
 ### 13.2 outcome reward 与 process reward
 
-- **ORM（Outcome Reward Model，结果奖励）**只看最终结果；
-- **PRM（Process Reward Model，过程奖励）**给中间推理步骤打分。
+- **ORM（Outcome Reward Model，结果奖励）** 只看最终结果；
+- **PRM（Process Reward Model，过程奖励）** 给中间推理步骤打分。
 
 R1-Zero 的展示强调简单结果奖励也能产生强学习信号。这不证明 PRM 永远无用；它只说明在该模型、数据、训练预算和实现下，团队报告的 PRM 路线没有带来预期收益（PDF p.38）。
 
@@ -875,7 +875,7 @@ R1-Zero 出现语言混杂。生产流程加入语言一致性 reward，使目�
 
 ### 15.1 从 R1 轨迹蒸馏到小模型
 
-【课程内容，PDF p.36–37】**distillation（蒸馏）**让较小 student 模型学习较强 teacher 生成的数据/分布。课件写 R1 生成约 800k traces，用于 Qwen2.5/Llama 系列学生模型。
+【课程内容，PDF p.36–37】**distillation（蒸馏）** 让较小 student 模型学习较强 teacher 生成的数据/分布。课件写 R1 生成约 800k traces，用于 Qwen2.5/Llama 系列学生模型。
 
 蒸馏不是把 teacher 权重复制进去。它更像让学生看老师的解题册：
 
@@ -897,7 +897,7 @@ MCTS 是 **Monte Carlo Tree Search（蒙特卡洛树搜索）**，通过分支�
 
 ### 16.1 数据依然决定 RL 学什么
 
-【课程内容，PDF p.39–41】Kimi k1.5 强调 broad coverage、difficulty filtering、可验证数学/代码 reward 和 curriculum。**curriculum（课程式训练）**是在训练的不同阶段改变总体难度或长度分布，常见直觉是先建立较容易的基础，再逐渐加入更难、更长的任务。
+【课程内容，PDF p.39–41】Kimi k1.5 强调 broad coverage、difficulty filtering、可验证数学/代码 reward 和 curriculum。**curriculum（课程式训练）** 是在训练的不同阶段改变总体难度或长度分布，常见直觉是先建立较容易的基础，再逐渐加入更难、更长的任务。
 
 若训练集只有竞赛代数，RL 不会自动获得网页检索、客服沟通和医学判断能力。可验证性让某种技能容易打分，不等于覆盖所有技能。
 
@@ -1150,13 +1150,13 @@ PDF p.43 的训练配方不是一开始就施加长度压力：团队先做正�
 
 ### 18.1 什么叫 on-policy
 
-**on-policy（同策略）**表示训练数据由当前/很近的策略生成。采样时 current 复制成 old，初始 ratio 为 1；更新后 current 改变。
+**on-policy（同策略）** 表示训练数据由当前/很近的策略生成。采样时 current 复制成 old，初始 ratio 为 1；更新后 current 改变。
 
 若同一 rollout 反复用很多轮，或由老很多版本的模型生成，就更 off-policy。PPO ratio/clip 能缓和一定差异，不是无限期复用许可证。
 
 ### 18.2 长 CoT 的 straggler 手算
 
-**straggler（拖尾任务）**是比同组其他任务慢很多、让大家等待的任务。4 个 rollout 长度：
+**straggler（拖尾任务）** 是比同组其他任务慢很多、让大家等待的任务。4 个 rollout 长度：
 
 ```math
 [100,120,110,1000].
@@ -1246,7 +1246,7 @@ PDF p.54 的表显示一般能力/偏好训练可提升部分通用任务，同�
 
 ### 20.2 midtraining 与 600B repository tokens
 
-**midtraining（中期训练）**位于通用预训练与 post-training 之间，强化长上下文、代码仓库、agent 交互等分布。课件写 600B repository-level tokens；$`B`$ 在这里是 billion（十亿）token，不是 bytes。
+**midtraining（中期训练）** 位于通用预训练与 post-training 之间，强化长上下文、代码仓库、agent 交互等分布。课件写 600B repository-level tokens；$`B`$ 在这里是 billion（十亿）token，不是 bytes。
 
 仓库级数据保留跨文件依赖、测试和提交结构；它不等于把孤立代码文件拼起来。
 
@@ -1458,10 +1458,10 @@ token term
 
 1. prompt 是题；response 是完整答案；token 是答案中的动作单位；group 是同一 prompt 的多回答；batch 是多 prompts/groups 的更新集合。
 2. responses $`=3\times8=24`$；tokens $`=24\times100=2400`$。
-3. 四格：真实对且通过=TP；真实错却通过=FP；真实对却拒绝=FN；真实错且拒绝=TN。**pass 不等于完整现实目标满足。**例如 parser 可误抓答案形成 FP；也可能因格式拒绝等价正确答案形成 FN。
+3. 四格：真实对且通过=TP；真实错却通过=FP；真实对却拒绝=FN；真实错且拒绝=TN。**pass 不等于完整现实目标满足。** 例如 parser 可误抓答案形成 FP；也可能因格式拒绝等价正确答案形成 FN。
 4. 例：只比末答案，漏错误中间推理；答案解析器可能接受格式漏洞。还可漏单位、证明完整性。
 5. 正确格式错：$`1+0=1`$；错误格式对：$`0+0.1=0.1`$。
-6. **不必。**reward 可是离散测试结果；梯度通过 $`\nabla\log\pi_\theta`$ 回到 policy。
+6. **不必。** reward 可是离散测试结果；梯度通过 $`\nabla\log\pi_\theta`$ 回到 policy。
 7. $`0.25\times1+0.75\times0=0.25`$。
 8. 新期望 $`0.30`$；增加 $`0.30-0.25=0.05`$。
 9. 同一真实目标重复采样，梯度估计忽高忽低，需要更多样本才能看清方向。
@@ -1481,7 +1481,7 @@ token term
 
 21. GAE 是 Generalized Advantage Estimation，把多步时序差分按衰减混合。本讲只需知道它给 PPO 构造 token advantage，GRPO 用组相对分数省去 value。
 22. 同 prompt 采 $`G`$ 条→verifier 打分→组内标准化→把 response advantage 给各 token→clip+KL 更新。p.18 总览式直接写整条 response 概率比、每 response 一项；p.23 为分析实现偏差，把它展开成每 token ratio 的内层和，原 GRPO 再除本条 $`|o_i|`$。二者不能无说明混成同一层级公式。
-23. **不是。**它不预测未来，只比较本次同题 group。
+23. **不是。** 它不预测未来，只比较本次同题 group。
 24. $`(0+1+1+2)/4=1`$。
 25. 离均差 $`[-1,0,0,1]`$；平方 $`[1,0,0,1]`$；和 2；population variance $`2/4=0.5`$。
 26. std $`=\sqrt{0.5}=0.7071`$；advantages 约 $`[-1.4142,0,0,1.4142]`$。
@@ -1495,7 +1495,7 @@ token term
 34. $`(-1.1314-1.5556)/2=-2.687/2=-1.3435`$。
 35. $`(-1.3435+0+0+1.6970)/4=0.3535/4=0.088375`$。
 36. token 和 $`-1.1314-1.5556+1.6970=-0.9900`$；除 6 得 $`-0.1650`$。
-37. **否。**二者优化的加权目标不同；先每 response 平均会让短长回答各占一票。
+37. **否。** 二者优化的加权目标不同；先每 response 平均会让短长回答各占一票。
 38. ratio=1；第一次该点不触发 clip。
 39. current 更新后与 frozen old 不同，ratio 才离 1；后续 epoch 需要 clip 限幅。
 40. $`e^{\log2}-\log2-1=2-0.6931-1=0.3069`$。
@@ -1510,16 +1510,16 @@ token term
 46. $`r_i-\bar r=\frac{G-1}{G}r_i-\frac1G\sum_{j\ne i}r_j`$。
 47. baselines $`[4/3,1,1,2/3]`$；advantages $`[-4/3,0,0,4/3]`$。
 48. std 包含 $`r_i`$，改变当前 action 会改分母；它不是 action-independent baseline。
-49. **不能。**epsilon 只防除 0，不消除随机分母对 action 的依赖。
+49. **不能。** epsilon 只防除 0，不消除随机分母对 action 的依赖。
 50. 长 2：每 token $`-1/2=-0.5`$；长 10：每 token $`-1/10=-0.1`$。
 51. 都按每 token $`-1/10`$：短回答总 $`2(-0.1)=-0.2`$；长回答总 $`10(-0.1)=-1`$。
-52. **不能。**可能是优化长度偏差、base 模式被放大或任务需要更多字；须做长度控制与消融。
+52. **不能。** 可能是优化长度偏差、base 模式被放大或任务需要更多字；须做长度控制与消融。
 53. accuracy 检最终正确/测试；format 检标签/格式。都不自动验证全过程真实。
 54. ORM 只看末答案；例如错误等式碰巧得到正确数字仍可得 1。
-55. **不是。**R1-Zero 是纯 RL 演示；R1 有 cold-start SFT、RL、后续 SFT/RLHF。
-56. V3-Base→cold-start SFT→reasoning RL→**收集/过滤 reasoning 与 non-reasoning 数据（数据步骤）**→SFT→一般 RLHF。链有六个节点，但只有带训练更新的节点才叫训练阶段；不能为凑“五阶段”偷偷删掉数据构造。
+55. **不是。** R1-Zero 是纯 RL 演示；R1 有 cold-start SFT、RL、后续 SFT/RLHF。
+56. V3-Base→cold-start SFT→reasoning RL→**收集/过滤 reasoning 与 non-reasoning 数据（数据步骤）** →SFT→一般 RLHF。链有六个节点，但只有带训练更新的节点才叫训练阶段；不能为凑“五阶段”偷偷删掉数据构造。
 57. $`1+0.8=1.8`$；一致性 1 时 $`1+1=2`$。
-58. **不能。**只说明其具体模型、数据、预算和实现未达预期。
+58. **不能。** 只说明其具体模型、数据、预算和实现未达预期。
 59. 蒸馏用 teacher 生成的数据/概率训练 student；不是复制权重，也不保证继承全部能力。
 60. 全失败 $`0.9^8\approx0.4305`$；至少一次成功 $`1-0.4305=0.5695`$。
 
@@ -1531,17 +1531,17 @@ token term
 64. 分母 $`300-100=200`$：100→0.5；200→$`0.5-100/200=0`$；300→$`0.5-200/200=-0.5`$。
 65. 正确拿 $`[0.5,0,-0.5]`$；错误拿 $`\min(0,\lambda)=[0,0,-0.5]`$。
 66. $`\max len-\min len=0`$，直接算会除 0；Kimi 报告的 fallback 是把该组所有 length reward 设为 0。其他实现的 skip 只能另标。
-67. **否。**更新后 current 漂移，rollout 变 stale；要限制复用并监控 ratio。
+67. **否。** 更新后 current 漂移，rollout 变 stale；要限制复用并监控 ratio。
 68. 有用 $`=100+120+110+1000=1330`$；slots $`=4\times1000=4000`$；利用率 $`1330/4000=33.25\%`$；浪费 2670。
 69. 理想下界 $`100/20=5`$ 秒；未含同步和竞争。
 70. $`3995\times8=31{,}960`$ responses。
 71. $`31{,}960\times2048=65{,}454{,}080`$ tokens。
 72. 不冲突：3995 是课件精确值；4000 是口头近似。计算要声明所用值。
-73. **不保证。**课件图只支持特定任务/预算；长推理可浪费或走错。
+73. **不保证。** 课件图只支持特定任务/预算；长推理可浪费或走错。
 74. 多目标梯度可能冲突；风格/安全/通用偏好优化会改变原 math/code 分布。
 75. billion，十亿 token；不是 byte。
 76. 例如移除答案历史、隐藏独立测试、记录工具轨迹、轮换私有任务、人工审计异常高分；任选四项。
-77. **不能。**测试覆盖可能弱，未检查性能、安全或隐藏输入。
+77. **不能。** 测试覆盖可能弱，未检查性能、安全或隐藏输入。
 78. 例：分别去掉 length reward、std normalization、KL、format reward；保持其他条件相同，并看独立评测和长度。
 79. 两处问题：相关不等于长度导致能力；reward/verifier 可能偏好长或有漏洞；还需与 base/Dr.GRPO/长度匹配对照。
 80. 示例：目标=修复真实 bug；输入=隔离仓库+issue；通过=隐藏功能/回归测试；漏检=安全/性能/未覆盖平台；聚合=每 trajectory 0/1、按任务平均；复核=新隐藏测试+人工 trace audit。六行必须都写。
