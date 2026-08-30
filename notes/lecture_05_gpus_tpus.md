@@ -323,6 +323,88 @@ else:
     y[i] = 0
 ```
 
+#### 用 8-lane 迷你 warp 手算一次
+
+**【补充例子】** 为了把 active mask 的作用看清楚，继续使用前文的 8-lane 教学模型。假设输入为：
+
+```text
+lane:      0   1   2   3   4   5   6   7
+x[i]:      3  -2   5  -1   0   8  -4   6
+x[i] > 0:  1   0   1   0   0   1   0   1
+```
+
+GPU 不能简单地让 lane 0 在同一时刻执行 `if` 中的赋值，同时让 lane 1 执行 `else` 中的另一条赋值，因为 warp 的执行资源仍以共同发射的指令为中心。为了手算，先假设硬件处理 `if` 路径，再处理 `else` 路径；具体先后次序不是程序可以依赖的保证。
+
+**第一阶段：执行 `if` 路径。** active mask 是：
+
+```text
+lane:   0 1 2 3 4 5 6 7
+mask:   1 0 1 0 0 1 0 1
+```
+
+warp 发射 `y[i] = x[i]`。只有 mask 为 1 的 lane 提交结果：
+
+```text
+lane 0: y[0] = 3    ← active
+lane 1: 不写         ← inactive
+lane 2: y[2] = 5    ← active
+lane 3: 不写         ← inactive
+lane 4: 不写         ← inactive
+lane 5: y[5] = 8    ← active
+lane 6: 不写         ← inactive
+lane 7: y[7] = 6    ← active
+```
+
+从执行单元的利用情况看，可以粗略画成：
+
+```text
+lane 0  active   → 3
+lane 1  inactive
+lane 2  active   → 5
+lane 3  inactive
+lane 4  inactive
+lane 5  active   → 8
+lane 6  inactive
+lane 7  active   → 6
+```
+
+**第二阶段：执行 `else` 路径。** mask 换成互补的另一组 lane：
+
+```text
+lane:   0 1 2 3 4 5 6 7
+mask:   0 1 0 1 1 0 1 0
+```
+
+这次 warp 发射 `y[i] = 0`，只有新的 active lanes 写结果：
+
+```text
+lane 0: 不写
+lane 1: y[1] = 0
+lane 2: 不写
+lane 3: y[3] = 0
+lane 4: y[4] = 0
+lane 5: 不写
+lane 6: y[6] = 0
+lane 7: 不写
+```
+
+两条路径都处理完后：
+
+```text
+y = [3, 0, 5, 0, 0, 8, 0, 6]
+```
+
+把时间线压缩成两行，就是：
+
+```text
+if   路径：10100101  ← 只有这些 lane 有效
+else 路径：01011010  ← 换另一批 lane 有效
+```
+
+所以源代码看起来只有一个 `if/else`，对发生分歧的 warp 来说，却可能近似变成“执行路径 A + 执行路径 B”。每个阶段都有 inactive lanes，执行资源没有被全部用于产生有效结果；若两边都是很长的计算，总指令工作量会明显增加。
+
+> **精确性边界：** 这不是某一代 GPU 的逐 cycle 微架构时序图。编译器可能把这种很短的分支改成 predication；Volta 及之后的 GPU 也支持更灵活的 independent thread scheduling。根据 NVIDIA 的 [SIMT execution model](https://docs.nvidia.com/cuda/cuda-programming-guide/03-advanced/advanced-kernel-programming.html#simt-execution-model)，分歧路径仍需分别执行，不在当前路径上的线程会被禁用。因此，“两条昂贵路径不会因为独立线程调度而免费并行”仍是这里要保留的性能直觉。
+
 若一个 warp 的 32 个元素中，一半大于 0、一半小于 0，两条路径都可能需要执行。相比之下，规则的逐元素表达式通常更容易被编译为高效的 predication 或向量化代码。
 
 > 不要把它误读成“GPU 代码绝对不能有 `if`”。真正的问题是 warp 内是否发生严重且昂贵的分歧，以及分支内有多少工作。
